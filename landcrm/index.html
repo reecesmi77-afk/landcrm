@@ -1,0 +1,1510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Land CRM</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+
+/* ── LOGIN SCREEN ── */
+#login-screen{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;}
+#login-screen.hidden{display:none;}
+.login-card{background:var(--bg2);border:1px solid var(--border2);border-radius:20px;padding:48px 44px;width:360px;text-align:center;box-shadow:0 32px 80px rgba(0,0,0,0.4);}
+.login-logo{font-family:'Syne',sans-serif;font-weight:800;font-size:28px;color:var(--accent);letter-spacing:-0.5px;margin-bottom:6px;}
+.login-sub{font-family:'DM Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:36px;}
+.login-label{font-family:'DM Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:0.5px;text-transform:uppercase;text-align:left;margin-bottom:6px;display:block;}
+.login-input{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:10px;color:var(--text);padding:12px 14px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color 0.15s;margin-bottom:8px;letter-spacing:2px;}
+.login-input:focus{border-color:var(--accent);}
+.login-input::placeholder{letter-spacing:0;color:var(--text3);}
+.login-btn{width:100%;background:var(--accent);color:#0a140a;border:none;border-radius:10px;padding:12px;font-size:13px;font-weight:600;font-family:'Syne',sans-serif;cursor:pointer;transition:background 0.15s;margin-top:8px;}
+.login-btn:hover{background:var(--accent2);}
+.login-error{font-size:11px;color:var(--coral);margin-top:10px;min-height:16px;font-family:'DM Mono',monospace;}
+.login-lock{width:48px;height:48px;border-radius:14px;background:var(--adim);border:1px solid rgba(168,255,110,0.2);display:flex;align-items:center;justify-content:center;margin:0 auto 24px;}
+.logout-btn{background:none;border:1px solid var(--border);border-radius:7px;color:var(--text3);font-size:10px;font-family:'DM Mono',monospace;padding:3px 8px;cursor:pointer;transition:all 0.15s;}
+.logout-btn:hover{color:var(--coral);border-color:rgba(255,122,92,0.3);}
+:root {
+  --bg:#0b0c0b;--bg2:#111311;--bg3:#181a17;--bg4:#1f221e;--bg5:#252825;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);
+  --text:#e6ebe6;--text2:#8a988a;--text3:#4a554a;
+  --accent:#a8ff6e;--accent2:#7ed44a;--adim:rgba(168,255,110,0.08);--adim2:rgba(168,255,110,0.15);
+  --coral:#ff7a5c;--cdim:rgba(255,122,92,0.1);
+  --amber:#ffb84d;--ambdim:rgba(255,184,77,0.1);
+  --blue:#5cb8ff;--bdim:rgba(92,184,255,0.1);
+  --purple:#c084fc;--pdim:rgba(192,132,252,0.1);
+  --teal:#4dd6b4;--tdim:rgba(77,214,180,0.1);
+  --ai-color:#f0a500;--ai-dim:rgba(240,165,0,0.1);
+  --r:10px;--rl:14px;
+}
+body.light {
+  --bg:#f4f5f2;--bg2:#ffffff;--bg3:#f0f1ee;--bg4:#e8eae5;--bg5:#e0e2dd;
+  --border:rgba(0,0,0,0.08);--border2:rgba(0,0,0,0.14);
+  --text:#1a1e1a;--text2:#4a5a4a;--text3:#8a9a8a;
+  --accent:#2d8a00;--accent2:#246e00;--adim:rgba(45,138,0,0.08);--adim2:rgba(45,138,0,0.14);
+  --coral:#d94f2e;--cdim:rgba(217,79,46,0.08);
+  --amber:#b87400;--ambdim:rgba(184,116,0,0.08);
+  --blue:#1a6eb5;--bdim:rgba(26,110,181,0.08);
+  --purple:#7c3aed;--pdim:rgba(124,58,237,0.08);
+  --teal:#0d7a5f;--tdim:rgba(13,122,95,0.08);
+  --ai-color:#b45a00;--ai-dim:rgba(180,90,0,0.08);
+}
+
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;font-size:14px;line-height:1.5;transition:background 0.2s,color 0.2s;}
+
+/* SIDEBAR */
+#sidebar{width:224px;min-height:100vh;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;position:fixed;top:0;left:0;bottom:0;z-index:100;}
+.logo{padding:22px 20px 18px;border-bottom:1px solid var(--border);}
+.logo-mark{font-family:'Syne',sans-serif;font-weight:800;font-size:18px;color:var(--accent);letter-spacing:-0.5px;line-height:1;}
+.logo-sub{font-family:'DM Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;margin-top:5px;}
+nav{padding:10px 8px;flex:1;overflow-y:auto;}
+.nav-section{margin-bottom:18px;}
+.nav-label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);padding:0 10px;margin-bottom:5px;}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;cursor:pointer;color:var(--text2);font-size:12.5px;font-weight:400;transition:all 0.15s;border:none;background:none;width:100%;text-align:left;}
+.nav-item:hover{background:var(--bg3);color:var(--text);}
+.nav-item.active{background:var(--adim);color:var(--accent);}
+.nav-item svg{width:14px;height:14px;flex-shrink:0;opacity:0.6;}
+.nav-item.active svg{opacity:1;}
+.nb{margin-left:auto;color:#fff;font-size:9px;font-weight:500;padding:1px 5px;border-radius:20px;font-family:'DM Mono',monospace;}
+.nb.red{background:var(--coral);}
+.nb.green{background:var(--accent2);color:#0a140a;}
+.nb.amber{background:var(--amber);color:#0a140a;}
+.sidebar-footer{padding:14px 18px;border-top:1px solid var(--border);}
+.sf-row{display:flex;justify-content:space-between;font-size:10px;font-family:'DM Mono',monospace;color:var(--text3);margin-bottom:5px;}
+.sf-bar{height:2px;background:var(--bg4);border-radius:2px;overflow:hidden;}
+.sf-fill{height:100%;background:var(--accent);border-radius:2px;transition:width 0.5s;}
+
+/* MAIN */
+#main{margin-left:224px;flex:1;display:flex;flex-direction:column;min-height:100vh;}
+#topbar{height:56px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:12px;position:sticky;top:0;z-index:50;}
+.page-title{font-family:'Syne',sans-serif;font-weight:700;font-size:16px;flex:1;}
+#content{padding:22px;flex:1;}
+.view{display:none;}
+.view.active{display:block;}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;border:none;transition:all 0.15s;font-family:'DM Sans',sans-serif;}
+.btn-primary{background:var(--accent);color:#0a140a;}
+.btn-primary:hover{background:var(--accent2);}
+.btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border2);}
+.btn-ghost:hover{background:var(--bg3);color:var(--text);}
+.btn-ghost.active{background:var(--adim);color:var(--accent);border-color:rgba(168,255,110,0.3);}
+.btn-sm{padding:4px 10px;font-size:11px;}
+.btn-danger{background:var(--cdim);color:var(--coral);border:1px solid rgba(255,122,92,0.2);}
+.btn-danger:hover{background:rgba(255,122,92,0.2);}
+.btn-ai{background:var(--ai-dim);color:var(--ai-color);border:1px solid rgba(240,165,0,0.25);}
+.btn-ai:hover{background:rgba(240,165,0,0.2);}
+.btn-human{background:var(--adim);color:var(--accent);border:1px solid rgba(168,255,110,0.25);}
+
+/* STATS */
+.stats-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:22px;}
+.stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:16px;position:relative;overflow:hidden;}
+.stat-card::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.stat-card.green::after{background:var(--accent);}
+.stat-card.coral::after{background:var(--coral);}
+.stat-card.amber::after{background:var(--amber);}
+.stat-card.blue::after{background:var(--blue);}
+.stat-card.ai::after{background:var(--ai-color);}
+.stat-label{font-size:9px;color:var(--text3);font-family:'DM Mono',monospace;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:8px;}
+.stat-value{font-family:'Syne',sans-serif;font-size:28px;font-weight:700;line-height:1;}
+.stat-value.green{color:var(--accent);}
+.stat-value.coral{color:var(--coral);}
+.stat-value.amber{color:var(--amber);}
+.stat-value.blue{color:var(--blue);}
+.stat-value.ai{color:var(--ai-color);}
+.stat-sub{font-size:10px;color:var(--text3);margin-top:4px;}
+
+/* PIPELINE */
+.pipeline-wrapper{overflow-x:auto;padding-bottom:16px;}
+.pipeline-board{display:flex;gap:12px;min-width:max-content;align-items:flex-start;}
+.pipeline-col{width:216px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden;flex-shrink:0;}
+.pipeline-col-header{padding:10px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);border-top:3px solid transparent;}
+.pipeline-col-name{font-size:11px;font-weight:600;font-family:'Syne',sans-serif;}
+.pipeline-count{font-family:'DM Mono',monospace;font-size:10px;padding:1px 6px;border-radius:20px;background:var(--bg4);color:var(--text2);}
+.pipeline-cards{padding:8px;display:flex;flex-direction:column;gap:6px;min-height:50px;}
+.pipeline-card{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px;cursor:pointer;transition:all 0.15s;position:relative;}
+.pipeline-card:hover{border-color:var(--border2);transform:translateY(-1px);}
+.pipeline-card.needs-review{border-color:rgba(240,165,0,0.4);}
+.pipeline-card.escalate{border-color:rgba(255,122,92,0.4);}
+.pc-name{font-size:12px;font-weight:500;margin-bottom:2px;}
+.pc-loc{font-size:10px;color:var(--text3);margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pc-meta{display:flex;align-items:center;gap:4px;flex-wrap:wrap;}
+.pc-days{margin-left:auto;font-size:9px;color:var(--text3);font-family:'DM Mono',monospace;white-space:nowrap;}
+.touch-badge{position:absolute;top:8px;right:8px;background:var(--bg4);border:1px solid var(--border2);border-radius:20px;font-family:'DM Mono',monospace;font-size:9px;color:var(--text2);padding:1px 5px;}
+.touch-badge.warn{background:var(--ai-dim);border-color:rgba(240,165,0,0.3);color:var(--ai-color);}
+.touch-badge.alert{background:var(--cdim);border-color:rgba(255,122,92,0.3);color:var(--coral);}
+
+/* TAGS */
+.tag{font-size:9px;font-family:'DM Mono',monospace;padding:2px 6px;border-radius:20px;white-space:nowrap;}
+.tag-hot{background:rgba(255,80,80,0.12);color:#ff6060;}
+.tag-warm{background:var(--ambdim);color:var(--amber);}
+.tag-cold{background:var(--bg4);color:var(--text3);}
+.tag-neutral{background:var(--bg4);color:var(--text2);}
+.tag-acq{background:var(--cdim);color:var(--coral);}
+.tag-dis{background:var(--tdim);color:var(--teal);}
+.tag-ai{background:var(--ai-dim);color:var(--ai-color);}
+.tag-human{background:var(--adim);color:var(--accent);}
+.tag-review{background:rgba(240,165,0,0.15);color:var(--ai-color);}
+.tag-green{background:var(--adim);color:var(--accent);}
+.tag-rural{background:rgba(120,180,80,0.12);color:#7eb454;}
+.tag-sub{background:var(--pdim);color:var(--purple);}
+.tag-buyer{background:var(--bdim);color:var(--blue);}
+
+/* CARD */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden;}
+.card-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.card-title{font-family:'Syne',sans-serif;font-weight:600;font-size:13px;}
+.card-body{padding:18px;}
+
+/* TOUCH LOG */
+.touch-log{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;}
+.touch-entry{display:grid;grid-template-columns:80px 70px 70px 80px 1fr;gap:8px;align-items:center;padding:8px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;font-size:11px;}
+.touch-entry-date{font-family:'DM Mono',monospace;font-size:9px;color:var(--text3);}
+.touch-outcome-replied{color:var(--accent);}
+.touch-outcome-voicemail{color:var(--amber);}
+.touch-outcome-no-response{color:var(--text3);}
+.touch-outcome-opted-out{color:var(--coral);}
+.add-touch-form{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px;}
+.add-touch-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:10px;}
+
+/* HANDOFF BANNER */
+.handoff-banner{border-radius:10px;padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.handoff-banner.ai{background:var(--ai-dim);border:1px solid rgba(240,165,0,0.25);}
+.handoff-banner.review{background:rgba(240,165,0,0.15);border:1px solid rgba(240,165,0,0.4);}
+.handoff-banner.human{background:var(--adim);border:1px solid rgba(168,255,110,0.2);}
+.hb-label{font-size:9px;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;}
+.hb-text{font-size:12px;font-weight:500;}
+
+/* ESCALATION ALERT */
+.escalation-box{background:var(--cdim);border:1px solid rgba(255,122,92,0.3);border-radius:10px;padding:12px 14px;margin-bottom:14px;}
+.esc-title{font-size:11px;font-weight:500;color:var(--coral);margin-bottom:3px;}
+.esc-text{font-size:11px;color:var(--text2);}
+
+/* FORM */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.form-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+.form-grid-4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;}
+.form-full{grid-column:1/-1;}
+.form-group{display:flex;flex-direction:column;gap:5px;}
+.form-label{font-size:9px;font-family:'DM Mono',monospace;letter-spacing:0.5px;text-transform:uppercase;color:var(--text3);}
+.form-input,.form-select,.form-textarea{background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:8px 10px;font-size:12px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color 0.15s;width:100%;}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--accent);}
+.form-input::placeholder,.form-textarea::placeholder{color:var(--text3);}
+.form-textarea{resize:vertical;min-height:70px;}
+.form-select option{background:var(--bg3);}
+.form-section{margin-bottom:18px;}
+.form-section-title{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid var(--border);}
+
+/* DETAIL */
+.detail-header{display:flex;align-items:flex-start;gap:16px;margin-bottom:18px;}
+.detail-avatar{width:48px;height:48px;border-radius:10px;background:var(--adim2);border:1px solid rgba(168,255,110,0.3);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:700;font-size:18px;color:var(--accent);flex-shrink:0;}
+.detail-name{font-family:'Syne',sans-serif;font-weight:700;font-size:20px;margin-bottom:4px;}
+.detail-tags{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:5px;}
+.detail-sub{font-size:11px;color:var(--text3);}
+.parcel-grid{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px;}
+.parcel-inner{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+.parcel-item{text-align:center;}
+.parcel-item-label{font-size:9px;font-family:'DM Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;}
+.parcel-item-val{font-size:12px;font-weight:500;}
+.parcel-item-val.accent{color:var(--accent);}
+.section-label{font-family:'DM Mono',monospace;font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;}
+
+/* CALC */
+.calc-result{background:var(--adim);border:1px solid rgba(168,255,110,0.2);border-radius:var(--rl);padding:20px;text-align:center;margin-bottom:16px;}
+.calc-result-label{font-size:9px;color:var(--text3);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;}
+.calc-result-value{font-family:'Syne',sans-serif;font-size:40px;font-weight:800;color:var(--accent);line-height:1;}
+.calc-result-sub{font-size:10px;color:var(--text3);margin-top:4px;}
+.calc-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px;}
+.calc-row:last-child{border-bottom:none;}
+.calc-row-label{color:var(--text3);}
+.calc-row-val{font-family:'DM Mono',monospace;font-weight:500;}
+.factor-group{margin-bottom:14px;}
+.factor-label{font-size:10px;color:var(--text2);margin-bottom:6px;}
+.factor-pills{display:flex;gap:6px;flex-wrap:wrap;}
+.factor-pill{padding:4px 10px;border-radius:20px;font-size:10px;font-family:'DM Mono',monospace;cursor:pointer;border:1px solid var(--border);background:var(--bg3);color:var(--text2);transition:all 0.15s;}
+.factor-pill.active{background:var(--adim);color:var(--accent);border-color:rgba(168,255,110,0.3);}
+.factor-pill.neg.active{background:var(--cdim);color:var(--coral);border-color:rgba(255,122,92,0.3);}
+
+/* DASHBOARD */
+.dash-grid{display:grid;grid-template-columns:1fr 320px;gap:18px;}
+.today-item{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer;}
+.today-item:hover{opacity:0.8;}
+.today-item:last-child{border-bottom:none;}
+.today-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:4px;}
+.today-dot.red{background:var(--coral);}
+.today-dot.amber{background:var(--amber);}
+.today-dot.green{background:var(--accent);}
+.today-dot.ai{background:var(--ai-color);}
+.today-label{font-size:12px;font-weight:500;margin-bottom:2px;}
+.today-sub{font-size:10px;color:var(--text3);}
+.stage-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.stage-bar-label{font-size:10px;color:var(--text3);width:140px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.stage-bar-track{flex:1;height:4px;background:var(--bg4);border-radius:2px;overflow:hidden;}
+.stage-bar-fill{height:100%;border-radius:2px;transition:width 0.5s;}
+.stage-bar-count{font-family:'DM Mono',monospace;font-size:10px;color:var(--text2);width:14px;text-align:right;}
+
+/* SEQUENCES */
+.seq-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.seq-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden;}
+.seq-header{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;}
+.seq-icon{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;}
+.seq-name{font-family:'Syne',sans-serif;font-weight:600;font-size:13px;}
+.seq-step{display:flex;align-items:flex-start;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.1s;}
+.seq-step:hover{background:var(--bg3);}
+.seq-step:last-child{border-bottom:none;}
+.seq-step-day{font-family:'DM Mono',monospace;font-size:9px;padding:2px 6px;border-radius:20px;background:var(--bg4);color:var(--text3);flex-shrink:0;margin-top:1px;}
+.seq-step-type{font-size:11px;font-weight:500;margin-bottom:2px;}
+.seq-step-preview{font-size:10px;color:var(--text3);line-height:1.4;}
+
+/* REPORT */
+.report-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px;}
+.funnel-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.funnel-bar{height:26px;border-radius:4px;display:flex;align-items:center;padding:0 10px;font-size:11px;font-weight:500;min-width:36px;transition:width 0.5s;}
+.funnel-label{font-size:11px;color:var(--text2);white-space:nowrap;}
+.funnel-pct{font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);margin-left:auto;}
+
+/* FILTER BAR */
+.filter-bar{display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap;}
+.search-input{background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:7px 12px;font-size:12px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color 0.15s;width:200px;}
+.search-input:focus{border-color:var(--accent);}
+.search-input::placeholder{color:var(--text3);}
+select.filter-select{background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text2);padding:7px 10px;font-size:12px;font-family:'DM Sans',sans-serif;outline:none;cursor:pointer;}
+select.filter-select option{background:var(--bg3);}
+
+/* TABLE */
+table{width:100%;border-collapse:collapse;}
+thead th{text-align:left;padding:8px 12px;font-size:9px;font-family:'DM Mono',monospace;letter-spacing:0.5px;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border);}
+tbody tr{border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.1s;}
+tbody tr:hover{background:var(--bg3);}
+tbody td{padding:10px 12px;font-size:12px;}
+
+/* BUYER */
+.buyer-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+.buyer-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:14px;cursor:pointer;transition:all 0.15s;}
+.buyer-card:hover{border-color:var(--border2);transform:translateY(-1px);}
+.buyer-name{font-size:13px;font-weight:500;margin-bottom:4px;}
+.buyer-buybox{font-size:10px;color:var(--text3);line-height:1.5;}
+
+/* MODAL */
+#modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:200;align-items:center;justify-content:center;}
+#modal-overlay.open{display:flex;}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--rl);width:640px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,0.6);}
+.modal-header{padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--bg2);z-index:1;}
+.modal-title{font-family:'Syne',sans-serif;font-weight:700;font-size:16px;}
+.modal-close{width:28px;height:28px;border-radius:7px;background:var(--bg3);border:1px solid var(--border);color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;}
+.modal-close:hover{background:var(--bg4);color:var(--text);}
+.modal-body{padding:22px;}
+.modal-footer{padding:14px 22px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;}
+
+/* TOAST */
+#toast{position:fixed;bottom:20px;right:20px;background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:10px 16px;font-size:12px;color:var(--text);z-index:500;transform:translateY(60px);opacity:0;transition:all 0.25s;pointer-events:none;}
+#toast.show{transform:translateY(0);opacity:1;}
+#toast.success{border-color:rgba(168,255,110,0.4);}
+
+.empty{text-align:center;padding:32px 20px;color:var(--text3);}
+.empty-title{font-family:'Syne',sans-serif;font-size:14px;color:var(--text2);margin-bottom:6px;}
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--bg5);border-radius:3px;}
+code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mono',monospace;font-size:10px;}
+</style>
+</head>
+<body>
+
+<div id="login-screen" style="display:none!important">
+  <div class="login-card">
+    <div class="login-lock">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a8ff6e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+        <path d="M7 11V7a5 5 0 0110 0v4"/>
+      </svg>
+    </div>
+    <div class="login-logo">LAND CRM</div>
+    <div class="login-sub">Command Center</div>
+    <label class="login-label">Password</label>
+    <input class="login-input" type="password" id="login-input" placeholder="Enter your password" onkeydown="if(event.key==='Enter')attemptLogin()">
+    <button class="login-btn" onclick="attemptLogin()">Unlock</button>
+    <div class="login-error" id="login-error"></div>
+  </div>
+</div>
+
+<div id="app-root" style="display:flex;width:100%;"><aside id="sidebar">
+  <div class="logo">
+    <div class="logo-mark">LAND CRM</div>
+    <div class="logo-sub">Command Center</div>
+  </div>
+  <nav>
+    <div class="nav-section">
+      <div class="nav-label">Overview</div>
+      <button class="nav-item active" onclick="showView('dashboard')">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="6" height="6" rx="1.5"/><rect x="9" y="1" width="6" height="6" rx="1.5"/><rect x="1" y="9" width="6" height="6" rx="1.5"/><rect x="9" y="9" width="6" height="6" rx="1.5"/></svg>
+        Dashboard
+      </button>
+      <button class="nav-item" onclick="showView('reporting')">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12l3-4 3 2 3-5 3 2"/></svg>
+        Reporting
+      </button>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Pipelines</div>
+      <button class="nav-item" onclick="showView('acq-pipeline')">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 4h14M1 8h10M1 12h6"/></svg>
+        Acquisitions
+        <span class="nb red" id="nb-acq">0</span>
+      </button>
+      <button class="nav-item" onclick="showView('dis-pipeline')">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 4h14M1 8h10M1 12h6"/></svg>
+        Dispositions
+        <span class="nb green" id="nb-dis">0</span>
+      </button>
+      <button class="nav-item" onclick="showView('ai-queue')">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 2"/></svg>
+        AI handoff queue
+        <span class="nb amber" id="nb-ai">0</span>
+      </button>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Contacts</div>
+      <button class="nav-item" onclick="showView('sellers')">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="5" r="3"/><path d="M2 14c0-3.314 2.686-6 6-6s6 2.686 6 6"/></svg>
+        Sellers
+      </button>
+      <button class="nav-item" onclick="showView('buyers')">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="7" width="12" height="8" rx="1.5"/><path d="M5 7V5a3 3 0 016 0v2"/></svg>
+        Buyers
+      </button>
+      <button class="nav-item" onclick="showComingSoon('Title and Closing')">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2h8a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z"/><path d="M6 6h4M6 9h4"/></svg>
+        Title & Closing
+      </button>
+      <button class="nav-item" onclick="showComingSoon('RE Agents')">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1l2 4 5 .7-3.5 3.4.8 5L8 12l-4.3 2.1.8-5L1 5.7 6 5z"/></svg>
+        RE Agents
+      </button>
+      <button class="nav-item" onclick="showComingSoon('Referral Partners')">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="6" r="3"/><path d="M2 14s-1 0-1-1 1-4 7-4 7 3 7 4-1 1-1 1H2z"/></svg>
+        Referral Partners
+      </button>
+      <button class="nav-item" onclick="showComingSoon('Lenders')">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 2"/></svg>
+        Lenders
+      </button>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Tools</div>
+      <button class="nav-item" onclick="showView('calculator')">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="1.5"/><path d="M5 8h6M8 5v6"/></svg>
+        Offer calculator
+      </button>
+      <button class="nav-item" onclick="showView('sequences')">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h8M2 12h5"/></svg>
+        SMS sequences
+      </button>
+    </div>
+  </nav>
+  <div class="sidebar-footer" style="display:flex;flex-direction:column;gap:8px;">
+    <div class="sf-row"><span>Total leads</span><span id="sf-count">0</span></div>
+    <div class="sf-bar"><div class="sf-fill" id="sf-fill" style="width:0%"></div></div>
+    <button class="logout-btn" onclick="logout()">Lock CRM</button>
+</div>
+</aside>
+
+<main id="main">
+  <div id="topbar">
+    <div class="page-title" id="page-title">Dashboard</div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <button class="btn btn-ghost btn-sm" onclick="syncFromQuo()">Sync Quo</button>
+      <button class="btn btn-ghost btn-sm" onclick="openFollowupModal()">Generate SMS</button>
+      <button class="btn btn-primary btn-sm" onclick="openAddContact()">+ Add contact</button>
+    </div>
+  </div>
+  <div id="content">
+
+    <!-- DASHBOARD -->
+    <div id="view-dashboard" class="view active">
+      <div class="stats-grid">
+        <div class="stat-card green"><div class="stat-label">Total leads</div><div class="stat-value green" id="s-total">0</div><div class="stat-sub">all stages</div></div>
+        <div class="stat-card coral"><div class="stat-label">Active acq.</div><div class="stat-value coral" id="s-acq">0</div><div class="stat-sub">in pipeline</div></div>
+        <div class="stat-card amber"><div class="stat-label">Follow-ups due</div><div class="stat-value amber" id="s-fu">0</div><div class="stat-sub">today</div></div>
+        <div class="stat-card ai"><div class="stat-label">Need handoff</div><div class="stat-value ai" id="s-handoff">0</div><div class="stat-sub">AI → you</div></div>
+        <div class="stat-card blue"><div class="stat-label">Under contract</div><div class="stat-value blue" id="s-uc">0</div><div class="stat-sub">active deals</div></div>
+      </div>
+      <div class="dash-grid">
+        <div class="card">
+          <div class="card-header"><span class="card-title">Action items — today</span><button class="btn btn-ghost btn-sm" onclick="renderDashboard()">Refresh</button></div>
+          <div class="card-body" id="today-list"></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px;">
+          <div class="card">
+            <div class="card-header"><span class="card-title">Acquisitions</span></div>
+            <div class="card-body" id="acq-snapshot"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">Dispositions</span></div>
+            <div class="card-body" id="dis-snapshot"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ACQ PIPELINE -->
+    <div id="view-acq-pipeline" class="view">
+      <div style="margin-bottom:14px;display:flex;gap:8px;align-items:center;">
+        <div style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;">Touch badge legend:</div>
+        <span class="tag tag-neutral">1-2 touches</span>
+        <span class="tag tag-ai">3+ touches — review</span>
+        <span class="tag tag-hot">5+ touches — escalate</span>
+      </div>
+      <div class="pipeline-wrapper"><div class="pipeline-board" id="acq-board"></div></div>
+    </div>
+
+    <!-- DIS PIPELINE -->
+    <div id="view-dis-pipeline" class="view">
+      <div class="pipeline-wrapper"><div class="pipeline-board" id="dis-board"></div></div>
+    </div>
+
+    <!-- AI HANDOFF QUEUE -->
+    <div id="view-ai-queue" class="view">
+      <div style="background:var(--ai-dim);border:1px solid rgba(240,165,0,0.25);border-radius:var(--rl);padding:16px;margin-bottom:20px;">
+        <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--ai-color);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">AI handoff queue</div>
+        <div style="font-size:12px;color:var(--text2);">These leads have been touched 3+ times with no response, or are flagged "Needs human review." Your AI agent has done its job — now it's your turn to step in personally.</div>
+      </div>
+      <div class="card">
+        <table>
+          <thead><tr><th>Name</th><th>County / State</th><th>Acres</th><th>Stage</th><th>Touches</th><th>Last touch</th><th>Status</th><th>Action</th></tr></thead>
+          <tbody id="ai-queue-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ALL LEADS -->
+    <div id="view-sellers" class="view">
+      <div class="filter-bar">
+        <input class="search-input" type="text" placeholder="Search leads..." id="seller-search" oninput="renderSellers()">
+        <select class="filter-select" id="seller-pipeline-filter" onchange="renderSellers()">
+          <option value="">All pipelines</option>
+          <option value="acq">Acquisitions</option>
+          <option value="dis">Dispositions</option>
+        </select>
+        <select class="filter-select" id="seller-stage-filter" onchange="renderSellers()">
+          <option value="">All stages</option>
+          ${[...ACQ_STAGES_CONST,'---',...DIS_STAGES_CONST].filter(s=>s!=='---').map(s=>`<option>${s}</option>`).join('')}
+        </select>
+        <select class="filter-select" id="seller-state-filter" onchange="renderSellers()">
+          <option value="">All states</option>
+          <option>TN</option><option>MS</option><option>AR</option><option>MO</option><option>AL</option><option>KY</option>
+        </select>
+        <select class="filter-select" id="seller-source-filter" onchange="renderSellers()">
+          <option value="">All sources</option>
+          ${SOURCES.map(s=>`<option>${s}</option>`).join('')}
+        </select>
+      </div>
+      <div class="card">
+        <table>
+          <thead><tr><th>Name</th><th>County / State</th><th>Acres</th><th>Source</th><th>Stage</th><th>Touches</th><th>Handler</th><th>Last contact</th><th>Temp</th></tr></thead>
+          <tbody id="sellers-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- BUYERS -->
+    <div id="view-buyers" class="view">
+      <div class="filter-bar">
+        <input class="search-input" type="text" placeholder="Search buyers..." id="buyer-search" oninput="renderBuyers()">
+        <select class="filter-select" id="buyer-type-filter" onchange="renderBuyers()">
+          <option value="">All types</option>
+          <option value="builder">Builder / developer</option>
+          <option value="land-investor">Land investor</option>
+          <option value="retail">Retail end buyer</option>
+          <option value="farmer">Farmer / recreational</option>
+        </select>
+      </div>
+      <div class="buyer-grid" id="buyer-grid"></div>
+    </div>
+
+    <!-- CALCULATOR -->
+    <div id="view-calculator" class="view">
+      <div style="max-width:660px;">
+        <div class="card">
+          <div class="card-header"><span class="card-title">Land offer calculator — per acre model</span></div>
+          <div class="card-body">
+            <div class="form-grid-3" style="margin-bottom:18px;">
+              <div class="form-group"><label class="form-label">Acreage</label><input class="form-input" type="number" id="c-acres" placeholder="10" oninput="calcLand()"></div>
+              <div class="form-group"><label class="form-label">Comp / acre ($)</label><input class="form-input" type="number" id="c-comppacre" placeholder="3000" oninput="calcLand()"></div>
+              <div class="form-group"><label class="form-label">Back taxes ($)</label><input class="form-input" type="number" id="c-taxes" placeholder="0" oninput="calcLand()"></div>
+              <div class="form-group"><label class="form-label">Closing costs ($)</label><input class="form-input" type="number" id="c-closing" placeholder="1500" oninput="calcLand()"></div>
+              <div class="form-group"><label class="form-label">Assignment fee ($)</label><input class="form-input" type="number" id="c-fee" placeholder="5000" oninput="calcLand()"></div>
+              <div class="form-group"><label class="form-label">Exit strategy</label>
+                <select class="form-select" id="c-exit" onchange="calcLand()">
+                  <option value="wholesale">Wholesale / assignment</option>
+                  <option value="double">Double close</option>
+                </select>
+              </div>
+            </div>
+            <div style="margin-bottom:18px;">
+              <div class="form-section-title">Value adjustment factors</div>
+              <div class="factor-group"><div class="factor-label">Road access</div>
+                <div class="factor-pills">
+                  <div class="factor-pill active" data-group="road" data-val="1.0" onclick="setPill(this,'road',1.0)">Paved</div>
+                  <div class="factor-pill" data-group="road" data-val="0.9" onclick="setPill(this,'road',0.9)">Dirt / gravel</div>
+                  <div class="factor-pill neg" data-group="road" data-val="0.65" onclick="setPill(this,'road',0.65)">Landlocked</div>
+                </div>
+              </div>
+              <div class="factor-group"><div class="factor-label">Utilities</div>
+                <div class="factor-pills">
+                  <div class="factor-pill active" data-group="util" data-val="1.0" onclick="setPill(this,'util',1.0)">Available</div>
+                  <div class="factor-pill" data-group="util" data-val="0.85" onclick="setPill(this,'util',0.85)">Nearby</div>
+                  <div class="factor-pill neg" data-group="util" data-val="0.7" onclick="setPill(this,'util',0.7)">None</div>
+                </div>
+              </div>
+              <div class="factor-group"><div class="factor-label">Flood zone</div>
+                <div class="factor-pills">
+                  <div class="factor-pill active" data-group="flood" data-val="1.0" onclick="setPill(this,'flood',1.0)">Not in flood zone</div>
+                  <div class="factor-pill neg" data-group="flood" data-val="0.75" onclick="setPill(this,'flood',0.75)">Partial</div>
+                  <div class="factor-pill neg" data-group="flood" data-val="0.5" onclick="setPill(this,'flood',0.5)">Full flood zone</div>
+                </div>
+              </div>
+              <div class="factor-group"><div class="factor-label">Zoning</div>
+                <div class="factor-pills">
+                  <div class="factor-pill active" data-group="zone" data-val="1.1" onclick="setPill(this,'zone',1.1)">Residential / commercial</div>
+                  <div class="factor-pill" data-group="zone" data-val="1.0" onclick="setPill(this,'zone',1.0)">Agricultural</div>
+                  <div class="factor-pill neg" data-group="zone" data-val="0.8" onclick="setPill(this,'zone',0.8)">Unzoned / rural</div>
+                </div>
+              </div>
+            </div>
+            <div class="calc-result"><div class="calc-result-label">Max allowable offer (MAO)</div><div class="calc-result-value" id="c-mao">—</div><div class="calc-result-sub" id="c-mao-sub"></div></div>
+            <div id="calc-breakdown"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SEQUENCES -->
+    <div id="view-sequences" class="view">
+      <div class="seq-grid" id="seq-grid"></div>
+    </div>
+
+    <!-- REPORTING -->
+    <div id="view-reporting" class="view">
+      <div class="report-grid">
+        <div class="card"><div class="card-header"><span class="card-title">Acquisitions funnel</span></div><div class="card-body" id="acq-funnel"></div></div>
+        <div class="card"><div class="card-header"><span class="card-title">Touch effectiveness</span></div><div class="card-body" id="touch-report"></div></div>
+        <div class="card"><div class="card-header"><span class="card-title">Lead source performance</span></div><div class="card-body" id="source-report"></div></div>
+        <div class="card"><div class="card-header"><span class="card-title">Deals by state</span></div><div class="card-body" id="state-report"></div></div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+</div>
+<div id="modal-overlay"><div class="modal" id="active-modal"></div></div>
+<div id="toast"></div>
+
+<script>
+// ══════════════════════════════════
+// CONSTANTS
+// ══════════════════════════════════
+const ACQ_STAGES_CONST = ['New Lead','Outreach Active','Awaiting Response','Conversation Active','Qualified','Appointment Set','Offer Made','Negotiating','Under Contract','Not Motivated Yet','Dead'];
+const DIS_STAGES_CONST = ['Available','Buyer Identified','Due Diligence','Under Agreement','Title Opened','Closed — Assignment','Closed — Double Close','Back to Market'];
+const ACQ_COLORS = ['#4a554a','#5cb8ff','#f0a500','#4dd6b4','#a8ff6e','#c084fc','#ff7a5c','#ff6b6b','#7ed44a','#8a988a','#3a3a3a'];
+const DIS_COLORS = ['#5cb8ff','#4dd6b4','#ffb84d','#ff7a5c','#ff7a5c','#a8ff6e','#7ed44a','#555'];
+const SOURCES = ['Cold SMS','Cold call','Direct mail','Referral','Agent referral','Driving for dollars','Online / web','List pull','Networking','Other'];
+const CHANNELS = ['SMS','Call','Voicemail','Mail','Email','Agent'];
+const OUTCOMES = ['No response','Voicemail left','Replied','Answered — not interested','Opted out','Wrong number','Callback requested'];
+const HANDOFF_STATES = ['AI handling','Needs human review','Human active'];
+
+// ══════════════════════════════════
+// DATA
+// ══════════════════════════════════
+const KEY = 'landcrm_v2';
+function load(){try{const r=localStorage.getItem(KEY);return r?JSON.parse(r):{contacts:[],buyers:[]};}catch(e){return{contacts:[],buyers:[]};}}
+function save(){localStorage.setItem(KEY,JSON.stringify(db));}
+let db = load();
+
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+function today(){return new Date().toISOString().slice(0,10);}
+function daysSince(d){if(!d)return 999;return Math.floor((Date.now()-new Date(d).getTime())/86400000);}
+function touchCount(c){return(c.touches||[]).length;}
+function lastTouchDate(c){const t=c.touches||[];return t.length?t[t.length-1].date:c.lastContact;}
+function handoffStatus(c){
+  const tc=touchCount(c);
+  if(c.handoff==='Human active')return'Human active';
+  if(c.handoff==='Needs human review'||tc>=3)return tc>=5?'Escalate — 5+ touches':'Needs human review';
+  return c.handoff||'AI handling';
+}
+function needsHandoff(c){const s=handoffStatus(c);return s==='Needs human review'||s.startsWith('Escalate');}
+function followupDue(c){
+  const dayMap={'New Lead':1,'Outreach Active':1,'Awaiting Response':2,'Conversation Active':1,'Qualified':3,'Appointment Set':1,'Offer Made':2,'Negotiating':1,'Under Contract':3,'Not Motivated Yet':30,'Available':2,'Buyer Identified':1,'Due Diligence':2,'Under Agreement':1,'Title Opened':2};
+  return daysSince(lastTouchDate(c))>=(dayMap[c.stage]||7);
+}
+
+// Seed
+if(!db.contacts.length){
+  db.contacts=[
+    {id:uid(),name:'Robert Hines',phone:'901-555-0142',email:'rhines@email.com',county:'Shelby',state:'TN',acreage:'12.5',zoning:'Agricultural',road:'Paved',utilities:'Nearby',flood:'No',backTaxes:'0',survey:'No',askingPrice:'45000',ourOffer:'',apn:'',stage:'Awaiting Response',pipeline:'acq',temp:'warm',source:'Cold SMS',dealType:'wholesale',handoff:'AI handling',tags:['rural-acreage','inherited'],touches:[{date:'2025-01-08',channel:'SMS',direction:'Outbound',by:'AI',outcome:'No response',note:'Initial cold SMS sent'},{date:'2025-01-11',channel:'SMS',direction:'Outbound',by:'AI',outcome:'No response',note:'Day 3 follow-up SMS'},{date:'2025-01-15',channel:'SMS',direction:'Outbound',by:'AI',outcome:'No response',note:'Day 7 follow-up SMS'}],lastContact:'2025-01-15',created:'2025-01-08'},
+    {id:uid(),name:'Patricia Downs',phone:'662-555-0287',email:'',county:'DeSoto',state:'MS',acreage:'5.2',zoning:'Residential',road:'Paved',utilities:'Available',flood:'No',backTaxes:'2400',survey:'Yes',askingPrice:'28000',ourOffer:'14500',apn:'123-456',stage:'Offer Made',pipeline:'acq',temp:'hot',source:'Cold SMS',dealType:'double-close',handoff:'Human active',tags:['subdivision-lot','back-taxes'],touches:[{date:'2025-01-09',channel:'SMS',direction:'Outbound',by:'AI',outcome:'No response',note:'Initial SMS'},{date:'2025-01-12',channel:'SMS',direction:'Inbound',by:'AI',outcome:'Replied',note:'Replied — open to offer'},{date:'2025-01-13',channel:'Call',direction:'Outbound',by:'You',outcome:'Answered — not interested',note:'Spoke for 12 mins. Motivated but thinks land worth more. Sent offer of $14,500.'}],lastContact:'2025-01-13',created:'2025-01-09'},
+    {id:uid(),name:'Gary Sutton',phone:'870-555-0391',email:'gsutton@yahoo.com',county:'Crittenden',state:'AR',acreage:'40',zoning:'Agricultural',road:'Dirt / gravel',utilities:'None',flood:'Partial',backTaxes:'0',survey:'No',askingPrice:'120000',ourOffer:'',apn:'',stage:'Outreach Active',pipeline:'acq',temp:'cold',source:'Direct mail',dealType:'wholesale',handoff:'AI handling',tags:['rural-acreage','farmland','timber'],touches:[{date:'2025-01-04',channel:'Mail',direction:'Outbound',by:'AI',outcome:'No response',note:'Direct mail piece sent'}],lastContact:'2025-01-04',created:'2025-01-04'},
+    {id:uid(),name:'Sandra Webb',phone:'901-555-0558',email:'',county:'Fayette',state:'TN',acreage:'8',zoning:'Residential',road:'Paved',utilities:'Available',flood:'No',backTaxes:'800',survey:'No',askingPrice:'35000',ourOffer:'18500',apn:'789-012',stage:'Available',pipeline:'dis',temp:'hot',source:'Cold call',dealType:'wholesale',handoff:'Human active',tags:['subdivision-lot','estate-sale'],touches:[{date:'2025-01-03',channel:'Call',direction:'Outbound',by:'You',outcome:'Answered — not interested',note:'Cold called. Very motivated. Estate situation.'},{date:'2025-01-06',channel:'Call',direction:'Outbound',by:'You',outcome:'Callback requested',note:'Follow-up call. Negotiated to $18,500. Agreed to sign.'},{date:'2025-01-08',channel:'SMS',direction:'Outbound',by:'You',outcome:'Replied',note:'Sent contract. Signed same day. Moving to dispo.'}],lastContact:'2025-01-08',created:'2025-01-03'},
+    {id:uid(),name:'Marcus Bell',phone:'901-555-0774',email:'mbell@gmail.com',county:'Marshall',state:'MS',acreage:'22',zoning:'Agricultural',road:'Dirt / gravel',utilities:'Nearby',flood:'No',backTaxes:'1200',survey:'No',askingPrice:'55000',ourOffer:'',apn:'',stage:'Awaiting Response',pipeline:'acq',temp:'cold',source:'Cold SMS',dealType:'wholesale',handoff:'Needs human review',tags:['rural-acreage','recreational'],touches:[{date:'2024-12-18',channel:'SMS',direction:'Outbound',by:'AI',outcome:'No response',note:'Initial SMS'},{date:'2024-12-21',channel:'SMS',direction:'Outbound',by:'AI',outcome:'No response',note:'Follow-up'},{date:'2024-12-28',channel:'SMS',direction:'Outbound',by:'AI',outcome:'No response',note:'Day 14 nurture'},{date:'2025-01-05',channel:'Call',direction:'Outbound',by:'AI',outcome:'Voicemail left',note:'Voicemail drop'},{date:'2025-01-10',channel:'SMS',direction:'Outbound',by:'AI',outcome:'No response',note:'Day 30 SMS'}],lastContact:'2025-01-10',created:'2024-12-18'},
+    {id:uid(),name:'Donna Price',phone:'731-555-0229',email:'',county:'Hardeman',state:'TN',acreage:'65',zoning:'Agricultural',road:'Paved',utilities:'None',flood:'No',backTaxes:'3200',survey:'No',askingPrice:'180000',ourOffer:'',apn:'',stage:'Conversation Active',pipeline:'acq',temp:'warm',source:'Referral',dealType:'wholesale',handoff:'Human active',tags:['rural-acreage','farmland','long-time-owner'],touches:[{date:'2025-01-10',channel:'SMS',direction:'Inbound',by:'You',outcome:'Replied',note:'Referral from Tony. She reached out. Very motivated to sell. Farming but too old to keep up.'},{date:'2025-01-12',channel:'Call',direction:'Outbound',by:'You',outcome:'Callback requested',note:'Long conversation. 65 acres, been in family 40 years. Wants fair price. Running comps now.'}],lastContact:'2025-01-12',created:'2025-01-10'},
+  ];
+  db.buyers=[
+    {id:uid(),name:'Derek Yount',phone:'901-555-0922',email:'dyount@builds.com',type:'builder',states:['TN','MS'],minAcres:0.25,maxAcres:5,maxPrice:80000,tags:['builder','subdivision-lot'],notes:'Infill and subdivision lots only. Memphis metro and DeSoto County. Closes fast, cash.',created:today()},
+    {id:uid(),name:'Ron & Lisa Tatum',phone:'662-555-0344',email:'rtatum@farm.net',type:'farmer',states:['MS','AR','TN'],minAcres:20,maxAcres:500,maxPrice:200000,tags:['farmer','rural-acreage','recreational'],notes:'Looking for farm or recreational land across mid-south. Patient buyers with cash.',created:today()},
+    {id:uid(),name:'Vista Land Fund',phone:'855-555-0101',email:'deals@vistaland.com',type:'land-investor',states:['TN','MS','AR','MO'],minAcres:5,maxAcres:200,maxPrice:500000,tags:['land-investor','rural-acreage'],notes:'Institutional buyer. Closes in 21 days. Buys 4-6 parcels monthly. Send everything.',created:today()},
+    {id:uid(),name:'Jason Pruitt',phone:'901-555-0612',email:'jpruitt@gmail.com',type:'retail',states:['TN'],minAcres:1,maxAcres:15,maxPrice:60000,tags:['retail','subdivision-lot'],notes:'Building a home. Looking for lot in Shelby or Fayette County. Utilities required.',created:today()},
+  ];
+  save();
+}
+
+// ══════════════════════════════════
+// NAV
+// ══════════════════════════════════
+let currentView='dashboard';
+function showView(v){
+  document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
+  currentView=v;
+  const _ve=document.getElementById('view-'+v);if(_ve)_ve.classList.add('active');
+  const titles={dashboard:'Dashboard','acq-pipeline':'Acquisitions pipeline','dis-pipeline':'Dispositions pipeline','ai-queue':'AI handoff queue',sellers:'All leads',buyers:'Buyer list',calculator:'Offer calculator',sequences:'SMS sequences',reporting:'Reporting'};
+  document.getElementById('page-title').textContent=titles[v]||v;
+  if(v==='dashboard')renderDashboard();
+  if(v==='acq-pipeline')renderPipeline('acq');
+  if(v==='dis-pipeline')renderPipeline('dis');
+  if(v==='ai-queue')renderAIQueue();
+  if(v==='sellers')renderSellers();
+  if(v==='buyers')renderBuyers();
+  if(v==='sequences')renderSequences();
+  if(v==='reporting')renderReporting();
+}
+
+// ══════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════
+function renderDashboard(){
+  const c=db.contacts;
+  document.getElementById('s-total').textContent=c.length;
+  document.getElementById('s-acq').textContent=c.filter(x=>x.pipeline==='acq'&&x.stage!=='Dead').length;
+  document.getElementById('s-fu').textContent=c.filter(followupDue).length;
+  document.getElementById('s-handoff').textContent=c.filter(needsHandoff).length;
+  document.getElementById('s-uc').textContent=c.filter(x=>x.stage==='Under Contract'||x.stage==='Under Agreement').length;
+  document.getElementById('sf-count').textContent=c.length;
+  document.getElementById('sf-fill').style.width=Math.min(c.length/100*100,100)+'%';
+  document.getElementById('nb-acq').textContent=c.filter(x=>x.pipeline==='acq'&&!['Dead','Not Motivated Yet'].includes(x.stage)).length;
+  document.getElementById('nb-dis').textContent=c.filter(x=>x.pipeline==='dis').length;
+  document.getElementById('nb-ai').textContent=c.filter(needsHandoff).length;
+  renderTodayList();
+  renderSnapshot('acq');
+  renderSnapshot('dis');
+}
+
+function renderTodayList(){
+  const el=document.getElementById('today-list');
+  const items=[];
+  db.contacts.forEach(c=>{
+    if(needsHandoff(c))items.push({c,type:'handoff',priority:0});
+    else if(followupDue(c))items.push({c,type:'followup',priority:daysSince(lastTouchDate(c))});
+  });
+  items.sort((a,b)=>a.priority-b.priority);
+  if(!items.length){el.innerHTML='<div class="empty"><div class="empty-title">All caught up</div><p>No action items today.</p></div>';return;}
+  el.innerHTML=items.slice(0,10).map(({c,type})=>{
+    const tc=touchCount(c);
+    const color=type==='handoff'?'ai':daysSince(lastTouchDate(c))>5?'red':'amber';
+    const sub=type==='handoff'?`${tc} touches, no response — needs personal outreach · ${c.phone}`:`${c.stage} · ${tc} touches · ${daysSince(lastTouchDate(c))}d since last touch · ${c.phone}`;
+    return`<div class="today-item" onclick="openDetail('${c.id}')"><div class="today-dot ${color}"></div><div><div class="today-label">${c.name} — ${c.county}, ${c.state} (${c.acreage} ac)</div><div class="today-sub">${sub}</div></div></div>`;
+  }).join('');
+}
+
+function renderSnapshot(pipeline){
+  const stages=pipeline==='acq'?ACQ_STAGES_CONST:DIS_STAGES_CONST;
+  const colors=pipeline==='acq'?ACQ_COLORS:DIS_COLORS;
+  const el=document.getElementById(pipeline+'-snapshot');
+  const contacts=db.contacts.filter(c=>c.pipeline===pipeline);
+  const counts={};stages.forEach(s=>counts[s]=0);
+  contacts.forEach(c=>{if(counts[c.stage]!==undefined)counts[c.stage]++;});
+  const max=Math.max(...Object.values(counts),1);
+  el.innerHTML=stages.slice(0,7).map((s,i)=>`
+    <div class="stage-bar-row">
+      <div class="stage-bar-label">${s}</div>
+      <div class="stage-bar-track"><div class="stage-bar-fill" style="width:${counts[s]/max*100}%;background:${colors[i]}"></div></div>
+      <div class="stage-bar-count">${counts[s]}</div>
+    </div>`).join('');
+}
+
+// ══════════════════════════════════
+// PIPELINE
+// ══════════════════════════════════
+function renderPipeline(pipeline){
+  const stages=pipeline==='acq'?ACQ_STAGES_CONST:DIS_STAGES_CONST;
+  const colors=pipeline==='acq'?ACQ_COLORS:DIS_COLORS;
+  const board=document.getElementById(pipeline+'-board');
+  const contacts=db.contacts.filter(c=>c.pipeline===pipeline);
+  board.innerHTML=stages.map((stage,i)=>{
+    const cards=contacts.filter(c=>c.stage===stage);
+    return`<div class="pipeline-col" style="border-top:3px solid ${colors[i]}20;">
+      <div class="pipeline-col-header" style="border-top:3px solid ${colors[i]};">
+        <span class="pipeline-col-name">${stage}</span>
+        <span class="pipeline-count">${cards.length}</span>
+      </div>
+      <div class="pipeline-cards">
+        ${cards.length?cards.map(c=>{
+          const tc=touchCount(c);
+          const nh=needsHandoff(c);
+          const escalate=tc>=5;
+          const badgeCls=escalate?'alert':tc>=3?'warn':'';
+          const cardCls=escalate?'escalate':nh?'needs-review':'';
+          return`<div class="pipeline-card ${cardCls}" onclick="openDetail('${c.id}')">
+            <div class="touch-badge ${badgeCls}">${tc}x</div>
+            <div class="pc-name" style="padding-right:28px">${c.name}</div>
+            <div class="pc-loc">${c.acreage}ac · ${c.county}, ${c.state}</div>
+            <div class="pc-meta">
+              <span class="tag tag-${c.temp||'cold'}">${c.temp||'cold'}</span>
+              <span class="tag tag-${c.handoff==='Human active'?'human':c.handoff==='Needs human review'?'review':'ai'}">${c.handoff==='Human active'?'you':c.handoff==='Needs human review'?'review':'AI'}</span>
+              <span class="tag tag-neutral">${c.source||'unknown'}</span>
+            </div>
+          </div>`;
+        }).join(''):'<div style="font-size:10px;color:var(--text3);padding:4px">Empty</div>'}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════
+// AI QUEUE
+// ══════════════════════════════════
+function renderAIQueue(){
+  const contacts=db.contacts.filter(needsHandoff);
+  const tbody=document.getElementById('ai-queue-tbody');
+  if(!contacts.length){tbody.innerHTML='<tr><td colspan="8"><div class="empty"><div class="empty-title">Queue is clear</div><p>No leads need your attention right now.</p></div></td></tr>';return;}
+  tbody.innerHTML=contacts.sort((a,b)=>touchCount(b)-touchCount(a)).map(c=>{
+    const tc=touchCount(c);
+    const hs=handoffStatus(c);
+    const escalate=tc>=5;
+    return`<tr onclick="openDetail('${c.id}')">
+      <td style="font-weight:500">${c.name}</td>
+      <td style="color:var(--text2)">${c.county}, ${c.state}</td>
+      <td style="font-family:'DM Mono',monospace;font-size:11px">${c.acreage} ac</td>
+      <td><span class="tag tag-neutral">${c.stage}</span></td>
+      <td><span class="tag ${escalate?'tag-hot':'tag-ai'}">${tc} touches</span></td>
+      <td style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3)">${lastTouchDate(c)||'—'}</td>
+      <td><span class="tag ${escalate?'tag-hot':'tag-review'}">${escalate?'Escalate':'Review'}</span></td>
+      <td><button class="btn btn-human btn-sm" onclick="event.stopPropagation();claimLead('${c.id}')">Claim</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function claimLead(id){
+  const c=db.contacts.find(x=>x.id===id);
+  if(!c)return;
+  c.handoff='Human active';
+  save();renderAIQueue();renderDashboard();toast('Lead claimed — you\'re on it','success');
+}
+
+// ══════════════════════════════════
+// SELLERS TABLE
+// ══════════════════════════════════
+function renderSellers(){
+  const search=document.getElementById('seller-search').value.toLowerCase();
+  const pipelineF=document.getElementById('seller-pipeline-filter').value;
+  const stageF=document.getElementById('seller-stage-filter').value;
+  const stateF=document.getElementById('seller-state-filter').value;
+  const sourceF=document.getElementById('seller-source-filter').value;
+  let contacts=db.contacts.filter(c=>{
+    if(pipelineF&&c.pipeline!==pipelineF)return false;
+    if(stageF&&c.stage!==stageF)return false;
+    if(stateF&&c.state!==stateF)return false;
+    if(sourceF&&c.source!==sourceF)return false;
+    if(search){const h=(c.name+c.county+c.state+c.phone).toLowerCase();if(!h.includes(search))return false;}
+    return true;
+  });
+  const tbody=document.getElementById('sellers-tbody');
+  if(!contacts.length){tbody.innerHTML='<tr><td colspan="9"><div class="empty"><div class="empty-title">No leads found</div></div></td></tr>';return;}
+  tbody.innerHTML=contacts.map(c=>{
+    const tc=touchCount(c);
+    const nh=needsHandoff(c);
+    return`<tr onclick="openDetail('${c.id}')">
+      <td style="font-weight:500">${c.name}</td>
+      <td style="color:var(--text2)">${c.county}, ${c.state}</td>
+      <td style="font-family:'DM Mono',monospace;font-size:11px">${c.acreage} ac</td>
+      <td><span class="tag tag-neutral">${c.source||'—'}</span></td>
+      <td><span class="tag ${c.pipeline==='dis'?'tag-dis':'tag-acq'}">${c.stage}</span></td>
+      <td><span class="tag ${tc>=5?'tag-hot':tc>=3?'tag-ai':'tag-neutral'}">${tc}x</span></td>
+      <td><span class="tag ${c.handoff==='Human active'?'tag-human':nh?'tag-review':'tag-ai'}">${c.handoff||'AI handling'}</span></td>
+      <td style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3)">${lastTouchDate(c)||'—'}</td>
+      <td><span class="tag tag-${c.temp||'cold'}">${c.temp||'cold'}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+// ══════════════════════════════════
+// CONTACT DETAIL
+// ══════════════════════════════════
+function openDetail(id){
+  const c=db.contacts.find(x=>x.id===id);
+  if(!c)return;
+  const initials=c.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  const stages=c.pipeline==='acq'?ACQ_STAGES_CONST:DIS_STAGES_CONST;
+  const tc=touchCount(c);
+  const hs=handoffStatus(c);
+  const escalate=tc>=5;
+  const escBox=escalate?`<div class="escalation-box"><div class="esc-title">Escalation alert — ${tc} touches, no conversion</div><div class="esc-text">This lead has been touched ${tc} times with no deal. Consider: a personal call, changing your offer approach, or moving to Not Motivated Yet.</div></div>`:'';
+  const hbClass=c.handoff==='Human active'?'human':hs.startsWith('Escalate')||hs==='Needs human review'?'review':'ai';
+  const hbText=c.handoff==='Human active'?'You are handling this lead personally':hs.startsWith('Escalate')?`${tc} touches — this needs your personal attention now`:`AI handling initial outreach (${tc} touches made)`;
+  const nextSMS=getLandSMS(c);
+  openCustomModal(`
+    <div class="modal-header">
+      <div class="modal-title">Lead detail</div>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-ghost btn-sm" onclick="openEditContact('${id}')">Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteContact('${id}')">Delete</button>
+        <button class="modal-close" onclick="closeModal()">&#x2715;</button>
+      </div>
+    </div>
+    <div class="modal-body">
+      ${escBox}
+      <div class="handoff-banner ${hbClass}">
+        <div>
+          <div class="hb-label" style="color:${c.handoff==='Human active'?'var(--accent)':hs.includes('Escalate')?'var(--coral)':'var(--ai-color)'}">${c.handoff==='Human active'?'Human active':hs.startsWith('Escalate')?'Escalate now':'AI handling'}</div>
+          <div class="hb-text">${hbText}</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0">
+          ${c.handoff!=='Human active'?`<button class="btn btn-human btn-sm" onclick="updateHandoff('${id}','Human active')">Claim lead</button>`:''}
+          ${c.handoff==='Human active'?`<button class="btn btn-ai btn-sm" onclick="updateHandoff('${id}','AI handling')">Return to AI</button>`:''}
+        </div>
+      </div>
+
+      <div class="detail-header">
+        <div class="detail-avatar">${initials}</div>
+        <div>
+          <div class="detail-name">${c.name}</div>
+          <div class="detail-tags">
+            <span class="tag ${c.pipeline==='dis'?'tag-dis':'tag-acq'}">${c.pipeline==='dis'?'Disposition':'Acquisition'}</span>
+            <span class="tag tag-${c.temp||'cold'}">${c.temp||'cold'}</span>
+            <span class="tag tag-neutral">${c.dealType||'wholesale'}</span>
+            <span class="tag tag-neutral">${c.source||'unknown'}</span>
+            ${(c.tags||[]).slice(0,2).map(t=>`<span class="tag tag-neutral">${t}</span>`).join('')}
+          </div>
+          <div class="detail-sub">${c.phone||''}${c.email?' · '+c.email:''}</div>
+        </div>
+      </div>
+
+      <div class="parcel-grid" style="margin-bottom:14px">
+        <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--accent);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">Parcel info</div>
+        <div class="parcel-inner">
+          <div class="parcel-item"><div class="parcel-item-label">Acreage</div><div class="parcel-item-val accent">${c.acreage||'—'} ac</div></div>
+          <div class="parcel-item"><div class="parcel-item-label">County / State</div><div class="parcel-item-val">${c.county||'—'}, ${c.state||'—'}</div></div>
+          <div class="parcel-item"><div class="parcel-item-label">Zoning</div><div class="parcel-item-val">${c.zoning||'—'}</div></div>
+          <div class="parcel-item"><div class="parcel-item-label">Road access</div><div class="parcel-item-val">${c.road||'—'}</div></div>
+          <div class="parcel-item"><div class="parcel-item-label">Utilities</div><div class="parcel-item-val">${c.utilities||'—'}</div></div>
+          <div class="parcel-item"><div class="parcel-item-label">Flood zone</div><div class="parcel-item-val">${c.flood||'—'}</div></div>
+          <div class="parcel-item"><div class="parcel-item-label">Back taxes</div><div class="parcel-item-val">${c.backTaxes?'$'+parseInt(c.backTaxes||0).toLocaleString():'$0'}</div></div>
+          <div class="parcel-item"><div class="parcel-item-label">Survey</div><div class="parcel-item-val">${c.survey||'—'}</div></div>
+        </div>
+        ${c.askingPrice||c.ourOffer?`<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);display:flex;gap:20px;font-size:11px;color:var(--text2)">${c.askingPrice?`<span>Asking: <strong style="color:var(--text)">$${parseInt(c.askingPrice).toLocaleString()}</strong></span>`:''}${c.ourOffer?`<span>Our offer: <strong style="color:var(--accent)">$${parseInt(c.ourOffer).toLocaleString()}</strong></span>`:''}</div>`:''}
+      </div>
+
+      <div style="margin-bottom:14px">
+        <div class="section-label">Move stage</div>
+        <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px">
+          ${stages.map(s=>`<button class="btn btn-ghost btn-sm ${s===c.stage?'active':''}" onclick="moveStage('${id}','${s}')">${s}</button>`).join('')}
+        </div>
+        ${c.pipeline==='acq'?`<button class="btn btn-ghost btn-sm" style="border-color:rgba(168,255,110,0.3);color:var(--accent)" onclick="moveToDispo('${id}')">Move to dispositions →</button>`:''}
+      </div>
+
+      ${nextSMS?`<div style="background:var(--adim);border:1px solid rgba(168,255,110,0.2);border-radius:10px;padding:12px;margin-bottom:14px">
+        <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--accent);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:5px">Suggested next SMS</div>
+        <div style="font-size:12px;font-weight:500;margin-bottom:3px">${nextSMS.day} — ${nextSMS.type}</div>
+        <div style="font-size:11px;color:var(--text3);margin-bottom:8px">${nextSMS.msg.replace(/\{name\}/g,c.name.split(' ')[0]).replace(/\{acres\}/g,c.acreage||'').replace(/\{county\}/g,c.county||'').slice(0,110)}…</div>
+        <button class="btn btn-ghost btn-sm" onclick="copyText(\`${nextSMS.msg.replace(/`/g,"'").replace(/\{name\}/g,c.name.split(' ')[0]).replace(/\{acres\}/g,c.acreage||'').replace(/\{county\}/g,c.county||'')}\`)">Copy SMS</button>
+      </div>`:''}
+
+      <!-- TOUCH LOG -->
+      <div style="margin-bottom:6px;display:flex;align-items:center;justify-content:space-between">
+        <div class="section-label">Touch log — ${tc} total touches</div>
+      </div>
+      <div class="touch-log" id="touch-log-${id}">
+        ${renderTouchLog(c)}
+      </div>
+
+      <!-- ADD TOUCH -->
+      <div class="add-touch-form">
+        <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">Log a touch</div>
+        <div class="add-touch-grid">
+          <div class="form-group"><label class="form-label">Channel</label>
+            <select class="form-select" id="touch-channel">
+              ${CHANNELS.map(ch=>`<option>${ch}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group"><label class="form-label">Direction</label>
+            <select class="form-select" id="touch-direction">
+              <option>Outbound</option><option>Inbound</option>
+            </select>
+          </div>
+          <div class="form-group"><label class="form-label">Handled by</label>
+            <select class="form-select" id="touch-by">
+              <option>You</option><option>AI</option>
+            </select>
+          </div>
+          <div class="form-group"><label class="form-label">Outcome</label>
+            <select class="form-select" id="touch-outcome">
+              ${OUTCOMES.map(o=>`<option>${o}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:10px"><label class="form-label">Note (optional)</label>
+          <input class="form-input" id="touch-note" placeholder="What happened on this touch?">
+        </div>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-ghost btn-sm" onclick="logTouch('${id}')">Log touch</button>
+          <button class="btn btn-primary btn-sm" onclick="logTouchAndMark('${id}')">Log touch + mark contacted today</button>
+        </div>
+      </div>
+
+      <!-- NOTES -->
+      <div class="section-label" style="margin-top:14px;margin-bottom:8px">General notes</div>
+      ${(c.notes||[]).map(n=>`<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:6px"><div style="font-size:9px;font-family:'DM Mono',monospace;color:var(--text3);margin-bottom:4px">${n.date}</div><div style="font-size:12px;line-height:1.5">${n.text}</div></div>`).join('')}
+      <textarea class="form-textarea" id="new-note-${id}" placeholder="Add a general note..." style="margin-top:8px;margin-bottom:8px"></textarea>
+      <button class="btn btn-ghost btn-sm" onclick="addNote('${id}')">Save note</button>
+    </div>`);
+}
+
+function renderTouchLog(c){
+  if(!c.touches||!c.touches.length)return'<div style="font-size:11px;color:var(--text3);padding:4px 0">No touches logged yet.</div>';
+  return[...c.touches].reverse().map((t,i)=>{
+    const outcomeCls=t.outcome==='Replied'||t.outcome==='Answered — not interested'?'touch-outcome-replied':t.outcome==='Voicemail left'?'touch-outcome-voicemail':t.outcome==='Opted out'?'touch-outcome-opted-out':'touch-outcome-no-response';
+    return`<div class="touch-entry">
+      <span class="touch-entry-date">${t.date}</span>
+      <span class="tag tag-neutral" style="text-align:center">${t.channel}</span>
+      <span style="font-size:10px;color:var(--text3);text-align:center">${t.direction}</span>
+      <span style="font-size:10px;color:${t.by==='AI'?'var(--ai-color)':'var(--accent)'};text-align:center">${t.by}</span>
+      <span class="${outcomeCls}" style="font-size:10px">${t.outcome}${t.note?` — <span style="color:var(--text3)">${t.note}</span>`:''}</span>
+    </div>`;
+  }).join('');
+}
+
+function logTouch(id){
+  const c=db.contacts.find(x=>x.id===id);
+  if(!c)return;
+  if(!c.touches)c.touches=[];
+  const outcome=document.getElementById('touch-outcome').value;
+  c.touches.push({date:today(),channel:document.getElementById('touch-channel').value,direction:document.getElementById('touch-direction').value,by:document.getElementById('touch-by').value,outcome,note:document.getElementById('touch-note').value.trim()});
+  // Auto-escalation
+  const tc=touchCount(c);
+  if(tc>=3&&c.handoff==='AI handling')c.handoff='Needs human review';
+  if(outcome==='Replied'||outcome==='Answered — not interested')c.handoff='Human active';
+  if(outcome==='Opted out')c.stage='Dead';
+  save();openDetail(id);toast('Touch logged','success');
+}
+
+function logTouchAndMark(id){
+  logTouch(id);
+  const c=db.contacts.find(x=>x.id===id);
+  if(c){c.lastContact=today();save();}
+}
+
+function updateHandoff(id,state){
+  const c=db.contacts.find(x=>x.id===id);
+  if(!c)return;
+  c.handoff=state;
+  save();openDetail(id);toast(`Status: ${state}`,'success');
+}
+
+function moveStage(id,stage){
+  const c=db.contacts.find(x=>x.id===id);
+  if(!c)return;
+  c.stage=stage;
+  if(stage==='Dead'&&c.handoff!=='Human active')c.handoff='Human active';
+  save();
+  // Re-render the board behind the modal immediately
+  if(c.pipeline==='acq')renderPipeline('acq');
+  if(c.pipeline==='dis')renderPipeline('dis');
+  renderDashboard();
+  openDetail(id);
+  toast('Stage updated','success');
+}
+
+function moveToDispo(id){
+  const c=db.contacts.find(x=>x.id===id);
+  if(!c)return;
+  c.pipeline='dis';c.stage='Available';c.handoff='Human active';
+  save();
+  renderPipeline('acq');
+  renderPipeline('dis');
+  renderDashboard();
+  openDetail(id);
+  toast('Moved to Dispositions — Available','success');
+}
+
+function addNote(id){
+  const ta=document.getElementById('new-note-'+id);
+  if(!ta||!ta.value.trim())return;
+  const c=db.contacts.find(x=>x.id===id);
+  if(!c)return;
+  if(!c.notes)c.notes=[];
+  c.notes.unshift({date:today(),text:ta.value.trim()});
+  save();openDetail(id);toast('Note saved','success');
+}
+
+function deleteContact(id){
+  if(!confirm('Delete this contact?'))return;
+  db.contacts=db.contacts.filter(c=>c.id!==id);
+  save();closeModal();
+  if(currentView==='sellers')renderSellers();
+  if(currentView==='acq-pipeline')renderPipeline('acq');
+  if(currentView==='dis-pipeline')renderPipeline('dis');
+  if(currentView==='ai-queue')renderAIQueue();
+  if(currentView==='dashboard')renderDashboard();
+  toast('Contact deleted');
+}
+
+// ══════════════════════════════════
+// ADD / EDIT CONTACT
+// ══════════════════════════════════
+function openAddContact(editId){
+  const c=editId?db.contacts.find(x=>x.id===editId):null;
+  openCustomModal(`
+    <div class="modal-header">
+      <div class="modal-title">${c?'Edit lead':'Add lead'}</div>
+      <button class="modal-close" onclick="closeModal()">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-section">
+        <div class="form-section-title">Contact info</div>
+        <div class="form-grid">
+          <div class="form-group"><label class="form-label">Full name *</label><input class="form-input" id="f-name" value="${c?.name||''}" placeholder="Robert Hines"></div>
+          <div class="form-group"><label class="form-label">Phone</label><input class="form-input" id="f-phone" value="${c?.phone||''}" placeholder="901-555-0100"></div>
+          <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="f-email" value="${c?.email||''}"></div>
+          <div class="form-group"><label class="form-label">Temperature</label>
+            <select class="form-select" id="f-temp">
+              <option value="hot" ${c?.temp==='hot'?'selected':''}>Hot</option>
+              <option value="warm" ${c?.temp==='warm'?'selected':''}>Warm</option>
+              <option value="cold" ${c?.temp==='cold'?'selected':''}>Cold</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="form-section">
+        <div class="form-section-title">Parcel info</div>
+        <div class="form-grid">
+          <div class="form-group"><label class="form-label">County</label><input class="form-input" id="f-county" value="${c?.county||''}" placeholder="Shelby"></div>
+          <div class="form-group"><label class="form-label">State</label>
+            <select class="form-select" id="f-state">${['TN','MS','AR','MO','AL','KY','GA','TX','OK','LA'].map(s=>`<option ${c?.state===s?'selected':''}>${s}</option>`).join('')}</select>
+          </div>
+          <div class="form-group"><label class="form-label">Acreage</label><input class="form-input" id="f-acreage" value="${c?.acreage||''}" placeholder="12.5"></div>
+          <div class="form-group"><label class="form-label">APN / Parcel ID</label><input class="form-input" id="f-apn" value="${c?.apn||''}" placeholder="123-456-789"></div>
+          <div class="form-group"><label class="form-label">Zoning</label>
+            <select class="form-select" id="f-zoning">${['Agricultural','Residential','Commercial','Unzoned / rural'].map(z=>`<option ${c?.zoning===z?'selected':''}>${z}</option>`).join('')}</select>
+          </div>
+          <div class="form-group"><label class="form-label">Road access</label>
+            <select class="form-select" id="f-road">${['Paved','Dirt / gravel','Landlocked'].map(r=>`<option ${c?.road===r?'selected':''}>${r}</option>`).join('')}</select>
+          </div>
+          <div class="form-group"><label class="form-label">Utilities</label>
+            <select class="form-select" id="f-utilities">${['Available','Nearby','None'].map(u=>`<option ${c?.utilities===u?'selected':''}>${u}</option>`).join('')}</select>
+          </div>
+          <div class="form-group"><label class="form-label">Flood zone</label>
+            <select class="form-select" id="f-flood">${['No','Partial','Yes'].map(f=>`<option ${c?.flood===f?'selected':''}>${f}</option>`).join('')}</select>
+          </div>
+          <div class="form-group"><label class="form-label">Back taxes ($)</label><input class="form-input" id="f-taxes" value="${c?.backTaxes||''}" placeholder="0"></div>
+          <div class="form-group"><label class="form-label">Survey on file</label>
+            <select class="form-select" id="f-survey"><option value="No" ${c?.survey==='No'?'selected':''}>No</option><option value="Yes" ${c?.survey==='Yes'?'selected':''}>Yes</option></select>
+          </div>
+        </div>
+      </div>
+      <div class="form-section">
+        <div class="form-section-title">Deal info</div>
+        <div class="form-grid">
+          <div class="form-group"><label class="form-label">Lead source *</label>
+            <select class="form-select" id="f-source">${SOURCES.map(s=>`<option ${c?.source===s?'selected':''}>${s}</option>`).join('')}</select>
+          </div>
+          <div class="form-group"><label class="form-label">Deal type</label>
+            <select class="form-select" id="f-dealtype">
+              <option value="wholesale" ${c?.dealType==='wholesale'?'selected':''}>Wholesale / assignment</option>
+              <option value="double-close" ${c?.dealType==='double-close'?'selected':''}>Double close</option>
+            </select>
+          </div>
+          <div class="form-group"><label class="form-label">Pipeline</label>
+            <select class="form-select" id="f-pipeline">
+              <option value="acq" ${c?.pipeline!=='dis'?'selected':''}>Acquisitions</option>
+              <option value="dis" ${c?.pipeline==='dis'?'selected':''}>Dispositions</option>
+            </select>
+          </div>
+          <div class="form-group"><label class="form-label">Stage</label>
+            <select class="form-select" id="f-stage">${ACQ_STAGES_CONST.map(s=>`<option ${c?.stage===s?'selected':''}>${s}</option>`).join('')}</select>
+          </div>
+          <div class="form-group"><label class="form-label">Handler</label>
+            <select class="form-select" id="f-handoff">${HANDOFF_STATES.map(h=>`<option ${c?.handoff===h?'selected':''}>${h}</option>`).join('')}</select>
+          </div>
+          <div class="form-group"><label class="form-label">Last contact date</label><input class="form-input" id="f-lastcontact" type="date" value="${c?.lastContact||today()}"></div>
+          <div class="form-group"><label class="form-label">Asking price ($)</label><input class="form-input" id="f-asking" value="${c?.askingPrice||''}" placeholder="45000"></div>
+          <div class="form-group"><label class="form-label">Our offer ($)</label><input class="form-input" id="f-offer" value="${c?.ourOffer||''}" placeholder="18000"></div>
+          <div class="form-group form-full"><label class="form-label">Tags (comma separated)</label><input class="form-input" id="f-tags" value="${(c?.tags||[]).join(', ')}" placeholder="inherited, motivated, rural-acreage"></div>
+          <div class="form-group form-full"><label class="form-label">Initial notes</label><textarea class="form-textarea" id="f-notes">${c?.notes?.[0]?.text||''}</textarea></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveContact('${editId||''}')">${c?'Save changes':'Add lead'}</button>
+    </div>`);
+}
+
+function openEditContact(id){openAddContact(id);}
+
+function saveContact(editId){
+  const name=document.getElementById('f-name').value.trim();
+  if(!name){toast('Name is required');return;}
+  const noteText=document.getElementById('f-notes').value.trim();
+  const tags=document.getElementById('f-tags').value.split(',').map(t=>t.trim()).filter(Boolean);
+  const fields={name,phone:document.getElementById('f-phone').value.trim(),email:document.getElementById('f-email').value.trim(),county:document.getElementById('f-county').value.trim(),state:document.getElementById('f-state').value,acreage:document.getElementById('f-acreage').value.trim(),apn:document.getElementById('f-apn').value.trim(),zoning:document.getElementById('f-zoning').value,road:document.getElementById('f-road').value,utilities:document.getElementById('f-utilities').value,flood:document.getElementById('f-flood').value,backTaxes:document.getElementById('f-taxes').value.trim(),survey:document.getElementById('f-survey').value,source:document.getElementById('f-source').value,dealType:document.getElementById('f-dealtype').value,pipeline:document.getElementById('f-pipeline').value,stage:document.getElementById('f-stage').value,handoff:document.getElementById('f-handoff').value,lastContact:document.getElementById('f-lastcontact').value||today(),temp:document.getElementById('f-temp').value,askingPrice:document.getElementById('f-asking').value.trim(),ourOffer:document.getElementById('f-offer').value.trim(),tags};
+  if(editId){
+    const c=db.contacts.find(x=>x.id===editId);if(!c)return;
+    Object.assign(c,fields);
+    if(noteText&&(!c.notes||!c.notes.length||c.notes[0].text!==noteText)){if(!c.notes)c.notes=[];c.notes.unshift({date:today(),text:noteText});}
+  }else{
+    db.contacts.unshift({id:uid(),created:today(),touches:[],...fields,notes:noteText?[{date:today(),text:noteText}]:[]});
+  }
+  save();
+  const _p=editId?db.contacts.find(x=>x.id===editId):db.contacts[0];
+  if(_p&&_p.phone)pushContactToQuo(_p);
+  closeModal();toast(editId?'Lead updated':'Lead added','success');
+  ['sellers','acq-pipeline','dis-pipeline','dashboard','ai-queue'].forEach(v=>{if(currentView===v){showView(v);}});
+}
+
+// ══════════════════════════════════
+// BUYERS
+// ══════════════════════════════════
+function renderBuyers(){
+  const search=document.getElementById('buyer-search').value.toLowerCase();
+  const typeF=document.getElementById('buyer-type-filter').value;
+  let buyers=db.buyers.filter(b=>{
+    if(typeF&&b.type!==typeF)return false;
+    if(search){const h=(b.name+b.email+b.phone).toLowerCase();if(!h.includes(search))return false;}
+    return true;
+  });
+  const grid=document.getElementById('buyer-grid');
+  if(!buyers.length){grid.innerHTML='<div class="empty" style="grid-column:1/-1"><div class="empty-title">No buyers found</div></div>';return;}
+  grid.innerHTML=buyers.map(b=>`
+    <div class="buyer-card" onclick="openBuyerDetail('${b.id}')">
+      <div class="buyer-name">${b.name}</div>
+      <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px">${b.tags.map(t=>`<span class="tag tag-neutral">${t}</span>`).join('')}</div>
+      <div class="buyer-buybox">${b.minAcres}–${b.maxAcres} acres · up to $${b.maxPrice.toLocaleString()}<br>States: ${b.states.join(', ')}<br>${b.notes.slice(0,60)}...</div>
+    </div>`).join('');
+}
+
+function openBuyerDetail(id){
+  const b=db.buyers.find(x=>x.id===id);if(!b)return;
+  const matching=db.contacts.filter(c=>c.pipeline==='dis'&&c.stage==='Available'&&b.states.includes(c.state)&&parseFloat(c.acreage||0)>=b.minAcres&&parseFloat(c.acreage||0)<=b.maxAcres);
+  openCustomModal(`
+    <div class="modal-header">
+      <div class="modal-title">${b.name}</div>
+      <div style="display:flex;gap:6px"><button class="btn btn-danger btn-sm" onclick="deleteBuyer('${id}')">Delete</button><button class="modal-close" onclick="closeModal()">&#x2715;</button></div>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:14px">${b.tags.map(t=>`<span class="tag tag-neutral">${t}</span>`).join('')}</div>
+      <div class="form-grid" style="margin-bottom:14px">
+        <div><div class="detail-field-label" style="font-size:9px;font-family:'DM Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px">Phone</div><div style="font-size:12px">${b.phone||'—'}</div></div>
+        <div><div class="detail-field-label" style="font-size:9px;font-family:'DM Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px">Email</div><div style="font-size:12px">${b.email||'—'}</div></div>
+        <div><div class="detail-field-label" style="font-size:9px;font-family:'DM Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px">Type</div><div style="font-size:12px">${b.type}</div></div>
+        <div><div class="detail-field-label" style="font-size:9px;font-family:'DM Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px">States</div><div style="font-size:12px">${b.states.join(', ')}</div></div>
+        <div><div class="detail-field-label" style="font-size:9px;font-family:'DM Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px">Acreage range</div><div style="font-size:12px">${b.minAcres}–${b.maxAcres} acres</div></div>
+        <div><div class="detail-field-label" style="font-size:9px;font-family:'DM Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px">Max price</div><div style="font-size:12px">$${b.maxPrice.toLocaleString()}</div></div>
+      </div>
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:14px;font-size:12px;color:var(--text2)">${b.notes}</div>
+      <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--accent);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">Matching available parcels (${matching.length})</div>
+      ${matching.length?matching.map(c=>`<div class="today-item" onclick="closeModal();openDetail('${c.id}')"><div class="today-dot green"></div><div><div class="today-label">${c.name} — ${c.acreage} acres, ${c.county} ${c.state}</div><div class="today-sub">${c.stage} · ${c.dealType}</div></div></div>`).join(''):'<p style="font-size:12px;color:var(--text3)">No matching parcels available right now.</p>'}
+    </div>`);
+}
+
+function openAddBuyer(){
+  openCustomModal(`
+    <div class="modal-header"><div class="modal-title">Add buyer</div><button class="modal-close" onclick="closeModal()">&#x2715;</button></div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">Full name *</label><input class="form-input" id="b-name"></div>
+        <div class="form-group"><label class="form-label">Phone</label><input class="form-input" id="b-phone"></div>
+        <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="b-email"></div>
+        <div class="form-group"><label class="form-label">Buyer type</label>
+          <select class="form-select" id="b-type"><option value="builder">Builder / developer</option><option value="land-investor">Land investor</option><option value="retail">Retail end buyer</option><option value="farmer">Farmer / recreational</option></select>
+        </div>
+        <div class="form-group"><label class="form-label">States (comma separated)</label><input class="form-input" id="b-states" placeholder="TN, MS, AR"></div>
+        <div class="form-group"><label class="form-label">Min acreage</label><input class="form-input" id="b-minacres" type="number" placeholder="1"></div>
+        <div class="form-group"><label class="form-label">Max acreage</label><input class="form-input" id="b-maxacres" type="number" placeholder="50"></div>
+        <div class="form-group"><label class="form-label">Max price ($)</label><input class="form-input" id="b-maxprice" type="number" placeholder="100000"></div>
+        <div class="form-group form-full"><label class="form-label">Buy box notes</label><textarea class="form-textarea" id="b-notes"></textarea></div>
+        <div class="form-group form-full"><label class="form-label">Tags (comma separated)</label><input class="form-input" id="b-tags" placeholder="builder, subdivision-lot"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveBuyer('')">Add buyer</button>
+    </div>`);
+}
+
+function saveBuyer(editId){
+  const name=document.getElementById('b-name').value.trim();
+  if(!name){toast('Name required');return;}
+  const data={name,phone:document.getElementById('b-phone').value.trim(),email:document.getElementById('b-email').value.trim(),type:document.getElementById('b-type').value,states:document.getElementById('b-states').value.split(',').map(s=>s.trim()).filter(Boolean),minAcres:parseFloat(document.getElementById('b-minacres').value)||0,maxAcres:parseFloat(document.getElementById('b-maxacres').value)||999,maxPrice:parseFloat(document.getElementById('b-maxprice').value)||0,notes:document.getElementById('b-notes').value.trim(),tags:document.getElementById('b-tags').value.split(',').map(t=>t.trim()).filter(Boolean)};
+  if(editId){Object.assign(db.buyers.find(x=>x.id===editId),data);}
+  else{db.buyers.unshift({id:uid(),created:today(),...data});}
+  save();closeModal();toast('Buyer saved','success');if(currentView==='buyers')renderBuyers();
+}
+
+function deleteBuyer(id){
+  if(!confirm('Delete buyer?'))return;
+  db.buyers=db.buyers.filter(b=>b.id!==id);
+  save();closeModal();if(currentView==='buyers')renderBuyers();toast('Buyer deleted');
+}
+
+// ══════════════════════════════════
+// CALCULATOR
+// ══════════════════════════════════
+const factors={road:1.0,util:1.0,flood:1.0,zone:1.1};
+function setPill(el,group,val){
+  document.querySelectorAll(`[data-group="${group}"]`).forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');factors[group]=val;calcLand();
+}
+function calcLand(){
+  const acres=parseFloat(document.getElementById('c-acres').value)||0;
+  const comp=parseFloat(document.getElementById('c-comppacre').value)||0;
+  const taxes=parseFloat(document.getElementById('c-taxes').value)||0;
+  const closing=parseFloat(document.getElementById('c-closing').value)||0;
+  const fee=parseFloat(document.getElementById('c-fee').value)||0;
+  const exit=document.getElementById('c-exit').value;
+  if(!acres||!comp){document.getElementById('c-mao').textContent='—';document.getElementById('c-mao-sub').textContent='';document.getElementById('calc-breakdown').innerHTML='';return;}
+  const adj=Object.values(factors).reduce((a,b)=>a*b,1);
+  const retail=acres*comp*adj;
+  const pct=exit==='double'?0.55:0.45;
+  const mao=retail*pct-taxes-closing-fee;
+  const color=mao>0?'var(--accent)':'var(--coral)';
+  document.getElementById('c-mao').style.color=color;
+  document.getElementById('c-mao').textContent=mao>0?'$'+Math.round(mao).toLocaleString():'No deal';
+  document.getElementById('c-mao-sub').textContent=mao>0?`${Math.round(mao/retail*100)}% of retail · ${exit==='double'?'double close':'wholesale'} pricing`:'Adjust inputs';
+  document.getElementById('calc-breakdown').innerHTML=`
+    <div class="calc-row"><span class="calc-row-label">Acreage</span><span class="calc-row-val">${acres} acres</span></div>
+    <div class="calc-row"><span class="calc-row-label">Comp / acre</span><span class="calc-row-val">$${comp.toLocaleString()}</span></div>
+    <div class="calc-row"><span class="calc-row-label">Adjustment factor</span><span class="calc-row-val">${(adj*100).toFixed(0)}%</span></div>
+    <div class="calc-row"><span class="calc-row-label">Adjusted retail value</span><span class="calc-row-val">$${Math.round(retail).toLocaleString()}</span></div>
+    <div class="calc-row"><span class="calc-row-label">Target % (${exit==='double'?'double close':'wholesale'})</span><span class="calc-row-val">${Math.round(pct*100)}%</span></div>
+    <div class="calc-row"><span class="calc-row-label">Back taxes</span><span class="calc-row-val" style="color:var(--coral)">−$${taxes.toLocaleString()}</span></div>
+    <div class="calc-row"><span class="calc-row-label">Closing costs</span><span class="calc-row-val" style="color:var(--coral)">−$${closing.toLocaleString()}</span></div>
+    <div class="calc-row"><span class="calc-row-label">Assignment / fee</span><span class="calc-row-val" style="color:var(--coral)">−$${fee.toLocaleString()}</span></div>
+    <div class="calc-row" style="padding-top:10px;border-top:1px solid var(--border2)"><span class="calc-row-label" style="font-weight:500;color:var(--text)">Max offer (MAO)</span><span class="calc-row-val" style="color:${color};font-size:16px">$${Math.round(mao).toLocaleString()}</span></div>`;
+}
+
+// ══════════════════════════════════
+// SEQUENCES
+// ══════════════════════════════════
+const SEQUENCES={
+  seller:{name:'Motivated land seller',color:'var(--coral)',bg:'var(--cdim)',steps:[
+    {day:'Touch 1',type:'Initial SMS',msg:'Hey {name}, my name is [Your Name] — I came across your {acres}-acre parcel in {county} and wanted to reach out. I buy vacant land as-is, all cash, fast close. Would you be open to a fair offer? No obligation.'},
+    {day:'Touch 2',type:'Follow-up SMS',msg:'Hi {name}, just following up on my message about your land in {county}. I close fast and handle all the paperwork. Still open to a cash offer?'},
+    {day:'Touch 3',type:'Value SMS',msg:'{name}, I know you\'re busy. I work with buyers who close in as little as 21 days on land like yours — no agent fees, no cleanup. Worth a 5-minute chat?'},
+    {day:'Touch 4',type:'Nurture SMS',msg:'Hey {name} — still holding that {acres}-acre parcel in {county}? If you\'re even thinking about selling, I\'d love to make you a number. Just reply YES and I\'ll send an offer.'},
+    {day:'Touch 5+',type:'Breakup SMS',msg:'{name}, I don\'t want to keep reaching out if the timing isn\'t right. I\'m going to remove your number — but if you ever want a fast cash offer for your land, I\'m one text away. Take care.'},
+  ]},
+  buyer_blast:{name:'Buyer blast — new parcel',color:'var(--blue)',bg:'var(--bdim)',steps:[
+    {day:'Initial',type:'Deal SMS',msg:'Hey {name} — got a {acres}-acre parcel in {county}, {state} that might fit your buy box. Asking ${price}. Interested in details?'},
+    {day:'Follow-up',type:'SMS',msg:'Hi {name}, following up on the {county} parcel I sent over. Still available. Want me to send the full package?'},
+  ]},
+};
+
+function renderSequences(){
+  document.getElementById('seq-grid').innerHTML=Object.entries(SEQUENCES).map(([key,seq])=>`
+    <div class="seq-card">
+      <div class="seq-header">
+        <div class="seq-icon" style="background:${seq.bg};border:1px solid ${seq.color}30">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="${seq.color}" stroke-width="1.5"><path d="M2 4h12M2 8h8M2 12h5"/></svg>
+        </div>
+        <div class="seq-name">${seq.name}</div>
+      </div>
+      ${seq.steps.map((step,i)=>`
+        <div class="seq-step" onclick="showScript('${key}',${i})">
+          <span class="seq-step-day">${step.day}</span>
+          <div><div class="seq-step-type" style="color:${seq.color}">${step.type}</div>
+          <div class="seq-step-preview">${step.msg.slice(0,80)}…</div></div>
+        </div>`).join('')}
+    </div>`).join('');
+}
+
+function showScript(key,idx){
+  const seq=SEQUENCES[key];const step=seq.steps[idx];
+  openCustomModal(`
+    <div class="modal-header"><div class="modal-title">${seq.name} — ${step.day}</div><button class="modal-close" onclick="closeModal()">&#x2715;</button></div>
+    <div class="modal-body">
+      <span class="tag" style="background:${seq.bg};color:${seq.color};margin-bottom:12px;display:inline-block">${step.type}</span>
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px;font-size:12px;line-height:1.7;color:var(--text2);white-space:pre-wrap;margin-bottom:12px">${step.msg}</div>
+      <p style="font-size:10px;color:var(--text3);margin-bottom:14px">Replace <code>{name}</code> <code>{acres}</code> <code>{county}</code> <code>{state}</code> <code>{price}</code> with actual values.</p>
+      <button class="btn btn-primary" onclick="copyText(\`${step.msg.replace(/`/g,"'")}\`)">Copy message</button>
+    </div>`);
+}
+
+function getLandSMS(c){
+  const seq=SEQUENCES.seller;
+  const tc=touchCount(c);
+  const idx=Math.min(tc,seq.steps.length-1);
+  return{...seq.steps[idx],idx};
+}
+
+function openFollowupModal(){
+  const opts=db.contacts.filter(c=>c.pipeline==='acq').map(c=>`<option value="${c.id}">${c.name} — ${c.stage} (${touchCount(c)} touches)</option>`).join('');
+  openCustomModal(`
+    <div class="modal-header"><div class="modal-title">Generate SMS</div><button class="modal-close" onclick="closeModal()">&#x2715;</button></div>
+    <div class="modal-body">
+      <div class="form-group" style="margin-bottom:12px"><label class="form-label">Contact (auto-fills name/acres/county)</label>
+        <select class="form-select" id="fu-contact" onchange="genFU()"><option value="">— Generic template —</option>${opts}</select>
+      </div>
+      <div class="form-group" style="margin-bottom:12px"><label class="form-label">Sequence</label>
+        <select class="form-select" id="fu-seq" onchange="genFU()">${Object.entries(SEQUENCES).map(([k,s])=>`<option value="${k}">${s.name}</option>`).join('')}</select>
+      </div>
+      <div class="form-group" style="margin-bottom:16px"><label class="form-label">Touch step</label>
+        <select class="form-select" id="fu-step" onchange="genFU()"></select>
+      </div>
+      <div id="fu-output"></div>
+    </div>`);
+  updateFUSteps();genFU();
+}
+
+function updateFUSteps(){
+  const key=document.getElementById('fu-seq')?.value;if(!key)return;
+  const seq=SEQUENCES[key];const el=document.getElementById('fu-step');if(!el)return;
+  el.innerHTML=seq.steps.map((s,i)=>`<option value="${i}">${s.day} — ${s.type}</option>`).join('');
+}
+
+function genFU(){
+  updateFUSteps();
+  const key=document.getElementById('fu-seq')?.value;
+  const idx=parseInt(document.getElementById('fu-step')?.value||0);
+  const contactId=document.getElementById('fu-contact')?.value;
+  if(!key)return;
+  const seq=SEQUENCES[key];const step=seq.steps[Math.min(idx,seq.steps.length-1)];
+  let msg=step.msg;
+  if(contactId){
+    const c=db.contacts.find(x=>x.id===contactId);
+    if(c){msg=msg.replace(/\{name\}/g,c.name.split(' ')[0]).replace(/\{acres\}/g,c.acreage||'').replace(/\{county\}/g,c.county||'').replace(/\{state\}/g,c.state||'');}
+  }
+  const out=document.getElementById('fu-output');
+  if(out)out.innerHTML=`<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px;font-size:12px;line-height:1.7;color:var(--text2);white-space:pre-wrap;margin-bottom:12px">${msg}</div><button class="btn btn-primary btn-sm" onclick="copyText(\`${msg.replace(/`/g,"'")}\`)">Copy message</button>`;
+}
+
+// ══════════════════════════════════
+// REPORTING
+// ══════════════════════════════════
+function renderReporting(){
+  const acq=db.contacts.filter(c=>c.pipeline==='acq');
+  const total=acq.length||1;
+  document.getElementById('acq-funnel').innerHTML=ACQ_STAGES_CONST.map((s,i)=>{
+    const count=acq.filter(c=>c.stage===s).length;
+    const pct=Math.round(count/total*100);
+    return`<div class="funnel-row"><div class="funnel-bar" style="width:${Math.max(pct,6)}%;background:${ACQ_COLORS[i]}20;border-left:3px solid ${ACQ_COLORS[i]}"><span style="color:${ACQ_COLORS[i]}">${count}</span></div><div class="funnel-label">${s}</div><div class="funnel-pct">${pct}%</div></div>`;
+  }).join('');
+
+  // Touch effectiveness
+  const byTouch={};
+  db.contacts.forEach(c=>{
+    const tc=touchCount(c);
+    const bucket=tc===0?'0':tc===1?'1':tc===2?'2':tc<=4?'3-4':'5+';
+    if(!byTouch[bucket])byTouch[bucket]={total:0,converted:0};
+    byTouch[bucket].total++;
+    if(['Qualified','Appointment Set','Offer Made','Negotiating','Under Contract'].includes(c.stage))byTouch[bucket].converted++;
+  });
+  const touchMax=Math.max(...Object.values(byTouch).map(v=>v.total),1);
+  document.getElementById('touch-report').innerHTML=Object.entries(byTouch).map(([bucket,v])=>`
+    <div class="funnel-row"><div class="funnel-bar" style="width:${Math.max(v.total/touchMax*100,6)}%;background:var(--bdim);border-left:3px solid var(--blue)"><span style="color:var(--blue)">${v.total}</span></div>
+    <div class="funnel-label">${bucket} touches</div><div class="funnel-pct">${Math.round(v.converted/v.total*100)||0}% conv.</div></div>`).join('')||'<p style="font-size:12px;color:var(--text3)">No data yet.</p>';
+
+  // Sources
+  const sources={};db.contacts.forEach(c=>{if(c.source)sources[c.source]=(sources[c.source]||0)+1;});
+  const srcMax=Math.max(...Object.values(sources),1);
+  document.getElementById('source-report').innerHTML=Object.entries(sources).sort((a,b)=>b[1]-a[1]).map(([src,count])=>`
+    <div class="funnel-row"><div class="funnel-bar" style="width:${Math.max(count/srcMax*100,6)}%;background:var(--tdim);border-left:3px solid var(--teal)"><span style="color:var(--teal)">${count}</span></div><div class="funnel-label">${src}</div></div>`).join('')||'<p style="font-size:12px;color:var(--text3)">No data yet.</p>';
+
+  // States
+  const states={};db.contacts.forEach(c=>{if(c.state)states[c.state]=(states[c.state]||0)+1;});
+  const stateMax=Math.max(...Object.values(states),1);
+  document.getElementById('state-report').innerHTML=Object.entries(states).sort((a,b)=>b[1]-a[1]).map(([state,count])=>`
+    <div class="funnel-row"><div class="funnel-bar" style="width:${Math.max(count/stateMax*100,6)}%;background:var(--pdim);border-left:3px solid var(--purple)"><span style="color:var(--purple)">${count}</span></div><div class="funnel-label">${state}</div></div>`).join('')||'<p style="font-size:12px;color:var(--text3)">No data yet.</p>';
+}
+
+// ══════════════════════════════════
+// MODAL / UTILS
+// ══════════════════════════════════
+function openCustomModal(html){document.getElementById('active-modal').innerHTML=html;document.getElementById('modal-overlay').classList.add('open');}
+function closeModal(){document.getElementById('modal-overlay').classList.remove('open');}
+document.getElementById('modal-overlay').addEventListener('click',function(e){if(e.target===this)closeModal();});
+function copyText(text){navigator.clipboard.writeText(text).then(()=>toast('Copied!','success'));}
+function toast(msg,type){const el=document.getElementById('toast');el.textContent=msg;el.className='show'+(type?' '+type:'');clearTimeout(window._tt);window._tt=setTimeout(()=>{el.className='';},2800);}
+
+
+// QUO SYNC
+const FUNCTIONS_BASE='/.netlify/functions';
+async function pushContactToQuo(contact){
+  try{
+    const res=await fetch(`${FUNCTIONS_BASE}/push-contact`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:contact.name,phone:contact.phone,county:contact.county,state:contact.state,acreage:contact.acreage})});
+    const d=await res.json();
+    if(d.ok)console.log('Quo contact '+d.action+':',contact.name);
+  }catch(e){console.warn('Quo push error:',e.message);}
+}
+async function syncFromQuo(){
+  try{
+    const res=await fetch(`${FUNCTIONS_BASE}/get-touches`);
+    const data=await res.json();
+    if(!data.touches||!data.touches.length)return;
+    let updated=false;
+    data.touches.forEach(function(t){
+      const touch=t.touch;const needsHandoff=t.needsHandoff;
+      if(!touch||!touch.contactPhone)return;
+      const norm=touch.contactPhone.replace(/\D/g,'');
+      const contact=db.contacts.find(function(c){return c.phone&&c.phone.replace(/\D/g,'').endsWith(norm.slice(-10));});
+      if(!contact)return;
+      if(!contact.touches)contact.touches=[];
+      if(contact.touches.some(function(x){return x.id===touch.id;}))return;
+      contact.touches.push(touch);
+      contact.lastContact=touch.date;
+      if(needsHandoff&&contact.handoff!=='Human active')contact.handoff='Needs human review';
+      if(touch.outcome==='Replied'&&contact.stage==='Outreach Active')contact.stage='Conversation Active';
+      updated=true;
+    });
+    if(updated){save();if(currentView==='dashboard')renderDashboard();if(currentView==='sellers')renderSellers();toast('Synced '+data.count+' event'+(data.count!==1?'s':'')+ ' from Quo','success');}
+  }catch(e){console.warn('Quo sync error:',e.message);}
+}
+// LIGHT / DARK MODE
+function toggleMode(){
+  const isLight=document.body.classList.toggle('light');
+  localStorage.setItem('crm_theme',isLight?'light':'dark');
+  updateModeIcon(isLight);
+}
+function updateModeIcon(isLight){
+  const sun=document.getElementById('mode-icon-sun');
+  const moon=document.getElementById('mode-icon-moon');
+  if(!sun||!moon)return;
+  sun.style.display=isLight?'inline':'none';
+  moon.style.display=isLight?'none':'inline';
+}
+function injectModeToggle(){
+  const actions=document.querySelector('#topbar div[style]');
+  if(!actions)return;
+  const btn=document.createElement('button');
+  btn.className='btn btn-ghost btn-sm';
+  btn.title='Toggle light / dark mode';
+  btn.style.cssText='padding:5px 9px;';
+  const sunSVG='<svg id="mode-icon-sun" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" style="display:none"><circle cx="8" cy="8" r="3"/><path d="M8 1v1.5M8 13.5V15M1 8h1.5M13.5 8H15M3.4 3.4l1 1M11.6 11.6l1 1M11.6 3.4l-1 1M3.4 11.6l-1 1"/></svg>';
+  const moonSVG='<svg id="mode-icon-moon" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13.5 10A6 6 0 016 2.5a6 6 0 100 11 6 6 0 007.5-3.5z"/></svg>';
+  btn.innerHTML=sunSVG+moonSVG;
+  btn.onclick=toggleMode;
+  actions.appendChild(btn);
+}
+
+
+function showComingSoon(name){toast(name+' contacts coming soon');}
+// INIT
+const savedTheme=localStorage.getItem('crm_theme');
+if(savedTheme==='light'){document.body.classList.add('light');}
+injectModeToggle();
+updateModeIcon(document.body.classList.contains('light'));
+renderDashboard();
+syncFromQuo();
+setInterval(syncFromQuo,60000);
+</script>
+</body>
+</html>
