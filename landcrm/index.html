@@ -903,7 +903,10 @@ function openDetail(id){
           <div class="parcel-item"><div class="parcel-item-label">Survey</div><div class="parcel-item-val">${c.survey||'—'}</div></div>
         </div>
         ${c.askingPrice||c.ourOffer?`<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);display:flex;gap:20px;font-size:11px;color:var(--text2)">${c.askingPrice?`<span>Asking: <strong style="color:var(--text)">$${parseInt(c.askingPrice).toLocaleString()}</strong></span>`:''}${c.ourOffer?`<span>Our offer: <strong style="color:var(--accent)">$${parseInt(c.ourOffer).toLocaleString()}</strong></span>`:''}</div>`:''}
+      ${c.apn?`<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);font-size:11px;color:var(--text2)">APN: <strong style="color:var(--text)">${c.apn}</strong></div>`:''}
       </div>
+
+    ${c.motivation?`<div class="motivation-box"><div class="motivation-label">Seller motivation</div><div style="font-size:12px;line-height:1.6;color:var(--text2)">${c.motivation}</div></div>`:''}
 
       <div style="margin-bottom:14px">
         <div class="section-label">Move stage</div>
@@ -967,6 +970,11 @@ function openDetail(id){
       ${(c.notes||[]).map(n=>`<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:6px"><div style="font-size:9px;font-family:'DM Mono',monospace;color:var(--text3);margin-bottom:4px">${n.date}</div><div style="font-size:12px;line-height:1.5">${n.text}</div></div>`).join('')}
       <textarea class="form-textarea" id="new-note-${id}" placeholder="Add a general note..." style="margin-top:8px;margin-bottom:8px"></textarea>
       <button class="btn btn-ghost btn-sm" onclick="addNote('${id}')">Save note</button>
+
+      <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border2);">
+        <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px;">Due diligence checklist</div>
+        ${renderDD(c)}
+      </div>
     </div>`);
 }
 
@@ -1139,7 +1147,9 @@ function openAddContact(editId){
           <div class="form-group"><label class="form-label">Last contact date</label><input class="form-input" id="f-lastcontact" type="date" value="${c?.lastContact||today()}"></div>
           <div class="form-group"><label class="form-label">Asking price ($)</label><input class="form-input" id="f-asking" value="${c?.askingPrice||''}" placeholder="45000"></div>
           <div class="form-group"><label class="form-label">Our offer ($)</label><input class="form-input" id="f-offer" value="${c?.ourOffer||''}" placeholder="18000"></div>
-          <div class="form-group form-full"><label class="form-label">Tags (comma separated)</label><input class="form-input" id="f-tags" value="${(c?.tags||[]).join(', ')}" placeholder="inherited, motivated, rural-acreage"></div>
+          <div class="form-group form-full"><label class="form-label">Seller motivation</label><textarea class="form-textarea" id="f-motivation" placeholder="Why are they selling? Inherited land, taxes owed, just wants out...">${c?.motivation||''}</textarea></div>
+        <div class="form-group"><label class="form-label">APN / Parcel ID</label><input class="form-input" id="f-apn" value="${c?.apn||''}" placeholder="123-456-789"></div>
+        <div class="form-group form-full"><label class="form-label">Tags (comma separated)</label><input class="form-input" id="f-tags" value="${(c?.tags||[]).join(', ')}" placeholder="inherited, motivated, rural-acreage"></div>
           <div class="form-group form-full"><label class="form-label">Initial notes</label><textarea class="form-textarea" id="f-notes">${c?.notes?.[0]?.text||''}</textarea></div>
         </div>
       </div>
@@ -1157,7 +1167,9 @@ function saveContact(editId){
   if(!name){toast('Name is required');return;}
   const noteText=document.getElementById('f-notes').value.trim();
   const tags=document.getElementById('f-tags').value.split(',').map(t=>t.trim()).filter(Boolean);
-  const fields={name,phone:document.getElementById('f-phone').value.trim(),email:document.getElementById('f-email').value.trim(),county:document.getElementById('f-county').value.trim(),state:document.getElementById('f-state').value,acreage:document.getElementById('f-acreage').value.trim(),apn:document.getElementById('f-apn').value.trim(),zoning:document.getElementById('f-zoning').value,road:document.getElementById('f-road').value,utilities:document.getElementById('f-utilities').value,flood:document.getElementById('f-flood').value,backTaxes:document.getElementById('f-taxes').value.trim(),survey:document.getElementById('f-survey').value,source:document.getElementById('f-source').value,dealType:document.getElementById('f-dealtype').value,pipeline:document.getElementById('f-pipeline').value,stage:document.getElementById('f-stage').value,handoff:document.getElementById('f-handoff').value,lastContact:document.getElementById('f-lastcontact').value||today(),temp:document.getElementById('f-temp').value,askingPrice:document.getElementById('f-asking').value.trim(),ourOffer:document.getElementById('f-offer').value.trim(),tags};
+  const motivation=document.getElementById('f-motivation')?.value?.trim()||'';
+  const apn=document.getElementById('f-apn')?.value?.trim()||'';
+  const fields={name,phone:document.getElementById('f-phone').value.trim(),email:document.getElementById('f-email').value.trim(),county:document.getElementById('f-county').value.trim(),state:document.getElementById('f-state').value,acreage:document.getElementById('f-acreage').value.trim(),apn:document.getElementById('f-apn').value.trim(),zoning:document.getElementById('f-zoning').value,road:document.getElementById('f-road').value,utilities:document.getElementById('f-utilities').value,flood:document.getElementById('f-flood').value,backTaxes:document.getElementById('f-taxes').value.trim(),survey:document.getElementById('f-survey').value,source:document.getElementById('f-source').value,dealType:document.getElementById('f-dealtype').value,pipeline:document.getElementById('f-pipeline').value,stage:document.getElementById('f-stage').value,handoff:document.getElementById('f-handoff').value,lastContact:document.getElementById('f-lastcontact').value||today(),temp:document.getElementById('f-temp').value,askingPrice:document.getElementById('f-asking').value.trim(),ourOffer:document.getElementById('f-offer').value.trim(),tags,motivation,apn};
   if(editId){
     const c=db.contacts.find(x=>x.id===editId);if(!c)return;
     Object.assign(c,fields);
