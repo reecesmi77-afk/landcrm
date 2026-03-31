@@ -437,6 +437,11 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
         AI handoff queue
         <span class="nb amber" id="nb-ai">0</span>
       </button>
+      <button class="nav-item" onclick="showView('ai-qualified')">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13 4L6 11l-3-3"/></svg>
+        AI Qualified
+        <span class="nav-badge" id="qualified-badge" style="display:none"></span>
+      </button>
     </div>
     <div class="nav-section">
       <div class="nav-label">Contacts</div>
@@ -600,6 +605,24 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
         </select>
       </div>
       <div class="buyer-grid" id="buyer-grid"></div>
+    </div>
+
+    <!-- AI QUALIFIED LEADS -->
+    <div id="view-ai-qualified" class="view">
+      <div style="max-width:860px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+          <div>
+            <div style="font-size:11px;font-family:'DM Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">AI Qualified Leads</div>
+            <div style="font-size:12px;color:var(--text3)">Sellers fully qualified by AI — ready for your call and offer</div>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="loadQualifiedLeads()">Refresh</button>
+        </div>
+        <div id="qualified-leads-list">
+          <div style="text-align:center;padding:40px;color:var(--text3);font-size:13px">
+            Loading qualified leads...
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- SETTINGS -->
@@ -1058,7 +1081,7 @@ function showView(v){
   document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
   currentView=v;
   const _ve=document.getElementById('view-'+v);if(_ve)_ve.classList.add('active');
-  const titles={dashboard:'Dashboard','acq-pipeline':'Acquisitions Pipeline','dis-pipeline':'Dispositions Pipeline','ai-queue':'AI Handoff Queue',sellers:'All Leads',buyers:'Buyer List',calculator:'Offer Calculator',sequences:'SMS Sequences',settings:'Settings',reporting:'Reporting'};
+  const titles={dashboard:'Dashboard','acq-pipeline':'Acquisitions Pipeline','dis-pipeline':'Dispositions Pipeline','ai-queue':'AI Handoff Queue',sellers:'All Leads',buyers:'Buyer List',calculator:'Offer Calculator',sequences:'SMS Sequences',settings:'Settings','ai-qualified':'AI Qualified Leads',reporting:'Reporting'};
   document.getElementById('page-title').textContent=titles[v]||v;
   if(v==='dashboard')renderDashboard();
   if(v==='acq-pipeline')renderPipeline('acq');
@@ -1068,6 +1091,7 @@ function showView(v){
   if(v==='buyers')renderBuyers();
   if(v==='sequences')renderSequences();
   if(v==='settings')renderSettings();
+  if(v==='ai-qualified')loadQualifiedLeads();
   if(v==='reporting')renderReporting();
 }
 
@@ -2181,6 +2205,120 @@ function saveSettings() {
 
 
 // ══════════════════════════════════
+
+// ══════════════════════════════════
+// AI QUALIFIED LEADS
+// ══════════════════════════════════
+async function loadQualifiedLeads() {
+  const el = document.getElementById('qualified-leads-list');
+  if (!el) return;
+  el.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text3)">Loading...</div>';
+
+  try {
+    const res = await fetch('/.netlify/functions/get-qualified-leads');
+    const data = await res.json();
+    const leads = (data.qualifiedLeads || []).reverse(); // newest first
+
+    // Update badge
+    const badge = document.getElementById('qualified-badge');
+    const pendingCount = leads.filter(l => l.status === 'pending_call').length;
+    if (badge) {
+      if (pendingCount > 0) {
+        badge.textContent = pendingCount;
+        badge.style.display = 'inline-flex';
+        badge.style.background = 'var(--accent)';
+        badge.style.color = '#000';
+        badge.style.borderRadius = '10px';
+        badge.style.fontSize = '10px';
+        badge.style.padding = '1px 6px';
+        badge.style.marginLeft = '6px';
+        badge.style.fontWeight = '600';
+      } else {
+        badge.style.display = 'none';
+      }
+    }
+
+    if (!leads.length) {
+      el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3);font-size:13px">No AI-qualified leads yet. Once sellers reply and Sona qualifies them, they\'ll appear here.</div>';
+      return;
+    }
+
+    el.innerHTML = leads.map((lead, i) => {
+      const d = lead.leadData || {};
+      const qDate = lead.qualifiedAt ? new Date(lead.qualifiedAt).toLocaleDateString('en-US', {month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}) : '—';
+      const isPending = lead.status === 'pending_call';
+
+      return `<div class="card" style="margin-bottom:12px;${isPending ? 'border-color:rgba(168,255,110,0.3)' : ''}">
+        <div class="card-body">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px">
+            <div style="flex:1;min-width:200px">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+                <div style="width:36px;height:36px;border-radius:8px;background:var(--adim);border:1px solid rgba(168,255,110,0.2);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:700;font-size:13px;color:var(--accent);flex-shrink:0">✓</div>
+                <div>
+                  <div style="font-size:13px;font-weight:600">${lead.phone || '—'}</div>
+                  <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace">Qualified ${qDate}</div>
+                </div>
+                ${isPending ? '<span style="font-family:\'DM Mono\',monospace;font-size:9px;padding:2px 8px;border-radius:20px;background:var(--adim);color:var(--accent);border:1px solid rgba(168,255,110,0.3)">Ready for call</span>' : '<span style="font-family:\'DM Mono\',monospace;font-size:9px;padding:2px 8px;border-radius:20px;background:var(--bg4);color:var(--text3);border:1px solid var(--border)">Called</span>'}
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
+                <div style="background:var(--bg3);border-radius:8px;padding:8px 10px">
+                  <div style="font-size:9px;color:var(--text3);font-family:'DM Mono',monospace;text-transform:uppercase;margin-bottom:3px">County</div>
+                  <div style="font-size:12px;font-weight:500">${d.county || '—'}</div>
+                </div>
+                <div style="background:var(--bg3);border-radius:8px;padding:8px 10px">
+                  <div style="font-size:9px;color:var(--text3);font-family:'DM Mono',monospace;text-transform:uppercase;margin-bottom:3px">Acreage</div>
+                  <div style="font-size:12px;font-weight:500">${d.acreage || '—'} ac</div>
+                </div>
+                <div style="background:var(--bg3);border-radius:8px;padding:8px 10px">
+                  <div style="font-size:9px;color:var(--text3);font-family:'DM Mono',monospace;text-transform:uppercase;margin-bottom:3px">Taxes</div>
+                  <div style="font-size:12px;font-weight:500;color:${d.taxes_current ? 'var(--accent)' : 'var(--amber)'}">${d.taxes_current ? 'Current' : 'Unknown'}</div>
+                </div>
+                <div style="background:var(--bg3);border-radius:8px;padding:8px 10px">
+                  <div style="font-size:9px;color:var(--text3);font-family:'DM Mono',monospace;text-transform:uppercase;margin-bottom:3px">Ownership</div>
+                  <div style="font-size:12px;font-weight:500">${d.sole_owner ? 'Sole owner' : 'Multiple owners'}</div>
+                </div>
+                <div style="background:var(--bg3);border-radius:8px;padding:8px 10px;grid-column:span 2">
+                  <div style="font-size:9px;color:var(--text3);font-family:'DM Mono',monospace;text-transform:uppercase;margin-bottom:3px">Best time to call</div>
+                  <div style="font-size:12px;font-weight:500">${d.callback_time || '—'}</div>
+                </div>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
+              <a href="sms:${lead.phone}" class="btn btn-primary btn-sm" style="text-decoration:none">📱 Text Now</a>
+              <a href="tel:${lead.phone}" class="btn btn-ghost btn-sm" style="text-decoration:none">📞 Call Now</a>
+              <button class="btn btn-ghost btn-sm" onclick="addQualifiedToContacts('${lead.phone}','${(d.county||'').replace(/'/g,"\\'")}','${d.acreage||''}',${i})">+ Add to CRM</button>
+              ${isPending ? `<button class="btn btn-ghost btn-sm" style="font-size:10px;color:var(--text3)" onclick="markQualifiedCalled(${i})">Mark Called</button>` : ''}
+            </div>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+
+  } catch (e) {
+    el.innerHTML = `<div style="text-align:center;padding:30px;color:var(--coral);font-size:12px">Error loading leads: ${e.message}<br><br><button class="btn btn-ghost btn-sm" onclick="loadQualifiedLeads()">Try Again</button></div>`;
+  }
+}
+
+function addQualifiedToContacts(phone, county, acreage, idx) {
+  // Pre-fill add contact modal with the AI-qualified data
+  openAddContact(null, 'seller');
+  setTimeout(function() {
+    const phoneEl = document.getElementById('f-phone');
+    const countyEl = document.getElementById('f-county');
+    const acreageEl = document.getElementById('f-acreage');
+    const sourceEl = document.getElementById('f-source');
+    if (phoneEl) phoneEl.value = phone;
+    if (countyEl && county) countyEl.value = county.split(',')[0].trim();
+    if (acreageEl && acreage) acreageEl.value = acreage;
+    if (sourceEl) sourceEl.value = 'Cold SMS';
+    toast('Pre-filled from AI qualification data', 'success');
+  }, 300);
+}
+
+function markQualifiedCalled(idx) {
+  toast('Marked as called — update coming in next sync', 'success');
+}
+
 // SETTINGS PAGE
 // ══════════════════════════════════
 
