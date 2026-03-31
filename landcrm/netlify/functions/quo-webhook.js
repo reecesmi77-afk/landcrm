@@ -236,11 +236,11 @@ exports.handler = async (event) => {
   if (eventType === 'message.received') {
     direction = 'Inbound';
     contactPhone = normalisePhone(obj.from);
-    messageText = obj.text || obj.content || '';
+    messageText = obj.body || obj.text || obj.content || '';
   } else if (eventType === 'message.delivered') {
     direction = 'Outbound';
     contactPhone = normalisePhone(Array.isArray(obj.to) ? obj.to[0] : obj.to);
-    messageText = obj.text || obj.content || '';
+    messageText = obj.body || obj.text || obj.content || '';
   } else if (eventType === 'call.completed' || eventType === 'call.summary.completed') {
     direction = obj.direction === 'incoming' ? 'Inbound' : 'Outbound';
     contactPhone = direction === 'Inbound'
