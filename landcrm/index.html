@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Land CRM</title>
+<title>REI Razor</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 
@@ -308,6 +308,80 @@ tbody td{padding:10px 12px;font-size:12px;}
 ::-webkit-scrollbar-track{background:transparent;}
 ::-webkit-scrollbar-thumb{background:var(--bg5);border-radius:3px;}
 code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mono',monospace;font-size:10px;}
+
+/* ── DD CHECKLIST ── */
+.dd-section{margin-bottom:14px;}
+.dd-section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.dd-section-title{font-family:'DM Mono',monospace;font-size:9px;color:var(--accent);text-transform:uppercase;letter-spacing:1px;font-weight:500;}
+.dd-item{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:6px;}
+.dd-item-prompt{font-size:12px;color:var(--text);margin-bottom:7px;line-height:1.4;font-style:italic;}
+.dd-toggle-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:7px;}
+.dd-toggle{padding:4px 12px;border-radius:20px;font-size:11px;font-family:'DM Mono',monospace;cursor:pointer;border:1px solid var(--border2);background:var(--bg4);color:var(--text3);transition:all 0.15s;line-height:1.4;}
+.dd-toggle:hover{border-color:var(--accent);color:var(--text);}
+.dd-toggle.yes.active{background:var(--adim);color:var(--accent);border-color:rgba(168,255,110,0.4);}
+.dd-toggle.no.active{background:var(--cdim);color:var(--coral);border-color:rgba(255,122,92,0.4);}
+.dd-toggle.na.active{background:var(--ambdim);color:var(--amber);border-color:rgba(255,184,77,0.4);}
+.dd-toggle.opt.active{background:var(--bdim);color:var(--blue);border-color:rgba(92,184,255,0.4);}
+.dd-notes-input{width:100%;background:var(--bg4);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:6px 10px;font-size:11px;font-family:'DM Sans',sans-serif;outline:none;resize:vertical;min-height:36px;margin-top:2px;box-sizing:border-box;}
+.dd-notes-input:focus{border-color:var(--accent);}
+.dd-notes-input::placeholder{color:var(--text3);}
+.motivation-box{background:var(--bg3);border:1px solid rgba(255,184,77,0.2);border-radius:10px;padding:12px 14px;margin-bottom:14px;}
+.motivation-label{font-family:'DM Mono',monospace;font-size:9px;color:var(--amber);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;}
+
+/* ── DRAG AND DROP ── */
+.pipeline-col{transition:background 0.15s;}
+.pipeline-col.drag-over{background:var(--adim);border-color:rgba(168,255,110,0.3);}
+.pipeline-card{cursor:grab;}
+.pipeline-card.dragging{opacity:0.4;cursor:grabbing;}
+.drop-indicator{height:4px;background:var(--accent);border-radius:2px;margin:4px 0;display:none;}
+.drop-indicator.visible{display:block;}
+
+/* AI BRIEFING */
+.briefing-modal{max-width:680px;}
+.briefing-output{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:16px;font-family:'DM Mono',monospace;font-size:11px;line-height:1.7;color:var(--text2);white-space:pre-wrap;max-height:60vh;overflow-y:auto;margin-bottom:14px;}
+.briefing-section{margin-bottom:14px;}
+.briefing-section-title{font-family:'DM Mono',monospace;font-size:9px;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;}
+
+/* ── SETTINGS PAGE ── */
+.settings-layout{display:flex;gap:0;min-height:600px;}
+.settings-nav{width:180px;flex-shrink:0;border-right:1px solid var(--border);padding:8px 0;}
+.settings-nav-item{display:flex;align-items:center;gap:10px;width:100%;padding:10px 16px;background:none;border:none;color:var(--text2);font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;text-align:left;border-radius:0;transition:all 0.15s;border-left:2px solid transparent;}
+.settings-nav-item svg{width:14px;height:14px;flex-shrink:0;opacity:0.6;}
+.settings-nav-item:hover{color:var(--text);background:var(--bg3);}
+.settings-nav-item.active{color:var(--accent);background:var(--adim);border-left-color:var(--accent);}
+.settings-nav-item.active svg{opacity:1;}
+.settings-content{flex:1;padding:28px 32px;overflow-y:auto;}
+.settings-panel{display:none;}
+.settings-panel.active{display:block;}
+.settings-panel-title{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;color:var(--text);margin-bottom:4px;}
+.settings-panel-sub{font-size:12px;color:var(--text3);margin-bottom:24px;}
+.settings-section-label{font-family:'DM Mono',monospace;font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;margin-top:20px;padding-bottom:6px;border-bottom:1px solid var(--border);}
+.settings-avatar-row{display:flex;align-items:center;gap:14px;margin-bottom:24px;padding:16px;background:var(--bg3);border-radius:12px;border:1px solid var(--border);}
+.settings-avatar{width:48px;height:48px;border-radius:12px;background:var(--adim);border:1px solid rgba(168,255,110,0.2);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:700;font-size:16px;color:var(--accent);flex-shrink:0;}
+.integration-card{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;}
+.integration-card.active-integration{border-color:rgba(168,255,110,0.2);}
+.integration-card-header{display:flex;align-items:flex-start;justify-content:space-between;}
+.integration-name{font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px;}
+.integration-status{font-size:11px;color:var(--text3);}
+.integration-status.connected{color:var(--accent);}
+.integration-badge{font-family:'DM Mono',monospace;font-size:9px;padding:3px 8px;border-radius:20px;font-weight:500;}
+.integration-badge.green{background:var(--adim);color:var(--accent);border:1px solid rgba(168,255,110,0.2);}
+.integration-badge.amber{background:var(--ambdim);color:var(--amber);border:1px solid rgba(255,184,77,0.2);}
+.notification-row{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--border);}
+.notification-row:last-child{border-bottom:none;}
+.toggle-switch{position:relative;display:inline-block;width:36px;height:20px;flex-shrink:0;}
+.toggle-switch input{opacity:0;width:0;height:0;}
+.toggle-slider{position:absolute;cursor:pointer;inset:0;background:var(--bg4);border:1px solid var(--border2);border-radius:20px;transition:0.2s;}
+.toggle-slider:before{content:"";position:absolute;height:14px;width:14px;left:2px;bottom:2px;background:var(--text3);border-radius:50%;transition:0.2s;}
+.toggle-switch input:checked + .toggle-slider{background:var(--adim);border-color:rgba(168,255,110,0.4);}
+.toggle-switch input:checked + .toggle-slider:before{transform:translateX(16px);background:var(--accent);}
+.accent-swatch{width:28px;height:28px;border-radius:50%;border:2px solid transparent;cursor:pointer;transition:transform 0.15s;}
+.accent-swatch:hover{transform:scale(1.15);}
+.accent-swatch.active{border-color:var(--text);transform:scale(1.15);}
+.data-action-row{display:flex;align-items:center;justify-content:space-between;padding:16px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;margin-bottom:10px;}
+.team-member-row{display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;}
+.team-member-avatar{width:36px;height:36px;border-radius:8px;background:var(--bg4);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:700;font-size:12px;color:var(--accent);flex-shrink:0;}
+.team-role-badge{font-family:'DM Mono',monospace;font-size:9px;padding:2px 8px;border-radius:20px;border:1px solid var(--border2);color:var(--text3);background:var(--bg4);}
 </style>
 </head>
 <body>
@@ -320,8 +394,8 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
         <path d="M7 11V7a5 5 0 0110 0v4"/>
       </svg>
     </div>
-    <div class="login-logo">LAND CRM</div>
-    <div class="login-sub">Command Center</div>
+    <div class="login-logo">REI RAZOR</div>
+    <div class="login-sub">AI-Powered CRM</div>
     <label class="login-label">Password</label>
     <input class="login-input" type="password" id="login-input" placeholder="Enter your password" onkeydown="if(event.key==='Enter')attemptLogin()">
     <button class="login-btn" onclick="attemptLogin()">Unlock</button>
@@ -331,8 +405,8 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
 
 <div id="app-root" style="display:flex;width:100%;"><aside id="sidebar">
   <div class="logo">
-    <div class="logo-mark">LAND CRM</div>
-    <div class="logo-sub">Command Center</div>
+    <div class="logo-mark">REI RAZOR</div>
+    <div class="logo-sub">AI-Powered CRM</div>
   </div>
   <nav>
     <div class="nav-section">
@@ -399,7 +473,11 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
       </button>
       <button class="nav-item" onclick="showView('sequences')">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h8M2 12h5"/></svg>
-        SMS sequences
+        SMS Sequences
+      </button>
+      <button class="nav-item" onclick="showView('settings')">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="2.5"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M3.05 12.95l1.41-1.41M11.54 4.46l1.41-1.41"/></svg>
+        Settings
       </button>
     </div>
   </nav>
@@ -414,9 +492,10 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
   <div id="topbar">
     <div class="page-title" id="page-title">Dashboard</div>
     <div style="display:flex;gap:8px;align-items:center;">
+      <button class="btn btn-ghost btn-sm" onclick="generateBriefing()">AI Briefing</button>
       <button class="btn btn-ghost btn-sm" onclick="syncFromQuo()">Sync Quo</button>
       <button class="btn btn-ghost btn-sm" onclick="openFollowupModal()">Generate SMS</button>
-      <button class="btn btn-primary btn-sm" onclick="openAddContact()">+ Add contact</button>
+      <button class="btn btn-primary btn-sm" onclick="openAddContact()">+ Add Contact</button>
     </div>
   </div>
   <div id="content">
@@ -432,7 +511,7 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
       </div>
       <div class="dash-grid">
         <div class="card">
-          <div class="card-header"><span class="card-title">Action items — today</span><button class="btn btn-ghost btn-sm" onclick="renderDashboard()">Refresh</button></div>
+          <div class="card-header"><span class="card-title">Action Items — Today</span><button class="btn btn-ghost btn-sm" onclick="renderDashboard()">Refresh</button></div>
           <div class="card-body" id="today-list"></div>
         </div>
         <div style="display:flex;flex-direction:column;gap:14px;">
@@ -467,7 +546,7 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
     <!-- AI HANDOFF QUEUE -->
     <div id="view-ai-queue" class="view">
       <div style="background:var(--ai-dim);border:1px solid rgba(240,165,0,0.25);border-radius:var(--rl);padding:16px;margin-bottom:20px;">
-        <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--ai-color);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">AI handoff queue</div>
+        <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--ai-color);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">AI Handoff Queue</div>
         <div style="font-size:12px;color:var(--text2);">These leads have been touched 3+ times with no response, or are flagged "Needs human review." Your AI agent has done its job — now it's your turn to step in personally.</div>
       </div>
       <div class="card">
@@ -523,11 +602,322 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
       <div class="buyer-grid" id="buyer-grid"></div>
     </div>
 
-    <!-- CALCULATOR -->
+    <!-- SETTINGS -->
+    <div id="view-settings" class="view">
+      <div class="settings-layout">
+
+        <!-- Settings sidebar nav -->
+        <div class="settings-nav">
+          <button class="settings-nav-item active" onclick="switchSettingsTab('profile',this)">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="5" r="3"/><path d="M2 14c0-3.314 2.686-6 6-6s6 2.686 6 6"/></svg>
+            Profile
+          </button>
+          <button class="settings-nav-item" onclick="switchSettingsTab('business',this)">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="6" width="12" height="8" rx="1"/><path d="M5 6V4a3 3 0 016 0v2"/></svg>
+            Business
+          </button>
+          <button class="settings-nav-item" onclick="switchSettingsTab('deal-defaults',this)">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v12M4 6h8M4 10h8"/></svg>
+            Deal Defaults
+          </button>
+          <button class="settings-nav-item" onclick="switchSettingsTab('integrations',this)">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 3h4M8 3v2M3 8h2M11 8h2M8 11v2M5.5 5.5l-1.5 1.5M10.5 5.5l1.5 1.5M5.5 10.5l-1.5 1.5M10.5 10.5l1.5 1.5"/><circle cx="8" cy="8" r="2.5"/></svg>
+            Integrations
+          </button>
+          <button class="settings-nav-item" onclick="switchSettingsTab('team',this)">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="5" r="2.5"/><path d="M1 13c0-2.761 2.239-5 5-5"/><circle cx="11" cy="6" r="2"/><path d="M15 13c0-2.209-1.791-4-4-4s-4 1.791-4 4"/></svg>
+            Team
+          </button>
+          <button class="settings-nav-item" onclick="switchSettingsTab('notifications',this)">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2a5 5 0 00-5 5v3l-1 2h12l-1-2V7a5 5 0 00-5-5zM6.5 13a1.5 1.5 0 003 0"/></svg>
+            Notifications
+          </button>
+          <button class="settings-nav-item" onclick="switchSettingsTab('appearance',this)">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 4v4l3 2"/></svg>
+            Appearance
+          </button>
+          <button class="settings-nav-item" onclick="switchSettingsTab('data',this)">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><ellipse cx="8" cy="4" rx="5" ry="2"/><path d="M3 4v4c0 1.105 2.239 2 5 2s5-.895 5-2V4M3 8v4c0 1.105 2.239 2 5 2s5-.895 5-2V8"/></svg>
+            Data
+          </button>
+        </div>
+
+        <!-- Settings content panels -->
+        <div class="settings-content">
+
+          <!-- PROFILE -->
+          <div class="settings-panel active" id="stab-profile">
+            <div class="settings-panel-title">Profile</div>
+            <div class="settings-panel-sub">Your personal information and contact details</div>
+            <div class="settings-avatar-row">
+              <div class="settings-avatar" id="settings-avatar-initials">WS</div>
+              <div>
+                <div style="font-size:13px;font-weight:500;margin-bottom:2px" id="settings-avatar-name">Your Name</div>
+                <div style="font-size:11px;color:var(--text3)">Account owner</div>
+              </div>
+            </div>
+            <div class="form-grid">
+              <div class="form-group"><label class="form-label">First name</label><input class="form-input" id="s-firstname" placeholder="William" oninput="saveSettings();updateSettingsAvatar()"></div>
+              <div class="form-group"><label class="form-label">Last name</label><input class="form-input" id="s-lastname" placeholder="Smith" oninput="saveSettings();updateSettingsAvatar()"></div>
+              <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="s-email" type="email" placeholder="you@example.com" oninput="saveSettings()"></div>
+              <div class="form-group"><label class="form-label">Phone</label><input class="form-input" id="s-phone" placeholder="901-555-0100" oninput="saveSettings()"></div>
+              <div class="form-group"><label class="form-label">Time zone</label>
+                <select class="form-select" id="s-timezone" onchange="saveSettings()">
+                  <option value="CT">Central Time (CT)</option>
+                  <option value="ET">Eastern Time (ET)</option>
+                  <option value="MT">Mountain Time (MT)</option>
+                  <option value="PT">Pacific Time (PT)</option>
+                </select>
+              </div>
+              <div class="form-group"><label class="form-label">Role</label>
+                <select class="form-select" id="s-role" onchange="saveSettings()">
+                  <option value="owner">Owner</option>
+                  <option value="acquisitions">Acquisitions</option>
+                  <option value="disposition">Disposition</option>
+                  <option value="va">Virtual Assistant</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- BUSINESS -->
+          <div class="settings-panel" id="stab-business">
+            <div class="settings-panel-title">Business</div>
+            <div class="settings-panel-sub">Your company details used across the CRM</div>
+            <div class="form-grid">
+              <div class="form-group"><label class="form-label">Business name</label><input class="form-input" id="s-biz" placeholder="Smith Land Co." oninput="saveSettings()"></div>
+              <div class="form-group"><label class="form-label">Website</label><input class="form-input" id="s-website" placeholder="smithlandco.com" oninput="saveSettings()"></div>
+              <div class="form-group form-full"><label class="form-label">Mailing address</label><input class="form-input" id="s-address" placeholder="123 Main St, Memphis TN 38101" oninput="saveSettings()"></div>
+              <div class="form-group"><label class="form-label">Primary markets</label><input class="form-input" id="s-states" placeholder="TN, MS, AR, MO" oninput="saveSettings()"></div>
+              <div class="form-group"><label class="form-label">Default deal type</label>
+                <select class="form-select" id="s-dealtype" onchange="saveSettings()">
+                  <option value="wholesale">Wholesale / Assignment</option>
+                  <option value="double-close">Double Close</option>
+                </select>
+              </div>
+              <div class="form-group"><label class="form-label">Lead source focus</label>
+                <select class="form-select" id="s-leadsource" onchange="saveSettings()">
+                  <option>Cold SMS</option>
+                  <option>Direct mail</option>
+                  <option>Cold calling</option>
+                  <option>Mixed</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- DEAL DEFAULTS -->
+          <div class="settings-panel" id="stab-deal-defaults">
+            <div class="settings-panel-title">Deal Defaults</div>
+            <div class="settings-panel-sub">Pre-fill values used in your Purchase Agreements and Offer Calculator</div>
+            <div class="settings-section-label">Purchase Agreement</div>
+            <div class="form-grid" style="margin-bottom:20px">
+              <div class="form-group"><label class="form-label">Closing timeline (days)</label><input class="form-input" id="s-closing-days" type="number" placeholder="30" oninput="saveSettings()"></div>
+              <div class="form-group"><label class="form-label">Earnest money ($)</label><input class="form-input" id="s-earnest" type="number" placeholder="100" oninput="saveSettings()"></div>
+              <div class="form-group form-full"><label class="form-label">Preferred title company</label><input class="form-input" id="s-title-co" placeholder="Acme Title — Memphis, TN" oninput="saveSettings()"></div>
+              <div class="form-group form-full"><label class="form-label">Title company phone</label><input class="form-input" id="s-title-phone" placeholder="901-555-0200" oninput="saveSettings()"></div>
+            </div>
+            <div class="settings-section-label">Offer Calculator</div>
+            <div class="form-grid">
+              <div class="form-group"><label class="form-label">Target profit — wholesale ($)</label><input class="form-input" id="s-profit" type="number" placeholder="5000" oninput="saveSettings()"></div>
+              <div class="form-group"><label class="form-label">Closing costs ($)</label><input class="form-input" id="s-closing-cost" type="number" placeholder="500" oninput="saveSettings()"></div>
+              <div class="form-group"><label class="form-label">Assignment fee ($)</label><input class="form-input" id="s-fee" type="number" placeholder="2000" oninput="saveSettings()"></div>
+              <div class="form-group"><label class="form-label">Default comp source</label>
+                <select class="form-select" id="s-comp-source" onchange="saveSettings()">
+                  <option>County assessor</option>
+                  <option>Zillow</option>
+                  <option>Redfin</option>
+                  <option>LandWatch</option>
+                  <option>Lands of America</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- INTEGRATIONS -->
+          <div class="settings-panel" id="stab-integrations">
+            <div class="settings-panel-title">Integrations</div>
+            <div class="settings-panel-sub">Connect REI Razor to your other tools</div>
+
+            <div class="integration-card active-integration">
+              <div class="integration-card-header">
+                <div>
+                  <div class="integration-name">Quo (OpenPhone)</div>
+                  <div class="integration-status connected">Connected</div>
+                </div>
+                <div class="integration-badge green">Active</div>
+              </div>
+              <div class="form-grid" style="margin-top:12px">
+                <div class="form-group form-full">
+                  <label class="form-label">Your Quo phone number ID</label>
+                  <input class="form-input" id="s-quo-pnid" placeholder="PNxxxxxxxx — found in Quo Settings" oninput="saveSettings()">
+                </div>
+                <div class="form-group form-full">
+                  <label class="form-label">Webhook URL — register this in Quo</label>
+                  <div style="display:flex;gap:8px">
+                    <input class="form-input" id="s-webhook-url" readonly style="color:var(--text3);flex:1">
+                    <button class="btn btn-ghost btn-sm" onclick="copyWebhookUrl()" style="white-space:nowrap">Copy URL</button>
+                  </div>
+                  <div style="font-size:10px;color:var(--text3);margin-top:4px">Quo → Integrations → Webhooks → Add Webhook → paste this URL</div>
+                </div>
+              </div>
+              <div style="margin-top:10px;display:flex;gap:8px">
+                <button class="btn btn-ghost btn-sm" onclick="syncFromQuo()">Test Sync</button>
+              </div>
+            </div>
+
+            <div class="integration-card">
+              <div class="integration-card-header">
+                <div>
+                  <div class="integration-name">PandaDoc</div>
+                  <div class="integration-status">E-signature & document generation</div>
+                </div>
+                <div class="integration-badge amber">Coming Soon</div>
+              </div>
+              <div style="font-size:11px;color:var(--text3);margin-top:8px">Send pre-filled Purchase Agreements for e-signature directly from a contact record.</div>
+            </div>
+
+            <div class="integration-card">
+              <div class="integration-card-header">
+                <div>
+                  <div class="integration-name">JSONbin</div>
+                  <div class="integration-status">Webhook event storage</div>
+                </div>
+                <div class="integration-badge green">Active</div>
+              </div>
+              <div style="font-size:11px;color:var(--text3);margin-top:8px">Stores incoming Quo events between syncs. Bin ID is set as a Netlify environment variable.</div>
+            </div>
+
+            <div class="integration-card">
+              <div class="integration-card-header">
+                <div>
+                  <div class="integration-name">Claude AI</div>
+                  <div class="integration-status">Morning briefings & deal analysis</div>
+                </div>
+                <div class="integration-badge green">Active</div>
+              </div>
+              <div style="font-size:11px;color:var(--text3);margin-top:8px">Use the AI Briefing button to export your pipeline for Claude analysis. Direct API integration coming soon.</div>
+            </div>
+          </div>
+
+          <!-- TEAM -->
+          <div class="settings-panel" id="stab-team">
+            <div class="settings-panel-title">Team</div>
+            <div class="settings-panel-sub">Manage team members and their access levels</div>
+            <div style="background:var(--adim);border:1px solid rgba(168,255,110,0.15);border-radius:10px;padding:14px;margin-bottom:20px;font-size:12px;color:var(--text2);line-height:1.6">
+              <strong style="color:var(--accent)">Solo operator mode</strong> — REI Razor currently runs as a single-user CRM. Team member records are stored here for reference and contact assignment. Full multi-user access with individual logins is on the roadmap as your business scales.
+            </div>
+            <div id="team-members-list" style="margin-bottom:16px"></div>
+            <button class="btn btn-ghost btn-sm" onclick="openAddTeamMember()">+ Add Team Member</button>
+          </div>
+
+          <!-- NOTIFICATIONS -->
+          <div class="settings-panel" id="stab-notifications">
+            <div class="settings-panel-title">Notifications</div>
+            <div class="settings-panel-sub">Choose what triggers an alert in your CRM</div>
+            <div class="form-grid" style="gap:0">
+              <div class="notification-row form-full">
+                <div>
+                  <div style="font-size:13px;font-weight:500">AI handoff — lead needs attention</div>
+                  <div style="font-size:11px;color:var(--text3)">When Sona flags a lead for human follow-up</div>
+                </div>
+                <label class="toggle-switch"><input type="checkbox" id="n-handoff" checked onchange="saveSettings()"><span class="toggle-slider"></span></label>
+              </div>
+              <div class="notification-row form-full">
+                <div>
+                  <div style="font-size:13px;font-weight:500">New inbound SMS</div>
+                  <div style="font-size:11px;color:var(--text3)">When a seller replies via Quo</div>
+                </div>
+                <label class="toggle-switch"><input type="checkbox" id="n-sms" checked onchange="saveSettings()"><span class="toggle-slider"></span></label>
+              </div>
+              <div class="notification-row form-full">
+                <div>
+                  <div style="font-size:13px;font-weight:500">Lead moves to Qualified</div>
+                  <div style="font-size:11px;color:var(--text3)">When a seller reaches the Qualified stage</div>
+                </div>
+                <label class="toggle-switch"><input type="checkbox" id="n-qualified" checked onchange="saveSettings()"><span class="toggle-slider"></span></label>
+              </div>
+              <div class="notification-row form-full">
+                <div>
+                  <div style="font-size:13px;font-weight:500">Deal goes Under Contract</div>
+                  <div style="font-size:11px;color:var(--text3)">Reminder to start working the buyer side</div>
+                </div>
+                <label class="toggle-switch"><input type="checkbox" id="n-contract" checked onchange="saveSettings()"><span class="toggle-slider"></span></label>
+              </div>
+              <div class="notification-row form-full">
+                <div>
+                  <div style="font-size:13px;font-weight:500">Stale lead alert</div>
+                  <div style="font-size:11px;color:var(--text3)">When a lead hasn't been touched in 7+ days</div>
+                </div>
+                <label class="toggle-switch"><input type="checkbox" id="n-stale" onchange="saveSettings()"><span class="toggle-slider"></span></label>
+              </div>
+            </div>
+          </div>
+
+          <!-- APPEARANCE -->
+          <div class="settings-panel" id="stab-appearance">
+            <div class="settings-panel-title">Appearance</div>
+            <div class="settings-panel-sub">Customize how REI Razor looks</div>
+            <div class="notification-row" style="margin-bottom:16px">
+              <div>
+                <div style="font-size:13px;font-weight:500">Dark mode</div>
+                <div style="font-size:11px;color:var(--text3)">Toggle between dark and light theme</div>
+              </div>
+              <button class="btn btn-ghost btn-sm" onclick="toggleMode()">Toggle Theme</button>
+            </div>
+            <div style="margin-bottom:16px">
+              <div style="font-size:12px;font-weight:500;margin-bottom:10px;color:var(--text2)">Accent color</div>
+              <div style="display:flex;gap:10px;flex-wrap:wrap">
+                <button class="accent-swatch active" style="background:#a8ff6e" onclick="setAccent('green',this)" title="Green (default)"></button>
+                <button class="accent-swatch" style="background:#5cb8ff" onclick="setAccent('blue',this)" title="Blue"></button>
+                <button class="accent-swatch" style="background:#c084fc" onclick="setAccent('purple',this)" title="Purple"></button>
+                <button class="accent-swatch" style="background:#ff7a5c" onclick="setAccent('coral',this)" title="Coral"></button>
+                <button class="accent-swatch" style="background:#ffb84d" onclick="setAccent('amber',this)" title="Amber"></button>
+                <button class="accent-swatch" style="background:#4dd6b4" onclick="setAccent('teal',this)" title="Teal"></button>
+              </div>
+            </div>
+          </div>
+
+          <!-- DATA -->
+          <div class="settings-panel" id="stab-data">
+            <div class="settings-panel-title">Data Management</div>
+            <div class="settings-panel-sub">Export, import, and manage your CRM data</div>
+            <div class="data-action-row">
+              <div>
+                <div style="font-size:13px;font-weight:500">Export all data</div>
+                <div style="font-size:11px;color:var(--text3)">Download a full JSON backup of all contacts, settings, and pipeline data</div>
+              </div>
+              <button class="btn btn-ghost btn-sm" onclick="exportData()">Export JSON</button>
+            </div>
+            <div class="data-action-row">
+              <div>
+                <div style="font-size:13px;font-weight:500">Clear sample contacts</div>
+                <div style="font-size:11px;color:var(--text3)">Remove the pre-loaded sample leads and buyers</div>
+              </div>
+              <button class="btn btn-ghost btn-sm" onclick="clearSampleData()">Clear Samples</button>
+            </div>
+            <div class="data-action-row" style="border-color:rgba(255,122,92,0.2)">
+              <div>
+                <div style="font-size:13px;font-weight:500;color:var(--coral)">Reset all data</div>
+                <div style="font-size:11px;color:var(--text3)">Permanently delete everything and start fresh. Cannot be undone.</div>
+              </div>
+              <button class="btn btn-danger btn-sm" onclick="confirmReset()">Reset</button>
+            </div>
+            <div style="margin-top:20px;padding:14px;background:var(--bg3);border-radius:10px;font-size:11px;color:var(--text3);line-height:1.6">
+              <strong style="color:var(--text2)">Storage info</strong><br>
+              All data is stored locally in your browser via localStorage. Export regularly as a backup. Data is not shared between browsers or devices unless you redeploy with a backend database.
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- CALCULATOR -->    <!-- CALCULATOR -->
     <div id="view-calculator" class="view">
       <div style="max-width:660px;">
         <div class="card">
-          <div class="card-header"><span class="card-title">Land offer calculator — per acre model</span></div>
+          <div class="card-header"><span class="card-title">Land Offer Calculator — Per Acre Model</span></div>
           <div class="card-body">
             <div class="form-grid-3" style="margin-bottom:18px;">
               <div class="form-group"><label class="form-label">Acreage</label><input class="form-input" type="number" id="c-acres" placeholder="10" oninput="calcLand()"></div>
@@ -588,10 +978,10 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
     <!-- REPORTING -->
     <div id="view-reporting" class="view">
       <div class="report-grid">
-        <div class="card"><div class="card-header"><span class="card-title">Acquisitions funnel</span></div><div class="card-body" id="acq-funnel"></div></div>
-        <div class="card"><div class="card-header"><span class="card-title">Touch effectiveness</span></div><div class="card-body" id="touch-report"></div></div>
-        <div class="card"><div class="card-header"><span class="card-title">Lead source performance</span></div><div class="card-body" id="source-report"></div></div>
-        <div class="card"><div class="card-header"><span class="card-title">Deals by state</span></div><div class="card-body" id="state-report"></div></div>
+        <div class="card"><div class="card-header"><span class="card-title">Acquisitions Funnel</span></div><div class="card-body" id="acq-funnel"></div></div>
+        <div class="card"><div class="card-header"><span class="card-title">Touch Effectiveness</span></div><div class="card-body" id="touch-report"></div></div>
+        <div class="card"><div class="card-header"><span class="card-title">Lead Source Performance</span></div><div class="card-body" id="source-report"></div></div>
+        <div class="card"><div class="card-header"><span class="card-title">Deals By State</span></div><div class="card-body" id="state-report"></div></div>
       </div>
     </div>
 
@@ -668,7 +1058,7 @@ function showView(v){
   document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
   currentView=v;
   const _ve=document.getElementById('view-'+v);if(_ve)_ve.classList.add('active');
-  const titles={dashboard:'Dashboard','acq-pipeline':'Acquisitions pipeline','dis-pipeline':'Dispositions pipeline','ai-queue':'AI handoff queue',sellers:'All leads',buyers:'Buyer list',calculator:'Offer calculator',sequences:'SMS sequences',reporting:'Reporting'};
+  const titles={dashboard:'Dashboard','acq-pipeline':'Acquisitions Pipeline','dis-pipeline':'Dispositions Pipeline','ai-queue':'AI Handoff Queue',sellers:'All Leads',buyers:'Buyer List',calculator:'Offer Calculator',sequences:'SMS Sequences',settings:'Settings',reporting:'Reporting'};
   document.getElementById('page-title').textContent=titles[v]||v;
   if(v==='dashboard')renderDashboard();
   if(v==='acq-pipeline')renderPipeline('acq');
@@ -677,6 +1067,7 @@ function showView(v){
   if(v==='sellers')renderSellers();
   if(v==='buyers')renderBuyers();
   if(v==='sequences')renderSequences();
+  if(v==='settings')renderSettings();
   if(v==='reporting')renderReporting();
 }
 
@@ -743,7 +1134,7 @@ function renderPipeline(pipeline){
   const contacts=db.contacts.filter(c=>c.pipeline===pipeline);
   board.innerHTML=stages.map((stage,i)=>{
     const cards=contacts.filter(c=>c.stage===stage);
-    return`<div class="pipeline-col" style="border-top:3px solid ${colors[i]}20;">
+    return`<div class="pipeline-col" data-stage="${stage}" style="border-top:3px solid ${colors[i]}20;" ondragover="onColDragOver(event,'${stage}')" ondrop="onColDrop(event,'${stage}','${pipeline}')">
       <div class="pipeline-col-header" style="border-top:3px solid ${colors[i]};">
         <span class="pipeline-col-name">${stage}</span>
         <span class="pipeline-count">${cards.length}</span>
@@ -755,7 +1146,7 @@ function renderPipeline(pipeline){
           const escalate=tc>=5;
           const badgeCls=escalate?'alert':tc>=3?'warn':'';
           const cardCls=escalate?'escalate':nh?'needs-review':'';
-          return`<div class="pipeline-card ${cardCls}" onclick="openDetail('${c.id}')">
+          return`<div class="pipeline-card ${cardCls}" draggable="true" data-contact-id="${c.id}" ondragstart="onCardDragStart(event,'${c.id}','${pipeline}')" ondragend="onCardDragEnd(event)" onclick="openDetail('${c.id}')">
             <div class="touch-badge ${badgeCls}">${tc}x</div>
             <div class="pc-name" style="padding-right:28px">${c.name}</div>
             <div class="pc-loc">${c.acreage}ac · ${c.county}, ${c.state}</div>
@@ -895,6 +1286,8 @@ function openDetail(id){
         <div class="parcel-inner">
           <div class="parcel-item"><div class="parcel-item-label">Acreage</div><div class="parcel-item-val accent">${c.acreage||'—'} ac</div></div>
           <div class="parcel-item"><div class="parcel-item-label">County / State</div><div class="parcel-item-val">${c.county||'—'}, ${c.state||'—'}</div></div>
+          <div class="parcel-item"><div class="parcel-item-label">City</div><div class="parcel-item-val">${c.city||'—'}</div></div>
+          <div class="parcel-item"><div class="parcel-item-label">Zip</div><div class="parcel-item-val">${c.zip||'—'}</div></div>
           <div class="parcel-item"><div class="parcel-item-label">Zoning</div><div class="parcel-item-val">${c.zoning||'—'}</div></div>
           <div class="parcel-item"><div class="parcel-item-label">Road access</div><div class="parcel-item-val">${c.road||'—'}</div></div>
           <div class="parcel-item"><div class="parcel-item-label">Utilities</div><div class="parcel-item-val">${c.utilities||'—'}</div></div>
@@ -913,11 +1306,12 @@ function openDetail(id){
         <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px">
           ${stages.map(s=>`<button class="btn btn-ghost btn-sm ${s===c.stage?'active':''}" onclick="moveStage('${id}','${s}')">${s}</button>`).join('')}
         </div>
-        ${c.pipeline==='acq'?`<button class="btn btn-ghost btn-sm" style="border-color:rgba(168,255,110,0.3);color:var(--accent)" onclick="moveToDispo('${id}')">Move to dispositions →</button>`:''}
+        ${c.pipeline==='acq'?`<button class="btn btn-ghost btn-sm" style="border-color:rgba(168,255,110,0.3);color:var(--accent)" onclick="moveToDispo('${id}')">Move To Dispositions →</button>`:''}
+      <button class="btn btn-ghost btn-sm" style="margin-top:8px;border-color:rgba(92,184,255,0.3);color:var(--blue)" onclick="openCalcForContact('${id}')">&#x26A1; Run Offer Math</button>
       </div>
 
       ${nextSMS?`<div style="background:var(--adim);border:1px solid rgba(168,255,110,0.2);border-radius:10px;padding:12px;margin-bottom:14px">
-        <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--accent);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:5px">Suggested next SMS</div>
+        <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--accent);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:5px">Suggested Next SMS</div>
         <div style="font-size:12px;font-weight:500;margin-bottom:3px">${nextSMS.day} — ${nextSMS.type}</div>
         <div style="font-size:11px;color:var(--text3);margin-bottom:8px">${nextSMS.msg.replace(/\{name\}/g,c.name.split(' ')[0]).replace(/\{acres\}/g,c.acreage||'').replace(/\{county\}/g,c.county||'').slice(0,110)}…</div>
         <button class="btn btn-ghost btn-sm" onclick="copyText(\`${nextSMS.msg.replace(/`/g,"'").replace(/\{name\}/g,c.name.split(' ')[0]).replace(/\{acres\}/g,c.acreage||'').replace(/\{county\}/g,c.county||'')}\`)">Copy SMS</button>
@@ -933,7 +1327,7 @@ function openDetail(id){
 
       <!-- ADD TOUCH -->
       <div class="add-touch-form">
-        <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">Log a touch</div>
+        <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">Log A Touch</div>
         <div class="add-touch-grid">
           <div class="form-group"><label class="form-label">Channel</label>
             <select class="form-select" id="touch-channel">
@@ -966,13 +1360,13 @@ function openDetail(id){
       </div>
 
       <!-- NOTES -->
-      <div class="section-label" style="margin-top:14px;margin-bottom:8px">General notes</div>
+      <div class="section-label" style="margin-top:14px;margin-bottom:8px">General Notes</div>
       ${(c.notes||[]).map(n=>`<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:6px"><div style="font-size:9px;font-family:'DM Mono',monospace;color:var(--text3);margin-bottom:4px">${n.date}</div><div style="font-size:12px;line-height:1.5">${n.text}</div></div>`).join('')}
       <textarea class="form-textarea" id="new-note-${id}" placeholder="Add a general note..." style="margin-top:8px;margin-bottom:8px"></textarea>
       <button class="btn btn-ghost btn-sm" onclick="addNote('${id}')">Save note</button>
 
       <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border2);">
-        <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px;">Due diligence checklist</div>
+        <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px;">Due Diligence Checklist</div>
         ${renderDD(c)}
       </div>
     </div>`);
@@ -1070,95 +1464,168 @@ function deleteContact(id){
 // ══════════════════════════════════
 // ADD / EDIT CONTACT
 // ══════════════════════════════════
-function openAddContact(editId){
-  const c=editId?db.contacts.find(x=>x.id===editId):null;
-  openCustomModal(`
-    <div class="modal-header">
-      <div class="modal-title">${c?'Edit lead':'Add lead'}</div>
-      <button class="modal-close" onclick="closeModal()">&#x2715;</button>
-    </div>
-    <div class="modal-body">
-      <div class="form-section">
-        <div class="form-section-title">Contact info</div>
-        <div class="form-grid">
-          <div class="form-group"><label class="form-label">Full name *</label><input class="form-input" id="f-name" value="${c?.name||''}" placeholder="Robert Hines"></div>
-          <div class="form-group"><label class="form-label">Phone</label><input class="form-input" id="f-phone" value="${c?.phone||''}" placeholder="901-555-0100"></div>
-          <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="f-email" value="${c?.email||''}"></div>
-          <div class="form-group"><label class="form-label">Temperature</label>
-            <select class="form-select" id="f-temp">
-              <option value="hot" ${c?.temp==='hot'?'selected':''}>Hot</option>
-              <option value="warm" ${c?.temp==='warm'?'selected':''}>Warm</option>
-              <option value="cold" ${c?.temp==='cold'?'selected':''}>Cold</option>
-            </select>
-          </div>
-        </div>
-      </div>
-      <div class="form-section">
-        <div class="form-section-title">Parcel info</div>
-        <div class="form-grid">
-          <div class="form-group"><label class="form-label">County</label><input class="form-input" id="f-county" value="${c?.county||''}" placeholder="Shelby"></div>
-          <div class="form-group"><label class="form-label">State</label>
-            <select class="form-select" id="f-state">${['TN','MS','AR','MO','AL','KY','GA','TX','OK','LA'].map(s=>`<option ${c?.state===s?'selected':''}>${s}</option>`).join('')}</select>
-          </div>
-          <div class="form-group"><label class="form-label">Acreage</label><input class="form-input" id="f-acreage" value="${c?.acreage||''}" placeholder="12.5"></div>
-          <div class="form-group"><label class="form-label">APN / Parcel ID</label><input class="form-input" id="f-apn" value="${c?.apn||''}" placeholder="123-456-789"></div>
-          <div class="form-group"><label class="form-label">Zoning</label>
-            <select class="form-select" id="f-zoning">${['Agricultural','Residential','Commercial','Unzoned / rural'].map(z=>`<option ${c?.zoning===z?'selected':''}>${z}</option>`).join('')}</select>
-          </div>
-          <div class="form-group"><label class="form-label">Road access</label>
-            <select class="form-select" id="f-road">${['Paved','Dirt / gravel','Landlocked'].map(r=>`<option ${c?.road===r?'selected':''}>${r}</option>`).join('')}</select>
-          </div>
-          <div class="form-group"><label class="form-label">Utilities</label>
-            <select class="form-select" id="f-utilities">${['Available','Nearby','None'].map(u=>`<option ${c?.utilities===u?'selected':''}>${u}</option>`).join('')}</select>
-          </div>
-          <div class="form-group"><label class="form-label">Flood zone</label>
-            <select class="form-select" id="f-flood">${['No','Partial','Yes'].map(f=>`<option ${c?.flood===f?'selected':''}>${f}</option>`).join('')}</select>
-          </div>
-          <div class="form-group"><label class="form-label">Back taxes ($)</label><input class="form-input" id="f-taxes" value="${c?.backTaxes||''}" placeholder="0"></div>
-          <div class="form-group"><label class="form-label">Survey on file</label>
-            <select class="form-select" id="f-survey"><option value="No" ${c?.survey==='No'?'selected':''}>No</option><option value="Yes" ${c?.survey==='Yes'?'selected':''}>Yes</option></select>
-          </div>
-        </div>
-      </div>
-      <div class="form-section">
-        <div class="form-section-title">Deal info</div>
-        <div class="form-grid">
-          <div class="form-group"><label class="form-label">Lead source *</label>
-            <select class="form-select" id="f-source">${SOURCES.map(s=>`<option ${c?.source===s?'selected':''}>${s}</option>`).join('')}</select>
-          </div>
-          <div class="form-group"><label class="form-label">Deal type</label>
-            <select class="form-select" id="f-dealtype">
-              <option value="wholesale" ${c?.dealType==='wholesale'?'selected':''}>Wholesale / assignment</option>
-              <option value="double-close" ${c?.dealType==='double-close'?'selected':''}>Double close</option>
-            </select>
-          </div>
-          <div class="form-group"><label class="form-label">Pipeline</label>
-            <select class="form-select" id="f-pipeline">
-              <option value="acq" ${c?.pipeline!=='dis'?'selected':''}>Acquisitions</option>
-              <option value="dis" ${c?.pipeline==='dis'?'selected':''}>Dispositions</option>
-            </select>
-          </div>
-          <div class="form-group"><label class="form-label">Stage</label>
-            <select class="form-select" id="f-stage">${ACQ_STAGES_CONST.map(s=>`<option ${c?.stage===s?'selected':''}>${s}</option>`).join('')}</select>
-          </div>
-          <div class="form-group"><label class="form-label">Handler</label>
-            <select class="form-select" id="f-handoff">${HANDOFF_STATES.map(h=>`<option ${c?.handoff===h?'selected':''}>${h}</option>`).join('')}</select>
-          </div>
-          <div class="form-group"><label class="form-label">Last contact date</label><input class="form-input" id="f-lastcontact" type="date" value="${c?.lastContact||today()}"></div>
-          <div class="form-group"><label class="form-label">Asking price ($)</label><input class="form-input" id="f-asking" value="${c?.askingPrice||''}" placeholder="45000"></div>
-          <div class="form-group"><label class="form-label">Our offer ($)</label><input class="form-input" id="f-offer" value="${c?.ourOffer||''}" placeholder="18000"></div>
-          <div class="form-group form-full"><label class="form-label">Seller motivation</label><textarea class="form-textarea" id="f-motivation" placeholder="Why are they selling? Inherited land, taxes owed, just wants out...">${c?.motivation||''}</textarea></div>
-        <div class="form-group"><label class="form-label">APN / Parcel ID</label><input class="form-input" id="f-apn" value="${c?.apn||''}" placeholder="123-456-789"></div>
-        <div class="form-group form-full"><label class="form-label">Tags (comma separated)</label><input class="form-input" id="f-tags" value="${(c?.tags||[]).join(', ')}" placeholder="inherited, motivated, rural-acreage"></div>
-          <div class="form-group form-full"><label class="form-label">Initial notes</label><textarea class="form-textarea" id="f-notes">${c?.notes?.[0]?.text||''}</textarea></div>
-        </div>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
-      <button class="btn btn-primary" onclick="saveContact('${editId||''}')">${c?'Save changes':'Add lead'}</button>
-    </div>`);
+function openAddContact(editId, prefillType) {
+  var c = editId ? db.contacts.find(function(x){return x.id===editId;}) : null;
+  var ctype = (c && c.contactType) || prefillType || 'seller';
+  openCustomModal('<div class="modal-header"><div class="modal-title">'+(c?'Edit contact':'Add contact')+'</div><button class="modal-close" onclick="closeModal()">&#x2715;</button></div><div class="modal-body"><div class="form-group" style="margin-bottom:16px"><label class="form-label">Contact type</label><select class="form-select" id="f-ctype" onchange="updateAddContactFields(this.value,\''+(editId||'')+'\')"><option value="seller" '+(ctype==='seller'?'selected':'')+'>Seller</option><option value="buyer" '+(ctype==='buyer'?'selected':'')+'>Buyer</option><option value="title" '+(ctype==='title'?'selected':'')+'>Title &amp; Closing</option><option value="agent" '+(ctype==='agent'?'selected':'')+'>RE Agent</option><option value="referral" '+(ctype==='referral'?'selected':'')+'>Referral Partner</option><option value="lender" '+(ctype==='lender'?'selected':'')+'>Lender / Private Money</option></select></div><div id="add-contact-fields"></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveUnifiedContact(\''+(editId||'')+'\')">'+(c?'Save changes':'Add contact')+'</button></div>');
+  updateAddContactFields(ctype, editId||'');
 }
+
+function updateAddContactFields(type, editId) {
+  var c = editId ? db.contacts.find(function(x){return x.id===editId;}) : null;
+  if(!c && editId && db.allContacts) c = db.allContacts.find(function(x){return x.id===editId;});
+  var el = document.getElementById('add-contact-fields');
+  if(!el) return;
+  var h = '';
+
+  if(type === 'seller') {
+    h = '<div class="form-section-title">Contact Info</div>' +
+      '<div class="form-grid" style="margin-bottom:14px">' +
+      '<div class="form-group"><label class="form-label">Full name *</label><input class="form-input" id="f-name" value="'+(c&&c.name||'')+'" placeholder="Robert Hines"></div>' +
+      '<div class="form-group"><label class="form-label">Phone</label><input class="form-input" id="f-phone" value="'+(c&&c.phone||'')+'" placeholder="901-555-0100"></div>' +
+      '<div class="form-group"><label class="form-label">Email</label><input class="form-input" id="f-email" value="'+(c&&c.email||'')+'"></div>' +
+      '<div class="form-group"><label class="form-label">Temperature</label><select class="form-select" id="f-temp">' +
+      '<option value="hot" '+(c&&c.temp==='hot'?'selected':'')+'>Hot</option>' +
+      '<option value="warm" '+(c&&c.temp==='warm'?'selected':'')+'>Warm</option>' +
+      '<option value="cold" '+(!c||c.temp==='cold'?'selected':'')+'>Cold</option>' +
+      '</select></div></div>' +
+      '<div class="form-section-title">Parcel Info</div>' +
+      '<div class="form-grid" style="margin-bottom:14px">' +
+      '<div class="form-group"><label class="form-label">County</label><input class="form-input" id="f-county" value="'+(c&&c.county||'')+'" placeholder="Shelby"></div>' +
+      '<div class="form-group"><label class="form-label">City</label><input class="form-input" id="f-city" value="'+(c&&c.city||'')+'" placeholder="Memphis"></div>' +
+      '<div class="form-group"><label class="form-label">Zip</label><input class="form-input" id="f-zip" value="'+(c&&c.zip||'')+'" placeholder="38101"></div>' +
+      '<div class="form-group"><label class="form-label">State</label><select class="form-select" id="f-state">' +
+      ['TN','MS','AR','MO','AL','KY','GA','TX','OK','LA'].map(function(s){return '<option '+(c&&c.state===s?'selected':'')+'>'+s+'</option>';}).join('') +
+      '</select></div>' +
+      '<div class="form-group"><label class="form-label">Acreage</label><input class="form-input" id="f-acreage" value="'+(c&&c.acreage||'')+'" placeholder="12.5"></div>' +
+      '<div class="form-group"><label class="form-label">APN / Parcel ID</label><input class="form-input" id="f-apn" value="'+(c&&c.apn||'')+'" placeholder="123-456-789"></div>' +
+      '</div>' +
+      '<div class="form-section-title">Deal Info</div>' +
+      '<div class="form-grid">' +
+      '<div class="form-group"><label class="form-label">Lead source</label><select class="form-select" id="f-source">' +
+      SOURCES.map(function(s){return '<option '+(c&&c.source===s?'selected':'')+'>'+s+'</option>';}).join('') +
+      '</select></div>' +
+      '<div class="form-group"><label class="form-label">Stage</label><select class="form-select" id="f-stage">' +
+      ACQ_STAGES_CONST.map(function(s){return '<option '+(c&&c.stage===s?'selected':'')+'>'+s+'</option>';}).join('') +
+      '</select></div>' +
+      '<div class="form-group"><label class="form-label">Asking price ($)</label><input class="form-input" id="f-asking" value="'+(c&&c.askingPrice||'')+'" placeholder="45000"></div>' +
+      '<div class="form-group"><label class="form-label">Our offer ($)</label><input class="form-input" id="f-offer" value="'+(c&&c.ourOffer||'')+'" placeholder="18000"></div>' +
+      '<div class="form-group form-full"><label class="form-label">Seller motivation</label><textarea class="form-textarea" id="f-motivation" placeholder="Why are they selling?">'+(c&&c.motivation||'')+'</textarea></div>' +
+      '<div class="form-group form-full"><label class="form-label">Tags (comma separated)</label><input class="form-input" id="f-tags" value="'+(c&&c.tags?c.tags.join(', '):'')+'" placeholder="inherited, motivated"></div>' +
+      '<div class="form-group form-full"><label class="form-label">Notes</label><textarea class="form-textarea" id="f-notes">'+(c&&c.notes&&c.notes[0]?c.notes[0].text:'')+'</textarea></div>' +
+      '</div>';
+
+  } else if(type === 'buyer') {
+    h = '<div class="form-section-title">Buyer Info</div>' +
+      '<div class="form-grid" style="margin-bottom:14px">' +
+      '<div class="form-group"><label class="form-label">Full name *</label><input class="form-input" id="f-name" value="'+(c&&c.name||'')+'"></div>' +
+      '<div class="form-group"><label class="form-label">Phone</label><input class="form-input" id="f-phone" value="'+(c&&c.phone||'')+'"></div>' +
+      '<div class="form-group"><label class="form-label">Email</label><input class="form-input" id="f-email" value="'+(c&&c.email||'')+'"></div>' +
+      '<div class="form-group"><label class="form-label">Buyer type</label><select class="form-select" id="f-buyertype">' +
+      ['Builder / developer','Land investor','Retail end buyer','Farmer / recreational'].map(function(t){return '<option '+(c&&c.buyerType===t?'selected':'')+'>'+t+'</option>';}).join('') +
+      '</select></div></div>' +
+      '<div class="form-section-title">Buy Box</div>' +
+      '<div class="form-grid">' +
+      '<div class="form-group"><label class="form-label">States (comma separated)</label><input class="form-input" id="f-states" value="'+(c&&c.states?c.states.join(', '):'')+'" placeholder="TN, MS, AR"></div>' +
+      '<div class="form-group"><label class="form-label">Min acreage</label><input class="form-input" id="f-minacres" type="number" value="'+(c&&c.minAcres||'')+'"></div>' +
+      '<div class="form-group"><label class="form-label">Max acreage</label><input class="form-input" id="f-maxacres" type="number" value="'+(c&&c.maxAcres||'')+'"></div>' +
+      '<div class="form-group"><label class="form-label">Max price ($)</label><input class="form-input" id="f-maxprice" type="number" value="'+(c&&c.maxPrice||'')+'"></div>' +
+      '<div class="form-group form-full"><label class="form-label">Notes</label><textarea class="form-textarea" id="f-notes">'+(c&&c.notes||'')+'</textarea></div>' +
+      '</div>';
+
+  } else {
+    var extraLabel = {lender:'Loan terms / max amount', agent:'Markets / brokerage', referral:'How they send deals', title:'Firm / office'}[type] || 'Details';
+    h = '<div class="form-grid">' +
+      '<div class="form-group"><label class="form-label">Full name *</label><input class="form-input" id="f-name" value="'+(c&&c.name||'')+'"></div>' +
+      '<div class="form-group"><label class="form-label">Company</label><input class="form-input" id="f-company" value="'+(c&&c.company||'')+'"></div>' +
+      '<div class="form-group"><label class="form-label">Phone</label><input class="form-input" id="f-phone" value="'+(c&&c.phone||'')+'"></div>' +
+      '<div class="form-group"><label class="form-label">Email</label><input class="form-input" id="f-email" value="'+(c&&c.email||'')+'"></div>' +
+      '<div class="form-group"><label class="form-label">State</label><select class="form-select" id="f-state">' +
+      ['TN','MS','AR','MO','AL','KY','GA','TX'].map(function(s){return '<option '+(c&&c.state===s?'selected':'')+'>'+s+'</option>';}).join('') +
+      '</select></div>' +
+      '<div class="form-group"><label class="form-label">'+extraLabel+'</label><input class="form-input" id="f-extra" value="'+(c&&c.extra||'')+'"></div>' +
+      '<div class="form-group form-full"><label class="form-label">Notes</label><textarea class="form-textarea" id="f-notes">'+(c&&c.notes||'')+'</textarea></div>' +
+      '</div>';
+  }
+  el.innerHTML = h;
+}
+
+function saveUnifiedContact(editId) {
+  var type = (document.getElementById('f-ctype') && document.getElementById('f-ctype').value) || 'seller';
+  var nameEl = document.getElementById('f-name');
+  var name = nameEl ? nameEl.value.trim() : '';
+  if(!name) { toast('Name is required','error'); return; }
+
+  if(type === 'seller') {
+    var noteText = (document.getElementById('f-notes') && document.getElementById('f-notes').value.trim()) || '';
+    var tagsRaw = (document.getElementById('f-tags') && document.getElementById('f-tags').value) || '';
+    var tags = tagsRaw.split(',').map(function(t){return t.trim();}).filter(Boolean);
+    var motivation = (document.getElementById('f-motivation') && document.getElementById('f-motivation').value.trim()) || '';
+    var apn = (document.getElementById('f-apn') && document.getElementById('f-apn').value.trim()) || '';
+    var fields = {
+      name: name,
+      phone: (document.getElementById('f-phone') && document.getElementById('f-phone').value.trim()) || '',
+      email: (document.getElementById('f-email') && document.getElementById('f-email').value.trim()) || '',
+      county: (document.getElementById('f-county') && document.getElementById('f-county').value.trim()) || '',
+      city: (document.getElementById('f-city') && document.getElementById('f-city').value.trim()) || '',
+      zip: (document.getElementById('f-zip') && document.getElementById('f-zip').value.trim()) || '',
+      state: (document.getElementById('f-state') && document.getElementById('f-state').value) || 'TN',
+      acreage: (document.getElementById('f-acreage') && document.getElementById('f-acreage').value.trim()) || '',
+      apn: apn,
+      source: (document.getElementById('f-source') && document.getElementById('f-source').value) || '',
+      stage: (document.getElementById('f-stage') && document.getElementById('f-stage').value) || 'New Lead',
+      askingPrice: (document.getElementById('f-asking') && document.getElementById('f-asking').value.trim()) || '',
+      ourOffer: (document.getElementById('f-offer') && document.getElementById('f-offer').value.trim()) || '',
+      temp: (document.getElementById('f-temp') && document.getElementById('f-temp').value) || 'cold',
+      pipeline: 'acq',
+      tags: tags, motivation: motivation,
+      lastContact: today(), contactType: 'seller',
+    };
+    if(editId) {
+      var c = db.contacts.find(function(x){return x.id===editId;});
+      if(c) {
+        Object.assign(c, fields);
+        if(noteText) c.notes.unshift({date:today(), text:noteText});
+      }
+    } else {
+      var newC = Object.assign({id:uid(), created:today(), touches:[], notes:noteText?[{date:today(),text:noteText}]:[]}, fields);
+      db.contacts.unshift(newC);
+      if(newC.phone) pushContactToQuo(newC);
+    }
+  } else {
+    if(!db.allContacts) db.allContacts = [];
+    var entry = {
+      id: editId || uid(),
+      contactType: type, name: name,
+      phone: (document.getElementById('f-phone') && document.getElementById('f-phone').value.trim()) || '',
+      email: (document.getElementById('f-email') && document.getElementById('f-email').value.trim()) || '',
+      company: (document.getElementById('f-company') && document.getElementById('f-company').value.trim()) || '',
+      state: (document.getElementById('f-state') && document.getElementById('f-state').value) || '',
+      extra: (document.getElementById('f-extra') && document.getElementById('f-extra').value.trim()) || '',
+      notes: (document.getElementById('f-notes') && document.getElementById('f-notes').value.trim()) || '',
+      created: today(),
+      buyerType: (document.getElementById('f-buyertype') && document.getElementById('f-buyertype').value) || '',
+      states: ((document.getElementById('f-states') && document.getElementById('f-states').value) || '').split(',').map(function(s){return s.trim();}).filter(Boolean),
+      minAcres: parseFloat((document.getElementById('f-minacres') && document.getElementById('f-minacres').value) || 0) || 0,
+      maxAcres: parseFloat((document.getElementById('f-maxacres') && document.getElementById('f-maxacres').value) || 999) || 999,
+      maxPrice: parseFloat((document.getElementById('f-maxprice') && document.getElementById('f-maxprice').value) || 0) || 0,
+    };
+    if(editId) {
+      var idx2 = db.allContacts.findIndex(function(x){return x.id===editId;});
+      if(idx2>=0) db.allContacts[idx2] = entry; else db.allContacts.unshift(entry);
+    } else {
+      db.allContacts.unshift(entry);
+      if(entry.phone) pushContactToQuo({name:entry.name, phone:entry.phone});
+    }
+  }
+  save();
+  closeModal();
+  toast(editId?'Contact updated':'Contact added','success');
+  if(currentView==='acq-pipeline') renderPipeline('acq');
+  if(currentView==='sellers') renderSellers();
+  if(currentView==='dashboard') renderDashboard();
+}
+
 
 function openEditContact(id){openAddContact(id);}
 
@@ -1169,7 +1636,9 @@ function saveContact(editId){
   const tags=document.getElementById('f-tags').value.split(',').map(t=>t.trim()).filter(Boolean);
   const motivation=document.getElementById('f-motivation')?.value?.trim()||'';
   const apn=document.getElementById('f-apn')?.value?.trim()||'';
-  const fields={name,phone:document.getElementById('f-phone').value.trim(),email:document.getElementById('f-email').value.trim(),county:document.getElementById('f-county').value.trim(),state:document.getElementById('f-state').value,acreage:document.getElementById('f-acreage').value.trim(),apn:document.getElementById('f-apn').value.trim(),zoning:document.getElementById('f-zoning').value,road:document.getElementById('f-road').value,utilities:document.getElementById('f-utilities').value,flood:document.getElementById('f-flood').value,backTaxes:document.getElementById('f-taxes').value.trim(),survey:document.getElementById('f-survey').value,source:document.getElementById('f-source').value,dealType:document.getElementById('f-dealtype').value,pipeline:document.getElementById('f-pipeline').value,stage:document.getElementById('f-stage').value,handoff:document.getElementById('f-handoff').value,lastContact:document.getElementById('f-lastcontact').value||today(),temp:document.getElementById('f-temp').value,askingPrice:document.getElementById('f-asking').value.trim(),ourOffer:document.getElementById('f-offer').value.trim(),tags,motivation,apn};
+  const fields={name,phone:document.getElementById('f-phone').value.trim(),email:document.getElementById('f-email').value.trim(),county:document.getElementById('f-county').value.trim(),
+    city:(document.getElementById('f-city')&&document.getElementById('f-city').value.trim())||'',
+    zip:(document.getElementById('f-zip')&&document.getElementById('f-zip').value.trim())||'',state:document.getElementById('f-state').value,acreage:document.getElementById('f-acreage').value.trim(),apn:document.getElementById('f-apn').value.trim(),zoning:document.getElementById('f-zoning').value,road:document.getElementById('f-road').value,utilities:document.getElementById('f-utilities').value,flood:document.getElementById('f-flood').value,backTaxes:document.getElementById('f-taxes').value.trim(),survey:document.getElementById('f-survey').value,source:document.getElementById('f-source').value,dealType:document.getElementById('f-dealtype').value,pipeline:document.getElementById('f-pipeline').value,stage:document.getElementById('f-stage').value,handoff:document.getElementById('f-handoff').value,lastContact:document.getElementById('f-lastcontact').value||today(),temp:document.getElementById('f-temp').value,askingPrice:document.getElementById('f-asking').value.trim(),ourOffer:document.getElementById('f-offer').value.trim(),tags,motivation,apn};
   if(editId){
     const c=db.contacts.find(x=>x.id===editId);if(!c)return;
     Object.assign(c,fields);
@@ -1481,6 +1950,516 @@ async function syncFromQuo(){
     if(updated){save();if(currentView==='dashboard')renderDashboard();if(currentView==='sellers')renderSellers();toast('Synced '+data.count+' event'+(data.count!==1?'s':'')+ ' from Quo','success');}
   }catch(e){console.warn('Quo sync error:',e.message);}
 }
+
+// ══════════════════════════════════
+
+// ══════════════════════════════════
+
+function openCalcForContact(id) {
+  const c = db.contacts.find(x => x.id === id);
+  if (!c) return;
+  closeModal();
+  showView('calculator');
+
+  // Pre-fill calculator fields from contact data
+  setTimeout(function() {
+    const acresEl = document.getElementById('c-acres');
+    if (acresEl && c.acreage) { acresEl.value = parseFloat(c.acreage); }
+
+    // Pre-fill taxes if available
+    const taxesEl = document.getElementById('c-taxes');
+    if (taxesEl && c.backTaxes) { taxesEl.value = parseFloat(c.backTaxes); }
+
+    // Pre-fill road access pill from DD or parcel data
+    if (c.road) {
+      const roadMap = {'Paved':'1.0','Dirt / gravel':'0.9','Landlocked':'0.65'};
+      const roadVal = roadMap[c.road];
+      if (roadVal) {
+        document.querySelectorAll('[data-group="road"]').forEach(function(el) {
+          el.classList.remove('active');
+          if (el.dataset.val === roadVal) el.classList.add('active');
+        });
+      }
+    }
+
+    // Pre-fill utilities
+    if (c.utilities) {
+      const utilMap = {'Available':'1.0','Nearby':'0.85','None':'0.7'};
+      const utilVal = utilMap[c.utilities];
+      if (utilVal) {
+        document.querySelectorAll('[data-group="util"]').forEach(function(el) {
+          el.classList.remove('active');
+          if (el.dataset.val === utilVal) el.classList.add('active');
+        });
+      }
+    }
+
+    // Pre-fill flood zone
+    if (c.flood) {
+      const floodMap = {'No':'1.0','Partial':'0.8','Yes':'0.6'};
+      const floodVal = floodMap[c.flood];
+      if (floodVal) {
+        document.querySelectorAll('[data-group="flood"]').forEach(function(el) {
+          el.classList.remove('active');
+          if (el.dataset.val === floodVal) el.classList.add('active');
+        });
+      }
+    }
+
+    // Show contact name in calculator header
+    const calcHeader = document.querySelector('#view-calculator .card-title');
+    if (calcHeader) calcHeader.textContent = 'Offer Calculator — ' + c.name + ' (' + (c.acreage||'?') + ' ac, ' + (c.county||'?') + ' ' + (c.state||'?') + ')';
+
+    calcLand();
+    toast('Calculator pre-filled from ' + c.name + '\'s data', 'success');
+  }, 100);
+}
+
+// AI BRIEFING
+// ══════════════════════════════════
+function generateBriefing() {
+  const today_date = new Date().toLocaleDateString('en-US', {weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  const contacts = db.contacts;
+  const active = contacts.filter(c => !['Dead','Not Motivated Yet'].includes(c.stage));
+
+  // Handoff queue
+  const needsHandoffNow = contacts.filter(c => c.handoff === 'Needs human review' || c.handoff === 'Human active');
+
+  // Follow-ups due
+  const followups = contacts.filter(c => {
+    if (['Dead','Not Motivated Yet'].includes(c.stage)) return false;
+    const last = c.lastContact ? Math.floor((Date.now()-new Date(c.lastContact).getTime())/86400000) : 999;
+    const stageMap = {'New Lead':3,'Outreach Active':2,'Awaiting Response':5,'Conversation Active':2,'Qualified':3,'Appointment Set':1,'Offer Made':2,'Negotiating':1};
+    return last >= (stageMap[c.stage] || 7);
+  });
+
+  // Hot leads
+  const hot = contacts.filter(c => c.temp === 'hot' && !['Dead','Not Motivated Yet'].includes(c.stage));
+
+  // Under contract
+  const uc = contacts.filter(c => c.stage === 'Under Contract' || c.stage === 'Under Agreement');
+
+  // Build briefing text
+  let brief = `REI RAZOR — MORNING BRIEFING\n${today_date}\n`;
+  brief += `${'='.repeat(50)}\n\n`;
+
+  // Pipeline snapshot
+  brief += `PIPELINE SNAPSHOT\n${'-'.repeat(30)}\n`;
+  brief += `Total active leads: ${active.length}\n`;
+  brief += `Hot leads: ${hot.length}\n`;
+  brief += `Need follow-up TODAY: ${followups.length}\n`;
+  brief += `Needs your attention (AI handed off): ${needsHandoffNow.length}\n`;
+  brief += `Under contract: ${uc.length}\n\n`;
+
+  // Urgent — needs attention now
+  if (needsHandoffNow.length > 0) {
+    brief += `ACTION REQUIRED — HUMAN HANDOFF\n${'-'.repeat(30)}\n`;
+    needsHandoffNow.forEach(c => {
+      const tc = (c.touches||[]).length;
+      const last = c.lastContact || 'unknown';
+      brief += `• ${c.name} | ${c.county||'?'}, ${c.state||'?'} | ${c.acreage||'?'} ac\n`;
+      brief += `  Stage: ${c.stage} | Temp: ${c.temp||'cold'} | Touches: ${tc} | Last contact: ${last}\n`;
+      if (c.motivation) brief += `  Motivation: ${c.motivation}\n`;
+      const lastTouch = c.touches && c.touches[c.touches.length-1];
+      if (lastTouch) brief += `  Last touch: ${lastTouch.channel} — ${lastTouch.outcome} (${lastTouch.date})\n`;
+      brief += `\n`;
+    });
+  }
+
+  // Follow-ups due
+  if (followups.length > 0) {
+    brief += `FOLLOW-UPS DUE\n${'-'.repeat(30)}\n`;
+    followups.forEach(c => {
+      const last = c.lastContact ? Math.floor((Date.now()-new Date(c.lastContact).getTime())/86400000) : 999;
+      brief += `• ${c.name} | ${c.county||'?'}, ${c.state||'?'} | ${c.acreage||'?'} ac\n`;
+      brief += `  Stage: ${c.stage} | Last contact: ${last === 999 ? 'never' : last + ' days ago'} | Temp: ${c.temp||'cold'}\n`;
+      if (c.motivation) brief += `  Motivation: ${c.motivation}\n`;
+      if (c.askingPrice) brief += `  Asking: $${parseInt(c.askingPrice).toLocaleString()}${c.ourOffer?' | Our offer: $'+parseInt(c.ourOffer).toLocaleString():''}\n`;
+      brief += `\n`;
+    });
+  }
+
+  // Hot leads detail
+  if (hot.length > 0) {
+    brief += `HOT LEADS — PRIORITIZE THESE\n${'-'.repeat(30)}\n`;
+    hot.forEach(c => {
+      brief += `• ${c.name} | ${c.county||'?'}, ${c.state||'?'} | ${c.acreage||'?'} ac | Stage: ${c.stage}\n`;
+      if (c.motivation) brief += `  Motivation: ${c.motivation}\n`;
+      if (c.askingPrice) brief += `  Asking: $${parseInt(c.askingPrice).toLocaleString()}${c.ourOffer?' | Our offer: $'+parseInt(c.ourOffer).toLocaleString():''}\n`;
+      const dd = c.dd || {};
+      const ddDone = Object.keys(dd).filter(k => dd[k] && dd[k].value).length;
+      if (ddDone > 0) brief += `  DD progress: ${ddDone} items completed\n`;
+      brief += `\n`;
+    });
+  }
+
+  // Under contract
+  if (uc.length > 0) {
+    brief += `UNDER CONTRACT — WORK THE BUYER SIDE\n${'-'.repeat(30)}\n`;
+    uc.forEach(c => {
+      brief += `• ${c.name} | ${c.county||'?'}, ${c.state||'?'} | ${c.acreage||'?'} ac\n`;
+      brief += `  Stage: ${c.stage} | Type: ${c.dealType||'wholesale'}\n`;
+      if (c.ourOffer) brief += `  Our offer: $${parseInt(c.ourOffer).toLocaleString()}\n`;
+      brief += `\n`;
+    });
+  }
+
+  // Full pipeline by stage
+  brief += `FULL PIPELINE\n${'-'.repeat(30)}\n`;
+  const stageGroups = {};
+  active.forEach(c => {
+    if (!stageGroups[c.stage]) stageGroups[c.stage] = [];
+    stageGroups[c.stage].push(c);
+  });
+  Object.entries(stageGroups).forEach(([stage, cs]) => {
+    brief += `${stage} (${cs.length}): ${cs.map(c=>c.name).join(', ')}\n`;
+  });
+
+  brief += `\n${'='.repeat(50)}\n`;
+  brief += `Paste this into Claude and ask: "Based on my pipeline, what should I focus on today and what should I say to each person?"\n`;
+
+  openCustomModal(`
+    <div class="modal-header">
+      <div class="modal-title">AI Morning Briefing</div>
+      <button class="modal-close" onclick="closeModal()">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:10px;font-family:'DM Mono',monospace;">Copy this and paste it into Claude for your daily briefing and action plan.</div>
+      <div class="briefing-output" id="briefing-text">${brief.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-primary" onclick="copyBriefing()">Copy Briefing</button>
+        <button class="btn btn-ghost" onclick="closeModal()">Close</button>
+      </div>
+    </div>`);
+}
+
+function copyBriefing() {
+  const el = document.getElementById('briefing-text');
+  if (!el) return;
+  navigator.clipboard.writeText(el.textContent).then(() => toast('Briefing copied — paste into Claude!', 'success'));
+}
+
+
+// ══════════════════════════════════
+// SETTINGS
+// ══════════════════════════════════
+const SETTINGS_KEY = 'reirazor_settings';
+
+
+
+function saveSettings() {
+  const s = {
+    name: document.getElementById('s-name')?.value || '',
+    biz: document.getElementById('s-biz')?.value || '',
+    phone: document.getElementById('s-phone')?.value || '',
+    email: document.getElementById('s-email')?.value || '',
+    states: document.getElementById('s-states')?.value || '',
+    dealtype: document.getElementById('s-dealtype')?.value || 'wholesale',
+    quoPnid: document.getElementById('s-quo-pnid')?.value || '',
+    closingDays: document.getElementById('s-closing-days')?.value || '30',
+    earnest: document.getElementById('s-earnest')?.value || '100',
+    titleCo: document.getElementById('s-title-co')?.value || '',
+    address: document.getElementById('s-address')?.value || '',
+    profit: document.getElementById('s-profit')?.value || '5000',
+    closingCost: document.getElementById('s-closing-cost')?.value || '500',
+    fee: document.getElementById('s-fee')?.value || '2000',
+    compSource: document.getElementById('s-comp-source')?.value || 'County assessor',
+  };
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+// ══════════════════════════════════
+// SETTINGS PAGE
+// ══════════════════════════════════
+
+function loadSettings() {
+  try { return JSON.parse(localStorage.getItem(SETTINGS_KEY)) || {}; } catch(e) { return {}; }
+}
+
+
+
+function val(id) { const el = document.getElementById(id); return el ? el.value : ''; }
+function chk(id) { const el = document.getElementById(id); return el ? el.checked : false; }
+function setVal(id, v) { const el = document.getElementById(id); if (el && v !== undefined && v !== null) el.value = v; }
+function setChk(id, v) { const el = document.getElementById(id); if (el) el.checked = !!v; }
+
+function renderSettings() {
+  const s = loadSettings();
+  setVal('s-firstname', s.firstname); setVal('s-lastname', s.lastname);
+  setVal('s-email', s.email); setVal('s-phone', s.phone);
+  setVal('s-timezone', s.timezone); setVal('s-role', s.role);
+  setVal('s-biz', s.biz); setVal('s-website', s.website);
+  setVal('s-address', s.address); setVal('s-states', s.states);
+  setVal('s-dealtype', s.dealtype); setVal('s-leadsource', s.leadsource);
+  setVal('s-closing-days', s.closingDays); setVal('s-earnest', s.earnest);
+  setVal('s-title-co', s.titleCo); setVal('s-title-phone', s.titlePhone);
+  setVal('s-profit', s.profit); setVal('s-closing-cost', s.closingCost);
+  setVal('s-fee', s.fee); setVal('s-comp-source', s.compSource);
+  setVal('s-quo-pnid', s.quoPnid);
+  if (s.notifications) {
+    setChk('n-handoff', s.notifications.handoff !== false);
+    setChk('n-sms', s.notifications.sms !== false);
+    setChk('n-qualified', s.notifications.qualified !== false);
+    setChk('n-contract', s.notifications.contract !== false);
+    setChk('n-stale', s.notifications.stale);
+  }
+  const wh = document.getElementById('s-webhook-url');
+  if (wh) wh.value = window.location.origin + '/.netlify/functions/quo-webhook';
+  updateSettingsAvatar();
+  renderTeamMembers();
+}
+
+function updateSettingsAvatar() {
+  const fn = val('s-firstname') || 'Y'; const ln = val('s-lastname') || 'N';
+  const initials = (fn[0] + ln[0]).toUpperCase();
+  const el = document.getElementById('settings-avatar-initials');
+  if (el) el.textContent = initials;
+  const nameEl = document.getElementById('settings-avatar-name');
+  if (nameEl) nameEl.textContent = (fn + ' ' + ln).trim() || 'Your Name';
+}
+
+function switchSettingsTab(tab, btn) {
+  document.querySelectorAll('.settings-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.settings-nav-item').forEach(b => b.classList.remove('active'));
+  const panel = document.getElementById('stab-' + tab);
+  if (panel) panel.classList.add('active');
+  if (btn) btn.classList.add('active');
+}
+
+function copyWebhookUrl() {
+  const url = window.location.origin + '/.netlify/functions/quo-webhook';
+  navigator.clipboard.writeText(url).then(() => toast('Webhook URL copied!', 'success'));
+}
+
+function setAccent(color, btn) {
+  document.querySelectorAll('.accent-swatch').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  const s = loadSettings();
+  s.accent = color;
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
+  toast('Accent color updated — refresh to apply', 'success');
+}
+
+// ── TEAM MEMBERS ──
+function renderTeamMembers() {
+  const s = loadSettings();
+  const team = s.team || [];
+  const el = document.getElementById('team-members-list');
+  if (!el) return;
+  if (!team.length) {
+    el.innerHTML = '<div style="font-size:12px;color:var(--text3);padding:12px 0">No team members added yet.</div>';
+    return;
+  }
+  const roleColors = { owner:'green', acquisitions:'blue', disposition:'purple', va:'amber' };
+  el.innerHTML = team.map((m, i) => {
+    const initials = ((m.firstname||'?')[0] + (m.lastname||'?')[0]).toUpperCase();
+    const roleLabel = {owner:'Owner',acquisitions:'Acquisitions',disposition:'Disposition',va:'Virtual Assistant'}[m.role] || m.role;
+    return `<div class="team-member-row">
+      <div class="team-member-avatar">${initials}</div>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:500">${m.firstname||''} ${m.lastname||''}</div>
+        <div style="font-size:11px;color:var(--text3)">${m.email||''}</div>
+      </div>
+      <span class="team-role-badge tag-${roleColors[m.role]||'neutral'}">${roleLabel}</span>
+      <button class="btn btn-ghost btn-sm" style="padding:3px 8px;font-size:10px" onclick="removeTeamMember(${i})">Remove</button>
+    </div>`;
+  }).join('');
+}
+
+function openAddTeamMember() {
+  openCustomModal(`
+    <div class="modal-header"><div class="modal-title">Add Team Member</div><button class="modal-close" onclick="closeModal()">&#x2715;</button></div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">First name</label><input class="form-input" id="tm-first" placeholder="Jane"></div>
+        <div class="form-group"><label class="form-label">Last name</label><input class="form-input" id="tm-last" placeholder="Doe"></div>
+        <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="tm-email" type="email" placeholder="jane@example.com"></div>
+        <div class="form-group"><label class="form-label">Phone</label><input class="form-input" id="tm-phone" placeholder="901-555-0200"></div>
+        <div class="form-group form-full"><label class="form-label">Role</label>
+          <select class="form-select" id="tm-role">
+            <option value="acquisitions">Acquisitions</option>
+            <option value="disposition">Disposition</option>
+            <option value="va">Virtual Assistant</option>
+            <option value="owner">Owner / Admin</option>
+          </select>
+        </div>
+      </div>
+      <div style="background:var(--bg3);border-radius:8px;padding:12px;font-size:11px;color:var(--text3);margin-top:8px;line-height:1.6">
+        Team members are stored as contacts for lead assignment and reference. Full individual login access is on the roadmap.
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveTeamMember()">Add Member</button>
+    </div>`);
+}
+
+function saveTeamMember() {
+  const firstname = document.getElementById('tm-first')?.value?.trim();
+  const lastname = document.getElementById('tm-last')?.value?.trim();
+  const email = document.getElementById('tm-email')?.value?.trim();
+  const phone = document.getElementById('tm-phone')?.value?.trim();
+  const role = document.getElementById('tm-role')?.value;
+  if (!firstname) { toast('First name is required', 'error'); return; }
+  const s = loadSettings();
+  if (!s.team) s.team = [];
+  s.team.push({ firstname, lastname, email, phone, role });
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
+  closeModal();
+  renderTeamMembers();
+  toast(firstname + ' added to your team', 'success');
+}
+
+function removeTeamMember(idx) {
+  if (!confirm('Remove this team member?')) return;
+  const s = loadSettings();
+  s.team.splice(idx, 1);
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
+  renderTeamMembers();
+  toast('Team member removed');
+}
+
+function exportData() {
+  const data = { contacts: db.contacts, buyers: db.buyers, allContacts: db.allContacts, settings: loadSettings(), exported: new Date().toISOString() };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'reirazor-backup-' + new Date().toISOString().slice(0,10) + '.json';
+  a.click(); URL.revokeObjectURL(url);
+  toast('Data exported!', 'success');
+}
+
+function clearSampleData() {
+  if (!confirm('Remove all sample contacts?')) return;
+  const names = ['Robert Hines','Patricia Downs','Gary Sutton','Sandra Webb','Marcus Bell','Donna Price','Ed Casey','John Smith'];
+  db.contacts = db.contacts.filter(c => !names.includes(c.name));
+  save(); renderDashboard();
+  toast('Sample contacts removed', 'success');
+}
+
+function confirmReset() {
+  if (!confirm('Delete ALL data permanently?')) return;
+  if (!confirm('Last chance — cannot be undone. Reset everything?')) return;
+  localStorage.removeItem('landcrm_v2');
+  localStorage.removeItem(SETTINGS_KEY);
+  location.reload();
+}
+
+// DUE DILIGENCE
+// ══════════════════════════════════
+const DD_SECTIONS=[
+  {id:'ownership',title:'Ownership & Title',items:[
+    {id:'deed_received',prompt:'Deed received?',type:'yn'},
+    {id:'all_signed',prompt:'Did everyone on the deed sign the PA?',type:'yn'},
+    {id:'legal_access',prompt:'Legal access?',type:'yn'},
+    {id:'physical_access',prompt:'Physical access?',type:'yn'},
+  ]},
+  {id:'zoning',title:'Zoning & Restrictions',items:[
+    {id:'single_wide',prompt:'Single wide mobile home allowed?',type:'yn'},
+    {id:'double_wide',prompt:'Double wide mobile home allowed?',type:'yn'},
+    {id:'rv',prompt:'RVs allowed?',type:'yn'},
+    {id:'site_built',prompt:'Site built homes allowed?',type:'yn'},
+    {id:'modular',prompt:'Modular homes allowed?',type:'yn'},
+    {id:'setbacks',prompt:'Setbacks confirmed?',type:'setbacks'},
+    {id:'zoning_notes',prompt:'Min sq ft, any other important info?',type:'noteonly'},
+  ]},
+  {id:'utilities',title:'Utilities',items:[
+    {id:'electric',prompt:'Electric available?',type:'yn'},
+    {id:'water',prompt:'Water?',type:'opts',opts:['Public water','Needs well']},
+    {id:'sewer',prompt:'Sewer?',type:'opts',opts:['Public sewer','Needs septic']},
+    {id:'soil_tests',prompt:'Any previous soil/buildability tests on file at the county?',type:'yn'},
+  ]},
+];
+
+function ddSet(cid,iid,val,btn){
+  var c=db.contacts.find(function(x){return x.id===cid;});
+  if(!c)return;
+  if(!c.dd)c.dd={};
+  if(!c.dd[iid])c.dd[iid]={};
+  var cur=c.dd[iid].value;
+  c.dd[iid].value=(cur===val?'':val);
+  save();
+  var row=btn.closest('.dd-toggle-row');
+  if(row)row.querySelectorAll('.dd-toggle').forEach(function(b){b.classList.remove('active');});
+  if(c.dd[iid].value)btn.classList.add('active');
+}
+
+function saveDDNote(cid,iid,val){
+  var c=db.contacts.find(function(x){return x.id===cid;});
+  if(!c)return;
+  if(!c.dd)c.dd={};
+  if(!c.dd[iid])c.dd[iid]={};
+  c.dd[iid].notes=val;
+  save();
+}
+
+function saveDDSetback(cid,side,val){
+  var c=db.contacts.find(function(x){return x.id===cid;});
+  if(!c)return;
+  if(!c.dd)c.dd={};
+  if(!c.dd['setbacks'])c.dd['setbacks']={value:'noted'};
+  c.dd['setbacks'][side]=val;
+  save();
+}
+
+function renderDD(c){
+  var dd=c.dd||{};
+  var h='';
+  DD_SECTIONS.forEach(function(sec){
+    h+='<div class="dd-section"><div class="dd-section-header"><div class="dd-section-title">'+sec.title+'</div></div>';
+    sec.items.forEach(function(item){
+      var d=dd[item.id]||{};
+      var v=d.value||'';
+      var n=d.notes||'';
+      h+='<div class="dd-item"><div class="dd-item-prompt">'+item.prompt+'</div>';
+      if(item.type==='yn'){
+        h+='<div class="dd-toggle-row">';
+        h+='<button class="dd-toggle yes'+(v==='yes'?' active':'')+'" onclick="ddSet(\''+c.id+'\',\''+item.id+'\',\'yes\',this)">Yes</button>';
+        h+='<button class="dd-toggle no'+(v==='no'?' active':'')+'" onclick="ddSet(\''+c.id+'\',\''+item.id+'\',\'no\',this)">No</button>';
+        h+='<button class="dd-toggle na'+(v==='na'?' active':'')+'" onclick="ddSet(\''+c.id+'\',\''+item.id+'\',\'na\',this)">N/A</button>';
+        h+='</div>';
+        h+='<textarea class="dd-notes-input" placeholder="Notes..." onchange="saveDDNote(\''+c.id+'\',\''+item.id+'\',this.value)">'+n+'</textarea>';
+      } else if(item.type==='opts'){
+        h+='<div class="dd-toggle-row">';
+        item.opts.forEach(function(opt){
+          var ok=opt.toLowerCase().replace(/[^a-z0-9]/g,'_');
+          h+='<button class="dd-toggle opt'+(v===ok?' active':'')+'" onclick="ddSet(\''+c.id+'\',\''+item.id+'\',\''+ok+'\',this)">'+opt+'</button>';
+        });
+        h+='</div>';
+        h+='<textarea class="dd-notes-input" placeholder="Notes..." onchange="saveDDNote(\''+c.id+'\',\''+item.id+'\',this.value)">'+n+'</textarea>';
+      } else if(item.type==='setbacks'){
+        var sf=(dd['setbacks']||{}).front||'';
+        var ss=(dd['setbacks']||{}).sides||'';
+        h+='<div style="display:flex;gap:10px;margin-bottom:6px;">';
+        h+='<div style="flex:1"><div style="font-size:10px;color:var(--text3);margin-bottom:3px;">Front (ft)</div>';
+        h+='<input class="dd-notes-input" style="min-height:0;padding:5px 8px;" type="text" placeholder="25" value="'+sf+'" onchange="saveDDSetback(\''+c.id+'\',\'front\',this.value)"></div>';
+        h+='<div style="flex:1"><div style="font-size:10px;color:var(--text3);margin-bottom:3px;">Sides (ft)</div>';
+        h+='<input class="dd-notes-input" style="min-height:0;padding:5px 8px;" type="text" placeholder="10" value="'+ss+'" onchange="saveDDSetback(\''+c.id+'\',\'sides\',this.value)"></div>';
+        h+='</div>';
+        h+='<textarea class="dd-notes-input" placeholder="Notes..." onchange="saveDDNote(\''+c.id+'\',\'setbacks\',this.value)">'+n+'</textarea>';
+      } else if(item.type==='noteonly'){
+        h+='<textarea class="dd-notes-input" placeholder="Notes..." onchange="saveDDNote(\''+c.id+'\',\''+item.id+'\',this.value)">'+n+'</textarea>';
+      }
+      h+='</div>';
+    });
+    h+='</div>';
+  });
+  return h;
+}
+
+
 // LIGHT / DARK MODE
 function toggleMode(){
   const isLight=document.body.classList.toggle('light');
@@ -1510,6 +2489,54 @@ function injectModeToggle(){
 
 
 function showComingSoon(name){toast(name+' contacts coming soon');}
+
+// ══════════════════════════════════
+// DRAG AND DROP PIPELINE
+// ══════════════════════════════════
+let dragContactId = null;
+let dragPipeline = null;
+
+function onCardDragStart(e, contactId, pipeline) {
+  dragContactId = contactId;
+  dragPipeline = pipeline;
+  e.dataTransfer.effectAllowed = 'move';
+  setTimeout(function() {
+    var el = document.querySelector('[data-contact-id="'+contactId+'"]');
+    if(el) el.classList.add('dragging');
+  }, 0);
+}
+
+function onCardDragEnd(e) {
+  document.querySelectorAll('.pipeline-card').forEach(function(c){c.classList.remove('dragging');});
+  document.querySelectorAll('.pipeline-col').forEach(function(c){c.classList.remove('drag-over');});
+  dragContactId = null;
+  dragPipeline = null;
+}
+
+function onColDragOver(e, stage) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  document.querySelectorAll('.pipeline-col').forEach(function(c){c.classList.remove('drag-over');});
+  var col = document.querySelector('[data-stage="'+stage+'"]');
+  if(col) col.classList.add('drag-over');
+}
+
+function onColDrop(e, stage, pipeline) {
+  e.preventDefault();
+  document.querySelectorAll('.pipeline-col').forEach(function(c){c.classList.remove('drag-over');});
+  if(!dragContactId) return;
+  var c = db.contacts.find(function(x){return x.id===dragContactId;});
+  if(!c) return;
+  c.stage = stage;
+  c.pipeline = pipeline;
+  c.lastContact = today();
+  save();
+  renderPipeline(pipeline);
+  if(pipeline === 'acq') renderPipeline('dis');
+  else renderPipeline('acq');
+  toast(c.name + ' moved to ' + stage, 'success');
+}
+
 // INIT
 const savedTheme=localStorage.getItem('crm_theme');
 if(savedTheme==='light'){document.body.classList.add('light');}
