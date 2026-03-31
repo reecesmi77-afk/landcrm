@@ -57,14 +57,15 @@ exports.handler = async (event) => {
     // Trigger AI SMS responder for inbound messages (awaited so it completes)
     if (contactPhone && messageText) {
       try {
-        const aiUrl = (process.env.URL || 'https://dealflow-crm.netlify.app') + '/.netlify/functions/ai-sms-responder';
+        const aiUrl = 'https://dealflow-crm.netlify.app/.netlify/functions/ai-sms-responder';
+        console.log('Calling AI responder for:', contactPhone, 'message:', messageText.slice(0,50));
         const aiRes = await fetch(aiUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ phone: contactPhone, message: messageText })
         });
         const aiData = await aiRes.json();
-        console.log('AI responder result:', JSON.stringify(aiData).slice(0, 200));
+        console.log('AI responder result:', JSON.stringify(aiData).slice(0, 300));
       } catch (e) {
         console.error('AI responder error:', e.message);
       }
