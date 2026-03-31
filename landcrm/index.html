@@ -498,6 +498,7 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
     <div class="page-title" id="page-title">Dashboard</div>
     <div style="display:flex;gap:8px;align-items:center;">
       <button class="btn btn-ghost btn-sm" onclick="generateBriefing()">AI Briefing</button>
+      <button class="btn btn-ghost btn-sm" onclick="manualSyncContacts()" id="sync-btn">Sync AI</button>
       <button class="btn btn-ghost btn-sm" onclick="syncFromQuo()">Sync Quo</button>
       <button class="btn btn-ghost btn-sm" onclick="openFollowupModal()">Generate SMS</button>
       <button class="btn btn-primary btn-sm" onclick="openAddContact()">+ Add Contact</button>
@@ -2676,30 +2677,6 @@ function onColDrop(e, stage, pipeline) {
 }
 
 
-// ══════════════════════════════════
-// SYNC CONTACTS TO JSONBIN FOR AI
-// ══════════════════════════════════
-async function syncContactsToJSONbin() {
-  try {
-    const res = await fetch('/.netlify/functions/sync-contacts', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contacts: db.contacts })
-    });
-    const data = await res.json();
-    console.log('Contacts synced to JSONbin:', data);
-  } catch(e) {
-    console.error('Contact sync error:', e.message);
-  }
-}
-
-// Auto-sync when contacts are saved
-const _originalSave = save;
-function save() {
-  _originalSave();
-  // Sync contacts in background (don't await)
-  syncContactsToJSONbin().catch(e => console.error('Background sync error:', e.message));
-}
 
 // INIT
 const savedTheme=localStorage.getItem('crm_theme');
