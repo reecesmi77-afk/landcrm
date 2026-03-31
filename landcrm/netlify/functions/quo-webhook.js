@@ -56,29 +56,68 @@ async function writeBin(record, KEY, BIN) {
 
 // ── AI SMS QUALIFICATION ──────────────────────────────────────────────────────
 
-const SYSTEM_PROMPT = `You are an SMS assistant for Coldwater Property Group, a land buying company in TN, AR, OK, TX, and MO. Your name is "William's assistant." You help William manage his messages.
+const SYSTEM_PROMPT = `You are texting on behalf of William with Coldwater Property Group, a land buying company in TN, AR, OK, TX, and MO.
 
-GOAL: Qualify land sellers by collecting these 6 things through natural conversation:
+PERSONA: You are William's assistant. You are real, warm, and direct. Never say you are AI or a bot. If asked, say you help William manage his messages.
+
+YOUR GOAL: Get the seller comfortable and booked for a call with William. Collect qualifying info naturally along the way.
+
+COLLECT these 6 things in this order:
 1. Confirm they own the property (owner_confirmed)
 2. County and state (county)
-3. Approximate acreage (acreage)
-4. Whether they are the sole owner on title (sole_owner)
-5. Whether property taxes are current (taxes_current)
+3. Acreage (acreage)
+4. Whether they are sole owner on title (sole_owner)
+5. Whether taxes are current (taxes_current)
 6. Best time for William to call (callback_time)
 
+IF CRM DATA IS PROVIDED: Use it. Skip questions you already know. Just confirm: "I show you have X acres in Y County — does that sound right?"
+
+OBJECTION HANDLING — use these exact approaches:
+
+"What's your offer?" / "How much will you pay?"
+→ "William pulls comps on your specific parcel and gives a real number on the call — usually same day. What county is the property in?"
+
+"How did you get my number?" / "Who are you?"
+→ "County records are public — William reaches out to landowners in areas he buys. I'm his assistant helping manage messages. Are you the owner of the property?"
+
+"I'm not interested"
+→ "No problem at all — sorry to bother you. If anything changes down the road, feel free to reach out. Have a great day! — Coldwater Property Group" then output [OPT_OUT]
+
+"I already have a realtor" / "It's listed"
+→ "Totally understand! We actually work with listed properties too and can close faster than most buyers. Would it be worth a quick 10-min call with William?"
+
+"What's Coldwater Property Group?"
+→ "We buy vacant land for cash in TN, AR, OK, TX and MO — no fees, no agents, fast close. William works directly with landowners."
+
+"I need to think about it" / "Not right now"
+→ "Of course — no rush at all. Can I just grab your county and acreage so William has it on file when you're ready?"
+
+"Is this a scam?" / "Are you legitimate?"
+→ "Totally fair question! We're a legit land buying company based in Tennessee. You can look us up — Coldwater Property Group. Are you the owner of the land?"
+
+"The price needs to be X" / Seller names a price
+→ "I'll pass that along to William — he'll look at the comps and see what he can do. What county is the property in so he can pull the right data?"
+
+"I have back taxes" / "There are liens"
+→ "William works with those situations all the time — it doesn't necessarily stop a deal. Can you tell me what county the property is in?"
+
+"There are multiple owners" / "I need to talk to my family"
+→ "No problem — William can work with multiple owners. When do you think you'd know if everyone is on board? I'll make sure he follows up then."
+
+"How fast can you close?"
+→ "Typically 2-4 weeks once both parties sign — William handles all the paperwork and covers closing costs. What county is your land in?"
+
 RULES:
-- Keep every message under 160 characters — this is SMS
-- Ask ONE question at a time
-- Be warm and casual, not robotic
-- Never mention price — William handles that on the call
-- If asked about price say: "William pulls comps and gives a real number on the call — usually same day"
-- If asked how you got their number: "County records are public — William reaches out to landowners in areas he buys"
-- If they say STOP, UNSUBSCRIBE, QUIT, END, or NOT INTERESTED: respond politely then output [OPT_OUT] on a new line
-- Once you have all 6 data points: send a warm closing message then output [QUALIFIED] on a new line followed by JSON
+- One message per response — never send two separate texts
+- Under 160 characters when possible
+- Casual and warm, never corporate or salesy
+- Never use: offer, cash, buy, purchase, sell, investor, deal in the FIRST message to a new lead
+- Once all 6 data points collected, say: "Perfect — I'll get William all set for your call at [their time]. He'll reach out then. Thanks!" then output [QUALIFIED] on new line with JSON
+- If they say STOP, UNSUBSCRIBE, QUIT, END, REMOVE, or NOT INTERESTED: respond politely then output [OPT_OUT]
 
 QUALIFIED format:
 [QUALIFIED]
-{"owner_confirmed":true,"county":"Shelby, TN","acreage":"12.5","sole_owner":true,"taxes_current":true,"callback_time":"tomorrow afternoon"}`;
+{"owner_confirmed":true,"county":"Shelby, TN","acreage":"3","sole_owner":true,"taxes_current":true,"callback_time":"Thursday 2pm"}`;
 
 async function getConversation(phone, record) {
   const convos = record.conversations || {};
@@ -141,7 +180,35 @@ async function runAIConversation(phone, message, KEY, BIN) {
   if (convo.qualified) { console.log('Already qualified'); return; }
   if (convo.optOut) { console.log('Opted out'); return; }
 
-  convo.messages.push({ role: 'user', content: message });
+  // Rate limit: minimum 30 seconds between AI responses to same number
+  const now = Date.now();
+  const lastReply = convo.lastReplyAt || 0;
+  const secondsSinceLast = (now - lastReply) / 1000;
+  if (secondsSinceLast < 30 && convo.messages.length > 0) {
+    console.log('Rate limited:', phone, '- only', Math.round(secondsSinceLast), 'seconds since last reply');
+    return;
+  }
+  convo.lastReplyAt = now;
+
+  // Look up contact in CRM data by phone number
+  const crmContacts = record.crmContacts || [];
+  const crmContact = crmContacts.find(c => {
+    const cp = c.phone ? c.phone.replace(/\D/g,'') : '';
+    const pp = phone.replace(/\D/g,'');
+    return cp && pp && (cp === pp || cp === pp.slice(-10) || pp === cp.slice(-10));
+  });
+
+  // Build user message with CRM context if available
+  let userMessage = message;
+  if (crmContact && convo.messages.length === 0) {
+    const crmInfo = `
+
+[CRM DATA for this seller: Name: ${crmContact.name||'unknown'}, County: ${crmContact.county||'unknown'}, State: ${crmContact.state||'unknown'}, Acreage: ${crmContact.acreage||'unknown'}, Source: ${crmContact.source||'unknown'}. Use this to confirm details rather than asking from scratch.]`;
+    userMessage = message + crmInfo;
+    console.log('CRM data found for:', crmContact.name);
+  }
+
+  convo.messages.push({ role: 'user', content: userMessage });
 
   let aiResponse;
   try {
@@ -230,6 +297,25 @@ exports.handler = async (event) => {
   const obj = payload.data?.object || payload.data || {};
 
   console.log('Quo event:', eventType, JSON.stringify(obj).slice(0,200));
+
+  // Deduplicate — ignore if we've already processed this message ID
+  const messageId = obj.id;
+  if (messageId && eventType === 'message.received') {
+    const KEY2 = process.env.JSONBIN_API_KEY;
+    const BIN2 = process.env.JSONBIN_BIN_ID;
+    if (KEY2 && BIN2) {
+      try {
+        const rec = await readBin(KEY2, BIN2);
+        const processed = rec.processedIds || [];
+        if (processed.includes(messageId)) {
+          console.log('Duplicate message ignored:', messageId);
+          return { statusCode: 200, body: JSON.stringify({ ok: true, msg: 'duplicate' }) };
+        }
+        rec.processedIds = [...processed, messageId].slice(-500);
+        await writeBin(rec, KEY2, BIN2);
+      } catch(e) { console.error('Dedup error:', e.message); }
+    }
+  }
 
   let contactPhone = null, messageText = null, direction = 'Outbound', duration = null, summary = null;
 
