@@ -281,10 +281,15 @@ exports.handler = async (event) => {
 
       // Run AI conversation for inbound SMS (inline, no HTTP call)
       if (eventType === 'message.received' && messageText && KEY && BIN) {
-        console.log('Running AI for inbound SMS from:', contactPhone);
+        console.log('=== STARTING AI CONVERSATION ===');
+        console.log('Phone:', contactPhone, 'Message:', messageText.slice(0,50));
+        console.log('ANTHROPIC_API_KEY set:', !!process.env.ANTHROPIC_API_KEY);
+        console.log('QUO_API_KEY set:', !!process.env.QUO_API_KEY);
+        console.log('QUO_PHONE_NUMBER_ID set:', !!process.env.QUO_PHONE_NUMBER_ID);
         await runAIConversation(contactPhone, messageText, KEY, BIN);
+        console.log('=== AI CONVERSATION COMPLETE ===');
       } else {
-        // Just save the touch if not inbound SMS
+        console.log('Not running AI. eventType:', eventType, 'hasMessage:', !!messageText, 'hasKey:', !!KEY);
         await writeBin(record, KEY, BIN);
       }
 
