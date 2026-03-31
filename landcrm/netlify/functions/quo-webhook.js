@@ -54,6 +54,23 @@ exports.handler = async (event) => {
     direction = 'Inbound';
     contactPhone = normalisePhone(obj.from);
     messageText = obj.text || obj.content || '';
+    // Trigger AI SMS responder for inbound messages
+    if (contactPhone && messageText) {
+      try {
+        const aiUrl = (process.env.URL || 'https://dealflow-crm.netlify.app') + '/.netlify/functions/ai-sms-responder';
+        fetch(aiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone: contactPhone, message: messageText })
+        }).then(r => r.json()).then(d => {
+          console.log('AI responder result:', JSON.stringify(d).slice(0, 200));
+        }).catch(e => {
+          console.error('AI responder error:', e.message);
+        });
+      } catch (e) {
+        console.error('AI trigger error:', e.message);
+      }
+    }
   } else if (eventType === 'message.delivered') {
     direction = 'Outbound';
     contactPhone = normalisePhone(Array.isArray(obj.to) ? obj.to[0] : obj.to);
