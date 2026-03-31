@@ -2,13 +2,20 @@
   base = "landcrm"
   publish = "."
   functions = "netlify/functions"
-
+ 
 [functions]
   node_bundler = "esbuild"
-
+ 
+[functions."ai-sms-responder"]
+  timeout = 26
+ 
+[functions."quo-webhook"]
+  timeout = 26
+ 
 [[headers]]
   for = "/.netlify/functions/*"
   [headers.values]
     Access-Control-Allow-Origin = "*"
     Access-Control-Allow-Headers = "Content-Type, Authorization"
     Access-Control-Allow-Methods = "GET, POST, OPTIONS"
+ 
