@@ -959,6 +959,45 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
                 </select>
               </div>
             </div>
+
+            <!-- OFFER PERCENTAGE CONTROLS -->
+            <div style="margin-bottom:20px;padding:16px;background:var(--bg3);border-radius:12px;border:1px solid var(--border)">
+              <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:14px;text-transform:uppercase;letter-spacing:.05em;font-family:'DM Mono',monospace">Offer Percentages</div>
+
+              <!-- Initial Offer % -->
+              <div style="margin-bottom:14px">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+                  <label style="font-size:14px;color:var(--text2)">Recommended initial offer</label>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <span style="font-size:18px;font-weight:700;color:var(--accent);min-width:44px;text-align:right" id="c-init-pct-label">40%</span>
+                    <input type="number" id="c-init-pct-input" min="10" max="80" value="40" style="width:60px;padding:5px 8px;background:var(--bg4);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-size:14px;text-align:center" oninput="syncSlider('init',this.value);calcLand()">
+                  </div>
+                </div>
+                <input type="range" id="c-init-pct" min="10" max="80" value="40" step="1"
+                  style="width:100%;accent-color:var(--accent)"
+                  oninput="syncPctInput('init',this.value);calcLand()">
+                <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-top:3px">
+                  <span>10% (very low)</span><span>30–60% typical</span><span>80% (near retail)</span>
+                </div>
+              </div>
+
+              <!-- MAO % -->
+              <div>
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+                  <label style="font-size:14px;color:var(--text2)">Maximum allowable offer (MAO)</label>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <span style="font-size:18px;font-weight:700;color:var(--coral);min-width:44px;text-align:right" id="c-mao-pct-label">55%</span>
+                    <input type="number" id="c-mao-pct-input" min="10" max="85" value="55" style="width:60px;padding:5px 8px;background:var(--bg4);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-size:14px;text-align:center" oninput="syncSlider('mao',this.value);calcLand()">
+                  </div>
+                </div>
+                <input type="range" id="c-mao-pct" min="10" max="85" value="55" step="1"
+                  style="width:100%;accent-color:var(--coral)"
+                  oninput="syncPctInput('mao',this.value);calcLand()">
+                <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-top:3px">
+                  <span>10%</span><span>Walk away above MAO</span><span>85%</span>
+                </div>
+              </div>
+            </div>
             <div style="margin-bottom:18px;">
               <div class="form-section-title">Value adjustment factors</div>
               <div class="factor-group"><div class="factor-label">Road access</div>
@@ -990,7 +1029,18 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
                 </div>
               </div>
             </div>
-            <div class="calc-result"><div class="calc-result-label">Max allowable offer (MAO)</div><div class="calc-result-value" id="c-mao">—</div><div class="calc-result-sub" id="c-mao-sub"></div></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+              <div style="background:var(--adim);border:1px solid rgba(168,255,110,0.25);border-radius:12px;padding:16px">
+                <div style="font-size:12px;font-family:'DM Mono',monospace;color:var(--accent);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Initial Offer</div>
+                <div id="c-init-offer" style="font-size:28px;font-weight:800;font-family:'Syne',sans-serif;color:var(--accent);line-height:1;margin-bottom:5px">—</div>
+                <div id="c-init-sub" style="font-size:13px;color:var(--text2)"></div>
+              </div>
+              <div style="background:var(--cdim);border:1px solid rgba(255,138,112,0.25);border-radius:12px;padding:16px">
+                <div style="font-size:12px;font-family:'DM Mono',monospace;color:var(--coral);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">MAO — Walk Away</div>
+                <div id="c-mao" style="font-size:28px;font-weight:800;font-family:'Syne',sans-serif;color:var(--coral);line-height:1;margin-bottom:5px">—</div>
+                <div id="c-mao-sub" style="font-size:13px;color:var(--text2)"></div>
+              </div>
+            </div>
             <div id="calc-breakdown"></div>
           </div>
         </div>
@@ -1984,6 +2034,21 @@ function setPill(el,group,val){
   document.querySelectorAll(`[data-group="${group}"]`).forEach(p=>p.classList.remove('active'));
   el.classList.add('active');factors[group]=val;calcLand();
 }
+function syncPctInput(which, val) {
+  var v = Math.max(10, Math.min(which==='mao'?85:80, parseInt(val)||10));
+  var label = document.getElementById('c-'+which+'-pct-label');
+  var input = document.getElementById('c-'+which+'-pct-input');
+  if (label) label.textContent = v + '%';
+  if (input) input.value = v;
+}
+function syncSlider(which, val) {
+  var v = Math.max(10, Math.min(which==='mao'?85:80, parseInt(val)||10));
+  var slider = document.getElementById('c-'+which+'-pct');
+  var label = document.getElementById('c-'+which+'-pct-label');
+  if (slider) slider.value = v;
+  if (label) label.textContent = v + '%';
+}
+
 function calcLand(){
   const acres=parseFloat(document.getElementById('c-acres').value)||0;
   const comp=parseFloat(document.getElementById('c-comppacre').value)||0;
@@ -1991,25 +2056,59 @@ function calcLand(){
   const closing=parseFloat(document.getElementById('c-closing').value)||0;
   const fee=parseFloat(document.getElementById('c-fee').value)||0;
   const exit=document.getElementById('c-exit').value;
-  if(!acres||!comp){document.getElementById('c-mao').textContent='—';document.getElementById('c-mao-sub').textContent='';document.getElementById('calc-breakdown').innerHTML='';return;}
+
+  // Get custom percentages from sliders
+  const initPctEl=document.getElementById('c-init-pct');
+  const maoPctEl=document.getElementById('c-mao-pct');
+  const initPct=(initPctEl?parseFloat(initPctEl.value):40)/100;
+  const maoPct=(maoPctEl?parseFloat(maoPctEl.value):55)/100;
+
+  if(!acres||!comp){
+    document.getElementById('c-init-offer').textContent='—';
+    document.getElementById('c-init-sub').textContent='';
+    document.getElementById('c-mao').textContent='—';
+    document.getElementById('c-mao-sub').textContent='';
+    document.getElementById('calc-breakdown').innerHTML='';
+    return;
+  }
+
   const adj=Object.values(factors).reduce((a,b)=>a*b,1);
   const retail=acres*comp*adj;
-  const pct=exit==='double'?0.55:0.45;
-  const mao=retail*pct-taxes-closing-fee;
-  const color=mao>0?'var(--accent)':'var(--coral)';
-  document.getElementById('c-mao').style.color=color;
-  document.getElementById('c-mao').textContent=mao>0?'$'+Math.round(mao).toLocaleString():'No deal';
-  document.getElementById('c-mao-sub').textContent=mao>0?`${Math.round(mao/retail*100)}% of retail · ${exit==='double'?'double close':'wholesale'} pricing`:'Adjust inputs';
+
+  // Initial offer
+  const initOffer=retail*initPct-taxes-closing-fee;
+  const initEl=document.getElementById('c-init-offer');
+  const initSub=document.getElementById('c-init-sub');
+  if(initEl){
+    initEl.textContent=initOffer>0?'$'+Math.round(initOffer).toLocaleString():'No deal';
+    initEl.style.color=initOffer>0?'var(--accent)':'var(--text3)';
+  }
+  if(initSub) initSub.textContent=initOffer>0?Math.round(initPct*100)+'% of $'+Math.round(retail).toLocaleString()+' retail':'Below cost — adjust inputs';
+
+  // MAO
+  const maoVal=retail*maoPct-taxes-closing-fee;
+  const maoEl=document.getElementById('c-mao');
+  const maoSub=document.getElementById('c-mao-sub');
+  if(maoEl){
+    maoEl.textContent=maoVal>0?'$'+Math.round(maoVal).toLocaleString():'No deal';
+    maoEl.style.color=maoVal>0?'var(--coral)':'var(--text3)';
+  }
+  if(maoSub) maoSub.textContent=maoVal>0?'Max '+Math.round(maoPct*100)+'% · walk away above this':'Below cost';
+
+  // Spread
+  const spread=maoVal-initOffer;
+
   document.getElementById('calc-breakdown').innerHTML=`
-    <div class="calc-row"><span class="calc-row-label">Acreage</span><span class="calc-row-val">${acres} acres</span></div>
+    <div class="calc-row"><span class="calc-row-label">Acreage</span><span class="calc-row-val">${acres} ac</span></div>
     <div class="calc-row"><span class="calc-row-label">Comp / acre</span><span class="calc-row-val">$${comp.toLocaleString()}</span></div>
     <div class="calc-row"><span class="calc-row-label">Adjustment factor</span><span class="calc-row-val">${(adj*100).toFixed(0)}%</span></div>
-    <div class="calc-row"><span class="calc-row-label">Adjusted retail value</span><span class="calc-row-val">$${Math.round(retail).toLocaleString()}</span></div>
-    <div class="calc-row"><span class="calc-row-label">Target % (${exit==='double'?'double close':'wholesale'})</span><span class="calc-row-val">${Math.round(pct*100)}%</span></div>
-    <div class="calc-row"><span class="calc-row-label">Back taxes</span><span class="calc-row-val" style="color:var(--coral)">−$${taxes.toLocaleString()}</span></div>
-    <div class="calc-row"><span class="calc-row-label">Closing costs</span><span class="calc-row-val" style="color:var(--coral)">−$${closing.toLocaleString()}</span></div>
-    <div class="calc-row"><span class="calc-row-label">Assignment / fee</span><span class="calc-row-val" style="color:var(--coral)">−$${fee.toLocaleString()}</span></div>
-    <div class="calc-row" style="padding-top:10px;border-top:1px solid var(--border2)"><span class="calc-row-label" style="font-weight:500;color:var(--text)">Max offer (MAO)</span><span class="calc-row-val" style="color:${color};font-size:16px">$${Math.round(mao).toLocaleString()}</span></div>`;
+    <div class="calc-row"><span class="calc-row-label">Adjusted retail value</span><span class="calc-row-val" style="font-weight:600">$${Math.round(retail).toLocaleString()}</span></div>
+    <div class="calc-row" style="padding-top:8px;border-top:1px solid var(--border)"><span class="calc-row-label">Initial offer (${Math.round(initPct*100)}%)</span><span class="calc-row-val" style="color:var(--accent)">$${Math.round(initOffer).toLocaleString()}</span></div>
+    <div class="calc-row"><span class="calc-row-label">MAO (${Math.round(maoPct*100)}%)</span><span class="calc-row-val" style="color:var(--coral)">$${Math.round(maoVal).toLocaleString()}</span></div>
+    <div class="calc-row"><span class="calc-row-label">Negotiation room</span><span class="calc-row-val" style="color:var(--amber)">$${Math.round(spread).toLocaleString()}</span></div>
+    <div class="calc-row" style="padding-top:8px;border-top:1px solid var(--border)"><span class="calc-row-label" style="color:var(--text3)">Back taxes</span><span class="calc-row-val" style="color:var(--coral)">−$${taxes.toLocaleString()}</span></div>
+    <div class="calc-row"><span class="calc-row-label" style="color:var(--text3)">Closing costs</span><span class="calc-row-val" style="color:var(--coral)">−$${closing.toLocaleString()}</span></div>
+    <div class="calc-row"><span class="calc-row-label" style="color:var(--text3)">Assignment fee</span><span class="calc-row-val" style="color:var(--coral)">−$${fee.toLocaleString()}</span></div>`;
 }
 
 // ══════════════════════════════════
