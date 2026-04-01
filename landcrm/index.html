@@ -2678,6 +2678,47 @@ function onColDrop(e, stage, pipeline) {
 
 
 
+// ══════════════════════════════════
+// MANUAL CONTACT SYNC TO JSONBIN
+// ══════════════════════════════════
+function manualSyncContacts() {
+  var btn = document.getElementById('sync-btn');
+  if (btn) { btn.textContent = 'Syncing...'; btn.disabled = true; }
+
+  var contacts = (db.contacts || []).map(function(c) {
+    return {
+      id: c.id,
+      name: c.name,
+      phone: c.phone,
+      county: c.county,
+      state: c.state,
+      acreage: c.acreage,
+      apn: c.apn,
+      source: c.source,
+      stage: c.stage,
+      motivation: c.motivation
+    };
+  });
+
+  fetch('/.netlify/functions/sync-contacts', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ contacts: contacts })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (btn) { btn.textContent = 'Sync AI'; btn.disabled = false; }
+    toast('Synced ' + (data.synced || 0) + ' contacts to AI', 'success');
+    console.log('Sync result:', data);
+  })
+  .catch(function(e) {
+    if (btn) { btn.textContent = 'Sync AI'; btn.disabled = false; }
+    toast('Sync failed: ' + e.message, 'error');
+    console.error('Sync error:', e);
+  });
+}
+
+
 // INIT
 const savedTheme=localStorage.getItem('crm_theme');
 if(savedTheme==='light'){document.body.classList.add('light');}
