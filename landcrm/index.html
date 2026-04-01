@@ -1616,6 +1616,10 @@ function saveUnifiedContact(editId) {
       var newC = Object.assign({id:uid(), created:today(), touches:[], notes:noteText?[{date:today(),text:noteText}]:[]}, fields);
       db.contacts.unshift(newC);
       if(newC.phone) pushContactToQuo(newC);
+      // Auto-trigger sequence for Lead Gen Agency contacts
+      if(newC.source && (newC.source.toLowerCase().includes('lead gen') || newC.source.toLowerCase().includes('agency')) && newC.phone) {
+        triggerLeadGenSequence(newC);
+      }
     }
   } else {
     if(!db.allContacts) db.allContacts = [];
@@ -2715,6 +2719,36 @@ function manualSyncContacts() {
     if (btn) { btn.textContent = 'Sync AI'; btn.disabled = false; }
     toast('Sync failed: ' + e.message, 'error');
     console.error('Sync error:', e);
+  });
+}
+
+
+// ══════════════════════════════════════════
+// LEAD GEN AGENCY AUTO-SEQUENCE TRIGGER
+// ══════════════════════════════════════════
+function triggerLeadGenSequence(contact) {
+  console.log('Triggering Lead Gen sequence for:', contact.name, contact.phone);
+  fetch('/.netlify/functions/start-sequence', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ contact: contact, immediate: true })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (data.sent) {
+      toast('Sequence started — first text sent to ' + contact.name, 'success');
+    } else if (data.scheduledFor) {
+      toast('Sequence queued for ' + contact.name + ' — sends at 9am next business day', 'info');
+    } else {
+      toast('Sequence started for ' + contact.name, 'success');
+    }
+    console.log('Sequence result:', data);
+    // Also sync contacts to AI
+    manualSyncContacts();
+  })
+  .catch(function(e) {
+    toast('Sequence error: ' + e.message, 'error');
+    console.error('Sequence error:', e);
   });
 }
 
