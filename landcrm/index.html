@@ -2909,7 +2909,7 @@ Notes: ${(c.notes||[]).map(n=>n.text).join(' | ') || 'none'}
         </div>
 
         <div style="margin-top:16px;display:flex;gap:8px;justify-content:flex-end">
-          ${c.phone ? `<a href="tel:${c.phone}" class="btn btn-primary btn-sm">📞 Call ${c.name.split(' ')[0]} now</a>` : ''}
+          ${c.phone ? `<button class="btn btn-primary btn-sm" onclick="initiateQuoCall('${c.phone}', '${c.name}')">📞 Call ${c.name.split(' ')[0]} now</button>` : ''}
           <button class="btn btn-ghost btn-sm" onclick="closeModal()">Close</button>
         </div>
       </div>
@@ -2928,6 +2928,32 @@ Notes: ${(c.notes||[]).map(n=>n.text).join(' | ') || 'none'}
     `);
     console.error('Brief error:', e);
   }
+}
+
+
+// ══════════════════════════════════
+// INITIATE QUO CALL
+// ══════════════════════════════════
+function initiateQuoCall(phone, name) {
+  if (!phone) { toast('No phone number on file', 'error'); return; }
+  fetch('/.netlify/functions/initiate-call', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ to: phone, name: name })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (data.ok) {
+      toast('Calling ' + name + ' via Quo...', 'success');
+    } else {
+      window.location.href = 'tel:' + phone;
+      toast('Opening phone dialer', 'info');
+    }
+  })
+  .catch(function(e) {
+    window.location.href = 'tel:' + phone;
+    toast('Opening phone dialer', 'info');
+  });
 }
 
 
