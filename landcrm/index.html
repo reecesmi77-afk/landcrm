@@ -2936,24 +2936,27 @@ Notes: ${(c.notes||[]).map(n=>n.text).join(' | ') || 'none'}
 // ══════════════════════════════════
 function initiateQuoCall(phone, name) {
   if (!phone) { toast('No phone number on file', 'error'); return; }
-  fetch('/.netlify/functions/initiate-call', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ to: phone, name: name })
-  })
-  .then(function(r) { return r.json(); })
-  .then(function(data) {
-    if (data.ok) {
-      toast('Calling ' + name + ' via Quo...', 'success');
+  // Quo API doesn't support programmatic call initiation
+  // Best path: open Quo web app to the contact, or fall back to tel: on mobile
+  var isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  if (isMobile) {
+    // On mobile, tel: opens the phone app directly
+    window.location.href = 'tel:' + phone.replace(/\D/g,'');
+    toast('Opening dialer for ' + name, 'success');
+  } else {
+    // On desktop, open Quo web app - user can dial from there
+    window.open('https://my.quo.com', '_blank');
+    // Copy number to clipboard for convenience
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(phone).then(function() {
+        toast(phone + ' copied — dial in Quo', 'success');
+      }).catch(function() {
+        toast('Opening Quo — dial ' + phone, 'info');
+      });
     } else {
-      window.location.href = 'tel:' + phone;
-      toast('Opening phone dialer', 'info');
+      toast('Opening Quo — dial ' + phone, 'info');
     }
-  })
-  .catch(function(e) {
-    window.location.href = 'tel:' + phone;
-    toast('Opening phone dialer', 'info');
-  });
+  }
 }
 
 
