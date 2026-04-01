@@ -498,9 +498,7 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
     <div class="page-title" id="page-title">Dashboard</div>
     <div style="display:flex;gap:8px;align-items:center;">
       <button class="btn btn-ghost btn-sm" onclick="generateBriefing()">AI Briefing</button>
-      <button class="btn btn-ghost btn-sm" onclick="manualSyncContacts()" id="sync-btn">Sync AI</button>
-      <button class="btn btn-ghost btn-sm" onclick="syncFromQuo()">Sync Quo</button>
-      <button class="btn btn-ghost btn-sm" onclick="openFollowupModal()">Generate SMS</button>
+      <button class="btn btn-ghost btn-sm" onclick="openFollowupModal()">Send SMS</button>
       <button class="btn btn-primary btn-sm" onclick="openAddContact()">+ Add Contact</button>
     </div>
   </div>
@@ -1034,7 +1032,46 @@ const HANDOFF_STATES = ['AI handling','Needs human review','Human active'];
 // ══════════════════════════════════
 const KEY = 'landcrm_v2';
 function load(){try{const r=localStorage.getItem(KEY);return r?JSON.parse(r):{contacts:[],buyers:[]};}catch(e){return{contacts:[],buyers:[]};}}
-function save(){localStorage.setItem(KEY,JSON.stringify(db));}
+function save(){
+  localStorage.setItem(KEY,JSON.stringify(db));
+  // Auto-sync to JSONbin in background on every save — no manual clicks needed
+  autoSync();
+}
+
+// Debounce timer so rapid saves don't spam the API
+var _autoSyncTimer = null;
+function autoSync() {
+  if (_autoSyncTimer) clearTimeout(_autoSyncTimer);
+  _autoSyncTimer = setTimeout(function() {
+    _doAutoSync();
+  }, 1500); // wait 1.5s after last save before syncing
+}
+
+function _doAutoSync() {
+  var contacts = (db.contacts || []).map(function(c) {
+    return {
+      id: c.id, name: c.name, phone: c.phone,
+      county: c.county, state: c.state, acreage: c.acreage,
+      apn: c.apn, source: c.source, stage: c.stage, motivation: c.motivation
+    };
+  });
+  fetch('/.netlify/functions/sync-contacts', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ contacts: contacts })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    console.log('Auto-synced', (data.synced||0), 'contacts to AI');
+    // Update sync button to show it's current
+    var btn = document.getElementById('sync-btn');
+    if (btn) {
+      btn.textContent = 'Sync AI ✓';
+      setTimeout(function(){ btn.textContent = 'Sync AI'; }, 2000);
+    }
+  })
+  .catch(function(e) { console.warn('Auto-sync failed:', e.message); });
+}
 let db = load();
 
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
