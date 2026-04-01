@@ -25,16 +25,16 @@
 .logout-btn{background:none;border:1px solid var(--border);border-radius:7px;color:var(--text3);font-size:10px;font-family:'DM Mono',monospace;padding:3px 8px;cursor:pointer;transition:all 0.15s;}
 .logout-btn:hover{color:var(--coral);border-color:rgba(255,122,92,0.3);}
 :root {
-  --bg:#0b0c0b;--bg2:#111311;--bg3:#181a17;--bg4:#1f221e;--bg5:#252825;
-  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);
-  --text:#e6ebe6;--text2:#8a988a;--text3:#4a554a;
-  --accent:#a8ff6e;--accent2:#7ed44a;--adim:rgba(168,255,110,0.08);--adim2:rgba(168,255,110,0.15);
-  --coral:#ff7a5c;--cdim:rgba(255,122,92,0.1);
-  --amber:#ffb84d;--ambdim:rgba(255,184,77,0.1);
-  --blue:#5cb8ff;--bdim:rgba(92,184,255,0.1);
-  --purple:#c084fc;--pdim:rgba(192,132,252,0.1);
-  --teal:#4dd6b4;--tdim:rgba(77,214,180,0.1);
-  --ai-color:#f0a500;--ai-dim:rgba(240,165,0,0.1);
+  --bg:#0e100e;--bg2:#141614;--bg3:#1a1d1a;--bg4:#222522;--bg5:#2a2e2a;
+  --border:rgba(255,255,255,0.10);--border2:rgba(255,255,255,0.16);
+  --text:#edf2ed;--text2:#b0c0b0;--text3:#6a7d6a;
+  --accent:#a8ff6e;--accent2:#7ed44a;--adim:rgba(168,255,110,0.10);--adim2:rgba(168,255,110,0.18);
+  --coral:#ff8a70;--cdim:rgba(255,138,112,0.12);
+  --amber:#ffc05a;--ambdim:rgba(255,192,90,0.12);
+  --blue:#72caff;--bdim:rgba(114,202,255,0.12);
+  --purple:#d09aff;--pdim:rgba(208,154,255,0.12);
+  --teal:#5ee4c0;--tdim:rgba(94,228,192,0.12);
+  --ai-color:#ffb020;--ai-dim:rgba(255,176,32,0.12);
   --r:10px;--rl:14px;
 }
 body.light {
@@ -51,7 +51,7 @@ body.light {
 }
 
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;font-size:14px;line-height:1.5;transition:background 0.2s,color 0.2s;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;font-size:17px;line-height:1.65;transition:background 0.2s,color 0.2s;}
 
 /* SIDEBAR */
 #sidebar{width:224px;min-height:100vh;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;position:fixed;top:0;left:0;bottom:0;z-index:100;}
@@ -84,7 +84,7 @@ nav{padding:10px 8px;flex:1;overflow-y:auto;}
 .view.active{display:block;}
 
 /* BUTTONS */
-.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;border:none;transition:all 0.15s;font-family:'DM Sans',sans-serif;}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-size:15px;font-weight:500;cursor:pointer;border:none;transition:all 0.15s;font-family:'DM Sans',sans-serif;}
 .btn-primary{background:var(--accent);color:#0a140a;}
 .btn-primary:hover{background:var(--accent2);}
 .btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border2);}
@@ -113,7 +113,7 @@ nav{padding:10px 8px;flex:1;overflow-y:auto;}
 .stat-value.amber{color:var(--amber);}
 .stat-value.blue{color:var(--blue);}
 .stat-value.ai{color:var(--ai-color);}
-.stat-sub{font-size:10px;color:var(--text3);margin-top:4px;}
+.stat-sub{font-size:13px;color:var(--text3);margin-top:4px;}
 
 /* PIPELINE */
 .pipeline-wrapper{overflow-x:auto;padding-bottom:16px;}
@@ -128,7 +128,7 @@ nav{padding:10px 8px;flex:1;overflow-y:auto;}
 .pipeline-card.needs-review{border-color:rgba(240,165,0,0.4);}
 .pipeline-card.escalate{border-color:rgba(255,122,92,0.4);}
 .pc-name{font-size:12px;font-weight:500;margin-bottom:2px;}
-.pc-loc{font-size:10px;color:var(--text3);margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pc-loc{font-size:13px;color:var(--text3);margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .pc-meta{display:flex;align-items:center;gap:4px;flex-wrap:wrap;}
 .pc-days{margin-left:auto;font-size:9px;color:var(--text3);font-family:'DM Mono',monospace;white-space:nowrap;}
 .touch-badge{position:absolute;top:8px;right:8px;background:var(--bg4);border:1px solid var(--border2);border-radius:20px;font-family:'DM Mono',monospace;font-size:9px;color:var(--text2);padding:1px 5px;}
@@ -136,7 +136,7 @@ nav{padding:10px 8px;flex:1;overflow-y:auto;}
 .touch-badge.alert{background:var(--cdim);border-color:rgba(255,122,92,0.3);color:var(--coral);}
 
 /* TAGS */
-.tag{font-size:9px;font-family:'DM Mono',monospace;padding:2px 6px;border-radius:20px;white-space:nowrap;}
+.tag{font-size:13px;font-family:'DM Mono',monospace;padding:2px 6px;border-radius:20px;white-space:nowrap;}
 .tag-hot{background:rgba(255,80,80,0.12);color:#ff6060;}
 .tag-warm{background:var(--ambdim);color:var(--amber);}
 .tag-cold{background:var(--bg4);color:var(--text3);}
@@ -154,7 +154,7 @@ nav{padding:10px 8px;flex:1;overflow-y:auto;}
 /* CARD */
 .card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden;}
 .card-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
-.card-title{font-family:'Syne',sans-serif;font-weight:600;font-size:13px;}
+.card-title{font-family:'Syne',sans-serif;font-weight:600;font-size:16px;}
 .card-body{padding:18px;}
 
 /* TOUCH LOG */
@@ -173,7 +173,7 @@ nav{padding:10px 8px;flex:1;overflow-y:auto;}
 .handoff-banner.ai{background:var(--ai-dim);border:1px solid rgba(240,165,0,0.25);}
 .handoff-banner.review{background:rgba(240,165,0,0.15);border:1px solid rgba(240,165,0,0.4);}
 .handoff-banner.human{background:var(--adim);border:1px solid rgba(168,255,110,0.2);}
-.hb-label{font-size:9px;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;}
+.hb-label{font-size:12px;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;}
 .hb-text{font-size:12px;font-weight:500;}
 
 /* ESCALATION ALERT */
@@ -187,8 +187,8 @@ nav{padding:10px 8px;flex:1;overflow-y:auto;}
 .form-grid-4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;}
 .form-full{grid-column:1/-1;}
 .form-group{display:flex;flex-direction:column;gap:5px;}
-.form-label{font-size:9px;font-family:'DM Mono',monospace;letter-spacing:0.5px;text-transform:uppercase;color:var(--text3);}
-.form-input,.form-select,.form-textarea{background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:8px 10px;font-size:12px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color 0.15s;width:100%;}
+.form-label{font-size:13px;font-family:'DM Mono',monospace;letter-spacing:0.5px;text-transform:uppercase;color:var(--text3);}
+.form-input,.form-select,.form-textarea{background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:8px 10px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color 0.15s;width:100%;}
 .form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--accent);}
 .form-input::placeholder,.form-textarea::placeholder{color:var(--text3);}
 .form-textarea{resize:vertical;min-height:70px;}
@@ -199,28 +199,28 @@ nav{padding:10px 8px;flex:1;overflow-y:auto;}
 /* DETAIL */
 .detail-header{display:flex;align-items:flex-start;gap:16px;margin-bottom:18px;}
 .detail-avatar{width:48px;height:48px;border-radius:10px;background:var(--adim2);border:1px solid rgba(168,255,110,0.3);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:700;font-size:18px;color:var(--accent);flex-shrink:0;}
-.detail-name{font-family:'Syne',sans-serif;font-weight:700;font-size:20px;margin-bottom:4px;}
+.detail-name{font-family:'Syne',sans-serif;font-weight:700;font-size:22px;margin-bottom:4px;}
 .detail-tags{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:5px;}
 .detail-sub{font-size:11px;color:var(--text3);}
 .parcel-grid{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px;}
 .parcel-inner{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
 .parcel-item{text-align:center;}
-.parcel-item-label{font-size:9px;font-family:'DM Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;}
-.parcel-item-val{font-size:12px;font-weight:500;}
+.parcel-item-label{font-size:13px;font-family:'DM Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;}
+.parcel-item-val{font-size:16px;font-weight:500;}
 .parcel-item-val.accent{color:var(--accent);}
-.section-label{font-family:'DM Mono',monospace;font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;}
+.section-label{font-family:'DM Mono',monospace;font-size:13px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;}
 
 /* CALC */
 .calc-result{background:var(--adim);border:1px solid rgba(168,255,110,0.2);border-radius:var(--rl);padding:20px;text-align:center;margin-bottom:16px;}
 .calc-result-label{font-size:9px;color:var(--text3);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;}
 .calc-result-value{font-family:'Syne',sans-serif;font-size:40px;font-weight:800;color:var(--accent);line-height:1;}
-.calc-result-sub{font-size:10px;color:var(--text3);margin-top:4px;}
+.calc-result-sub{font-size:13px;color:var(--text3);margin-top:4px;}
 .calc-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px;}
 .calc-row:last-child{border-bottom:none;}
 .calc-row-label{color:var(--text3);}
 .calc-row-val{font-family:'DM Mono',monospace;font-weight:500;}
 .factor-group{margin-bottom:14px;}
-.factor-label{font-size:10px;color:var(--text2);margin-bottom:6px;}
+.factor-label{font-size:13px;color:var(--text2);margin-bottom:6px;}
 .factor-pills{display:flex;gap:6px;flex-wrap:wrap;}
 .factor-pill{padding:4px 10px;border-radius:20px;font-size:10px;font-family:'DM Mono',monospace;cursor:pointer;border:1px solid var(--border);background:var(--bg3);color:var(--text2);transition:all 0.15s;}
 .factor-pill.active{background:var(--adim);color:var(--accent);border-color:rgba(168,255,110,0.3);}
@@ -237,12 +237,12 @@ nav{padding:10px 8px;flex:1;overflow-y:auto;}
 .today-dot.green{background:var(--accent);}
 .today-dot.ai{background:var(--ai-color);}
 .today-label{font-size:12px;font-weight:500;margin-bottom:2px;}
-.today-sub{font-size:10px;color:var(--text3);}
+.today-sub{font-size:13px;color:var(--text3);}
 .stage-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
-.stage-bar-label{font-size:10px;color:var(--text3);width:140px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.stage-bar-label{font-size:13px;color:var(--text3);width:140px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .stage-bar-track{flex:1;height:4px;background:var(--bg4);border-radius:2px;overflow:hidden;}
 .stage-bar-fill{height:100%;border-radius:2px;transition:width 0.5s;}
-.stage-bar-count{font-family:'DM Mono',monospace;font-size:10px;color:var(--text2);width:14px;text-align:right;}
+.stage-bar-count{font-family:'DM Mono',monospace;font-size:13px;color:var(--text2);width:14px;text-align:right;}
 
 /* SEQUENCES */
 .seq-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
@@ -255,14 +255,14 @@ nav{padding:10px 8px;flex:1;overflow-y:auto;}
 .seq-step:last-child{border-bottom:none;}
 .seq-step-day{font-family:'DM Mono',monospace;font-size:9px;padding:2px 6px;border-radius:20px;background:var(--bg4);color:var(--text3);flex-shrink:0;margin-top:1px;}
 .seq-step-type{font-size:11px;font-weight:500;margin-bottom:2px;}
-.seq-step-preview{font-size:10px;color:var(--text3);line-height:1.4;}
+.seq-step-preview{font-size:13px;color:var(--text3);line-height:1.4;}
 
 /* REPORT */
 .report-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px;}
 .funnel-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
 .funnel-bar{height:26px;border-radius:4px;display:flex;align-items:center;padding:0 10px;font-size:11px;font-weight:500;min-width:36px;transition:width 0.5s;}
 .funnel-label{font-size:11px;color:var(--text2);white-space:nowrap;}
-.funnel-pct{font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);margin-left:auto;}
+.funnel-pct{font-family:'DM Mono',monospace;font-size:13px;color:var(--text3);margin-left:auto;}
 
 /* FILTER BAR */
 .filter-bar{display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap;}
@@ -274,7 +274,7 @@ select.filter-select option{background:var(--bg3);}
 
 /* TABLE */
 table{width:100%;border-collapse:collapse;}
-thead th{text-align:left;padding:8px 12px;font-size:9px;font-family:'DM Mono',monospace;letter-spacing:0.5px;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border);}
+thead th{text-align:left;padding:8px 12px;font-size:12px;font-family:'DM Mono',monospace;letter-spacing:0.5px;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border);}
 tbody tr{border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.1s;}
 tbody tr:hover{background:var(--bg3);}
 tbody td{padding:10px 12px;font-size:12px;}
@@ -284,12 +284,12 @@ tbody td{padding:10px 12px;font-size:12px;}
 .buyer-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:14px;cursor:pointer;transition:all 0.15s;}
 .buyer-card:hover{border-color:var(--border2);transform:translateY(-1px);}
 .buyer-name{font-size:13px;font-weight:500;margin-bottom:4px;}
-.buyer-buybox{font-size:10px;color:var(--text3);line-height:1.5;}
+.buyer-buybox{font-size:13px;color:var(--text3);line-height:1.5;}
 
 /* MODAL */
 #modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:200;align-items:center;justify-content:center;}
 #modal-overlay.open{display:flex;}
-.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--rl);width:640px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,0.6);}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--rl);width:700px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,0.6);}
 .modal-header{padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--bg2);z-index:1;}
 .modal-title{font-family:'Syne',sans-serif;font-weight:700;font-size:16px;}
 .modal-close{width:28px;height:28px;border-radius:7px;background:var(--bg3);border:1px solid var(--border);color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;}
@@ -782,7 +782,7 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
                     <input class="form-input" id="s-webhook-url" readonly style="color:var(--text3);flex:1">
                     <button class="btn btn-ghost btn-sm" onclick="copyWebhookUrl()" style="white-space:nowrap">Copy URL</button>
                   </div>
-                  <div style="font-size:10px;color:var(--text3);margin-top:4px">Quo → Integrations → Webhooks → Add Webhook → paste this URL</div>
+                  <div style="font-size:13px;color:var(--text3);margin-top:4px">Quo → Integrations → Webhooks → Add Webhook → paste this URL</div>
                 </div>
               </div>
               <div style="margin-top:10px;display:flex;gap:8px">
@@ -1223,7 +1223,7 @@ function renderPipeline(pipeline){
               <span class="tag tag-neutral">${c.source||'unknown'}</span>
             </div>
           </div>`;
-        }).join(''):'<div style="font-size:10px;color:var(--text3);padding:4px">Empty</div>'}
+        }).join(''):'<div style="font-size:13px;color:var(--text3);padding:4px">Empty</div>'}
       </div>
     </div>`;
   }).join('');
@@ -1246,7 +1246,7 @@ function renderAIQueue(){
       <td style="font-family:'DM Mono',monospace;font-size:11px">${c.acreage} ac</td>
       <td><span class="tag tag-neutral">${c.stage}</span></td>
       <td><span class="tag ${escalate?'tag-hot':'tag-ai'}">${tc} touches</span></td>
-      <td style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3)">${lastTouchDate(c)||'—'}</td>
+      <td style="font-family:'DM Mono',monospace;font-size:13px;color:var(--text3)">${lastTouchDate(c)||'—'}</td>
       <td><span class="tag ${escalate?'tag-hot':'tag-review'}">${escalate?'Escalate':'Review'}</span></td>
       <td><button class="btn btn-human btn-sm" onclick="event.stopPropagation();claimLead('${c.id}')">Claim</button></td>
     </tr>`;
@@ -1290,7 +1290,7 @@ function renderSellers(){
       <td><span class="tag ${c.pipeline==='dis'?'tag-dis':'tag-acq'}">${c.stage}</span></td>
       <td><span class="tag ${tc>=5?'tag-hot':tc>=3?'tag-ai':'tag-neutral'}">${tc}x</span></td>
       <td><span class="tag ${c.handoff==='Human active'?'tag-human':nh?'tag-review':'tag-ai'}">${c.handoff||'AI handling'}</span></td>
-      <td style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3)">${lastTouchDate(c)||'—'}</td>
+      <td style="font-family:'DM Mono',monospace;font-size:13px;color:var(--text3)">${lastTouchDate(c)||'—'}</td>
       <td><span class="tag tag-${c.temp||'cold'}">${c.temp||'cold'}</span></td>
     </tr>`;
   }).join('');
@@ -1307,154 +1307,304 @@ function openDetail(id){
   const tc=touchCount(c);
   const hs=handoffStatus(c);
   const escalate=tc>=5;
-  const escBox=escalate?`<div class="escalation-box"><div class="esc-title">Escalation alert — ${tc} touches, no conversion</div><div class="esc-text">This lead has been touched ${tc} times with no deal. Consider: a personal call, changing your offer approach, or moving to Not Motivated Yet.</div></div>`:'';
+  const stageIdx=stages.indexOf(c.stage);
+  const stagePct=stages.length>1?Math.round((stageIdx/(stages.length-1))*100):0;
+  const escBox=escalate?`<div class="escalation-box"><div class="esc-title">Escalation alert — ${tc} touches, no conversion</div><div class="esc-text">This lead has been touched ${tc} times with no deal. Consider a personal call or changing your approach.</div></div>`:'';
   const hbClass=c.handoff==='Human active'?'human':hs.startsWith('Escalate')||hs==='Needs human review'?'review':'ai';
   const hbText=c.handoff==='Human active'?'You are handling this lead personally':hs.startsWith('Escalate')?`${tc} touches — this needs your personal attention now`:`AI handling initial outreach (${tc} touches made)`;
   const nextSMS=getLandSMS(c);
+
   openCustomModal(`
     <div class="modal-header">
       <div class="modal-title">Lead detail</div>
       <div style="display:flex;gap:6px">
-        <button class="btn btn-ghost btn-sm" style="background:linear-gradient(135deg,rgba(168,255,110,0.15),rgba(168,255,110,0.05));border-color:rgba(168,255,110,0.3)" onclick="generatePreCallBrief(\'${id}\')" >📋 Pre-Call Brief</button>
-        <button class="btn btn-ghost btn-sm" onclick="runContactComps('${id}')" style="font-size:11px">🔍 Run Comps</button>
+        <button class="btn btn-ghost btn-sm" style="background:linear-gradient(135deg,rgba(168,255,110,0.15),rgba(168,255,110,0.05));border-color:rgba(168,255,110,0.3)" onclick="generatePreCallBrief('${id}')">📋 Brief</button>
+        <button class="btn btn-ghost btn-sm" onclick="runContactComps('${id}')">🔍 Comps</button>
         <button class="btn btn-ghost btn-sm" onclick="openEditContact('${id}')">Edit</button>
         <button class="btn btn-danger btn-sm" onclick="deleteContact('${id}')">Delete</button>
         <button class="modal-close" onclick="closeModal()">&#x2715;</button>
       </div>
     </div>
-    <div class="modal-body">
+    <div class="modal-body" style="padding:0">
+
       ${escBox}
-      <div class="handoff-banner ${hbClass}">
-        <div>
-          <div class="hb-label" style="color:${c.handoff==='Human active'?'var(--accent)':hs.includes('Escalate')?'var(--coral)':'var(--ai-color)'}">${c.handoff==='Human active'?'Human active':hs.startsWith('Escalate')?'Escalate now':'AI handling'}</div>
-          <div class="hb-text">${hbText}</div>
-        </div>
-        <div style="display:flex;gap:6px;flex-shrink:0">
-          ${c.handoff!=='Human active'?`<button class="btn btn-human btn-sm" onclick="updateHandoff('${id}','Human active')">Claim lead</button>`:''}
-          ${c.handoff==='Human active'?`<button class="btn btn-ai btn-sm" onclick="updateHandoff('${id}','AI handling')">Return to AI</button>`:''}
-        </div>
-      </div>
 
-      <div class="detail-header">
-        <div class="detail-avatar">${initials}</div>
-        <div>
-          <div class="detail-name">${c.name}</div>
-          <div class="detail-tags">
-            <span class="tag ${c.pipeline==='dis'?'tag-dis':'tag-acq'}">${c.pipeline==='dis'?'Disposition':'Acquisition'}</span>
-            <span class="tag tag-${c.temp||'cold'}">${c.temp||'cold'}</span>
-            <span class="tag tag-neutral">${c.dealType||'wholesale'}</span>
-            <span class="tag tag-neutral">${c.source||'unknown'}</span>
-            ${(c.tags||[]).slice(0,2).map(t=>`<span class="tag tag-neutral">${t}</span>`).join('')}
+      <!-- ── HEADER BLOCK ── -->
+      <div style="padding:18px 20px 14px;border-bottom:1px solid var(--border)">
+        <div style="display:flex;gap:14px;align-items:flex-start;margin-bottom:14px">
+          <div class="detail-avatar">${initials}</div>
+          <div style="flex:1;min-width:0">
+            <div class="detail-name">${c.name}</div>
+            <div style="font-size:15px;color:var(--text2);margin-bottom:8px">${c.phone||''}${c.email?' · '+c.email:''}</div>
+            <div class="detail-tags">
+              <span class="tag ${c.pipeline==='dis'?'tag-dis':'tag-acq'}">${c.pipeline==='dis'?'Disposition':'Acquisition'}</span>
+              <span class="tag tag-${c.temp||'cold'}">${c.temp||'cold'}</span>
+              <span class="tag tag-neutral">${c.source||'unknown'}</span>
+              <span class="tag tag-neutral">${c.dealType||'wholesale'}</span>
+              ${(c.tags||[]).slice(0,2).map(t=>`<span class="tag tag-neutral">${t}</span>`).join('')}
+            </div>
           </div>
-          <div class="detail-sub">${c.phone||''}${c.email?' · '+c.email:''}</div>
+          <div style="text-align:right;flex-shrink:0">
+            <div style="font-size:13px;color:var(--text3);margin-bottom:4px">Stage</div>
+            <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:4px">${c.stage||'New Lead'}</div>
+            <div style="width:80px;height:3px;background:var(--border2);border-radius:2px;overflow:hidden">
+              <div style="height:100%;width:${stagePct}%;background:var(--accent);border-radius:2px"></div>
+            </div>
+            <div style="font-size:11px;color:var(--text3);margin-top:3px">${stageIdx+1} of ${stages.length}</div>
+          </div>
+        </div>
+
+        <!-- QUICK ACTIONS -->
+        <div style="display:flex;gap:8px;margin-bottom:14px">
+          <button class="btn btn-primary" style="flex:1" onclick="initiateQuoCall('${c.phone}','${c.name}')">📞 Call ${c.name.split(' ')[0]}</button>
+          <a href="sms:${c.phone}" class="btn btn-ghost" style="flex:1;text-decoration:none;justify-content:center">💬 Text</a>
+          ${c.email?`<a href="mailto:${c.email}" class="btn btn-ghost" style="flex:1;text-decoration:none;justify-content:center">✉️ Email</a>`:'<button class="btn btn-ghost" style="flex:1;opacity:0.4" disabled>✉️ Email</button>'}
+          <button class="btn btn-ghost" style="flex:1;border-color:rgba(92,184,255,0.3);color:var(--blue)" onclick="openCalcForContact('${id}')">⚡ Offer Math</button>
+        </div>
+
+        <!-- TEMP + HANDOFF -->
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+          <div style="display:flex;gap:6px;align-items:center">
+            <span style="font-size:13px;color:var(--text3)">Temp:</span>
+            ${['cold','warm','hot'].map(t=>`<button onclick="quickSetTemp('${id}','${t}')" class="btn btn-sm" style="padding:4px 12px;${c.temp===t?'border-color:var(--accent);color:var(--accent);':'opacity:0.5'}">${t==='cold'?'🧊':t==='warm'?'🔥':'⚡'} ${t}</button>`).join('')}
+          </div>
+          <div style="display:flex;gap:6px">
+            ${c.handoff!=='Human active'?`<button class="btn btn-human btn-sm" onclick="updateHandoff('${id}','Human active')">Claim lead</button>`:''}
+            ${c.handoff==='Human active'?`<button class="btn btn-ai btn-sm" onclick="updateHandoff('${id}','AI handling')">Return to AI</button>`:''}
+          </div>
         </div>
       </div>
 
-      <div class="parcel-grid" style="margin-bottom:14px">
-        <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--accent);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">Parcel info</div>
-        <div class="parcel-inner">
-          <div class="parcel-item"><div class="parcel-item-label">Acreage</div><div class="parcel-item-val accent">${c.acreage||'—'} ac</div></div>
-          <div class="parcel-item"><div class="parcel-item-label">County / State</div><div class="parcel-item-val">${c.county||'—'}, ${c.state||'—'}</div></div>
-          <div class="parcel-item"><div class="parcel-item-label">City</div><div class="parcel-item-val">${c.city||'—'}</div></div>
-          <div class="parcel-item"><div class="parcel-item-label">Zip</div><div class="parcel-item-val">${c.zip||'—'}</div></div>
-          <div class="parcel-item"><div class="parcel-item-label">Zoning</div><div class="parcel-item-val">${c.zoning||'—'}</div></div>
-          <div class="parcel-item"><div class="parcel-item-label">Road access</div><div class="parcel-item-val">${c.road||'—'}</div></div>
-          <div class="parcel-item"><div class="parcel-item-label">Utilities</div><div class="parcel-item-val">${c.utilities||'—'}</div></div>
-          <div class="parcel-item"><div class="parcel-item-label">Flood zone</div><div class="parcel-item-val">${c.flood||'—'}</div></div>
-          <div class="parcel-item"><div class="parcel-item-label">Back taxes</div><div class="parcel-item-val">${c.backTaxes?'$'+parseInt(c.backTaxes||0).toLocaleString():'$0'}</div></div>
-          <div class="parcel-item"><div class="parcel-item-label">Survey</div><div class="parcel-item-val">${c.survey||'—'}</div></div>
+      <!-- ── PROPERTY SNAPSHOT ── -->
+      <div style="padding:14px 20px;border-bottom:1px solid var(--border)">
+        <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--accent);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Property</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px">
+          <div><div style="font-size:13px;color:var(--text3);margin-bottom:2px">Acreage</div><div style="font-size:17px;font-weight:600;color:var(--accent)">${c.acreage||'—'} ac</div></div>
+          <div><div style="font-size:13px;color:var(--text3);margin-bottom:2px">County / State</div><div style="font-size:16px;font-weight:500">${c.county||'—'}, ${c.state||'—'}</div></div>
+          <div><div style="font-size:13px;color:var(--text3);margin-bottom:2px">APN</div><div style="font-size:14px;font-weight:500;font-family:'DM Mono',monospace">${c.apn||'—'}</div></div>
+          <div><div style="font-size:13px;color:var(--text3);margin-bottom:2px">Asking</div><div style="font-size:16px;font-weight:500">${c.askingPrice?'$'+parseInt(c.askingPrice).toLocaleString():'—'}</div></div>
+          <div><div style="font-size:13px;color:var(--text3);margin-bottom:2px">Our offer</div><div style="font-size:14px;font-weight:500;color:var(--accent)">${c.ourOffer?'$'+parseInt(c.ourOffer).toLocaleString():'—'}</div></div>
+          <div><div style="font-size:13px;color:var(--text3);margin-bottom:2px">City / Zip</div><div style="font-size:13px;font-weight:500">${c.city||'—'}${c.zip?' '+c.zip:''}</div></div>
         </div>
-        ${c.askingPrice||c.ourOffer?`<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);display:flex;gap:20px;font-size:11px;color:var(--text2)">${c.askingPrice?`<span>Asking: <strong style="color:var(--text)">$${parseInt(c.askingPrice).toLocaleString()}</strong></span>`:''}${c.ourOffer?`<span>Our offer: <strong style="color:var(--accent)">$${parseInt(c.ourOffer).toLocaleString()}</strong></span>`:''}</div>`:''}
-      ${c.apn?`<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);font-size:11px;color:var(--text2)">APN: <strong style="color:var(--text)">${c.apn}</strong></div>`:''}
+        ${c.motivation?`<div style="font-size:15px;color:var(--text2);padding:8px 10px;background:var(--adim);border-radius:8px;border-left:3px solid var(--accent)">${c.motivation}</div>`:''}
       </div>
 
-    <!-- PROPERTY MAP -->
-    <div style="margin-bottom:14px;border-radius:12px;overflow:hidden;border:1px solid var(--border)">
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--adim);border-bottom:1px solid var(--border)">
-        <div style="font-size:11px;font-weight:700;color:var(--accent);letter-spacing:.08em">📍 PROPERTY LOCATION</div>
-        <div style="display:flex;gap:6px">
-          <a href="https://www.acrevalue.com/map/${encodeURIComponent(c.state||'')}/${encodeURIComponent(c.county||'')}/" target="_blank" style="font-size:10px;color:var(--accent);text-decoration:none;padding:3px 8px;border:1px solid rgba(168,255,110,0.3);border-radius:4px">🌾 AcreValue</a>
-          <a id="gmaps-link-${c.id}" href="#" target="_blank" style="font-size:10px;color:var(--text2);text-decoration:none;padding:3px 8px;border:1px solid var(--border);border-radius:4px">🛰 Satellite</a>
+      <!-- ── MAP ── -->
+      <div style="border-bottom:1px solid var(--border)">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 20px;background:var(--bg3)">
+          <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--accent);text-transform:uppercase;letter-spacing:.06em">📍 Location</div>
+          <div style="display:flex;gap:8px">
+            <a href="https://www.acrevalue.com/map/${encodeURIComponent(c.state||'')}/${encodeURIComponent(c.county||'')}/\" target="_blank" style="font-size:13px;color:var(--accent);text-decoration:none">🌾 AcreValue</a>
+            <a id="gmaps-link-${c.id}" href="#" target="_blank" style="font-size:15px;color:var(--text2);text-decoration:none">🛰 Satellite</a>
+          </div>
+        </div>
+        <div id="map-${c.id}" style="height:200px;width:100%"></div>
+      </div>
+
+      <!-- ── INTEL SUMMARY ── -->
+      <div style="padding:14px 20px;border-bottom:1px solid var(--border)">
+        <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--accent);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">📊 Captured intel</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px" id="intel-badges-${id}">
+          ${renderIntelSummary(c)}
         </div>
       </div>
-      <div id="map-${c.id}" style="height:220px;width:100%;background:var(--surface2)"></div>
-      <div style="padding:8px 12px;background:var(--adim);font-size:10px;color:var(--text3)">${c.county ? c.county + (c.state ? ', ' + c.state : '') : 'County not specified'}${c.acreage ? ' · ' + c.acreage + ' acres' : ''}${c.apn ? ' · APN: ' + c.apn : ''}</div>
-    </div>
 
-    ${c.motivation?`<div class="motivation-box"><div class="motivation-label">Seller motivation</div><div style="font-size:12px;line-height:1.6;color:var(--text2)">${c.motivation}</div></div>`:''}
+      <!-- ── TABS ── -->
+      <div style="display:flex;border-bottom:1px solid var(--border);background:var(--bg3)">
+        ${['Call Script','Due Diligence','Pipeline','Activity','Notes'].map((t,i)=>`
+          <button onclick="switchTab('${id}',${i})" id="tab-btn-${id}-${i}"
+            style="padding:12px 16px;font-size:15px;font-weight:500;border:none;background:none;cursor:pointer;
+            color:${i===0?'var(--accent)':'var(--text2)'};
+            border-bottom:2px solid ${i===0?'var(--accent)':'transparent'};
+            transition:all .15s">${t}</button>
+        `).join('')}
+      </div>
 
-      <div style="margin-bottom:14px">
-        <div class="section-label">Move stage</div>
-        <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px">
+      <!-- ── TAB PANELS ── -->
+      <div id="tab-panels-${id}" style="padding:18px 20px;min-height:200px">
+        ${renderTabPanel(c, 0)}
+      </div>
+
+    </div>`);
+
+  setTimeout(function(){
+    initContactMap(id, c.county, c.state, c.acreage, c.name);
+  }, 100);
+}
+
+function switchTab(id, tabIdx) {
+  var c = db.contacts.find(x => x.id === id);
+  if (!c) return;
+  // Update tab button styles
+  for (var i = 0; i < 5; i++) {
+    var btn = document.getElementById('tab-btn-' + id + '-' + i);
+    if (btn) {
+      btn.style.color = i === tabIdx ? 'var(--accent)' : 'var(--text2)';
+      btn.style.borderBottom = i === tabIdx ? '2px solid var(--accent)' : '2px solid transparent';
+    }
+  }
+  // Render panel
+  var panel = document.getElementById('tab-panels-' + id);
+  if (panel) panel.innerHTML = renderTabPanel(c, tabIdx);
+}
+
+function renderTabPanel(c, tabIdx) {
+  var id = c.id;
+  var stages = c.pipeline === 'acq' ? ACQ_STAGES_CONST : DIS_STAGES_CONST;
+  var nextSMS = getLandSMS(c);
+  var tc = touchCount(c);
+
+  if (tabIdx === 0) {
+    // ── CALL SCRIPT ──
+    return `
+      <div style="font-size:15px;color:var(--text2);margin-bottom:16px;padding:10px 12px;background:var(--adim);border-radius:8px">
+        Open before you dial. Fill in as the seller talks. Hit <strong style="color:var(--accent)">Save</strong> when done — data writes to the contact automatically.
+      </div>
+
+      ${csStep('1','WARM OPENER','var(--accent)','"Hi, is this [name]? This is [your name] with Coldwater Property Group — calling about your land in [county]. Got a couple minutes?"','Their reaction:',
+        ['Warm / interested','Neutral / ok','Cold / hesitant','Hung up'].map(r=>`<button onclick="setCallField('${id}','cs_reaction','${r}',this)" class="btn btn-sm btn-ghost" style="${c.cs_reaction===r?'border-color:var(--accent);color:var(--accent)':''}">${r}</button>`).join('')
+      )}
+
+      ${csStep('2','CONFIRM OWNERSHIP','var(--blue)','"Are you still the owner of the land out in [county]?"','Ownership status:',
+        ['Yes — sole owner','Yes — multiple owners','No longer owner','Not sure'].map(r=>`<button onclick="setCallField('${id}','cs_ownership','${r}',this)" class="btn btn-sm btn-ghost" style="${c.cs_ownership===r?'border-color:var(--blue);color:var(--blue)':''}">${r}</button>`).join('')
+      )}
+
+      <div style="margin-bottom:12px;padding:12px;background:var(--bg3);border-radius:8px;border-left:3px solid #f59e0b">
+        <div style="font-size:13px;font-weight:700;color:#f59e0b;margin-bottom:4px">STEP 3 — MOTIVATION</div>
+        <div style="font-size:15px;color:var(--text2);margin-bottom:8px;font-style:italic">"What's got you thinking about selling? What's going on with the property?"</div>
+        <textarea id="cs-motivation-${id}" class="form-textarea" placeholder="Their reason for selling..." style="min-height:56px;font-size:16px">${c.cs_motivation||''}</textarea>
+      </div>
+
+      ${csStep('4','TIMELINE','var(--coral)','"How soon are you looking to sell? Urgent or more when timing is right?"','Timeline:',
+        ['ASAP — very motivated','30-60 days','3-6 months','No rush','Just curious'].map(r=>`<button onclick="setCallField('${id}','cs_timeline','${r}',this)" class="btn btn-sm btn-ghost" style="${c.cs_timeline===r?'border-color:var(--coral);color:var(--coral)':''}">${r}</button>`).join('')
+      )}
+
+      <div style="margin-bottom:12px;padding:12px;background:var(--bg3);border-radius:8px;border-left:3px solid var(--accent)">
+        <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:4px">STEP 5 — PRICE EXPECTATION</div>
+        <div style="font-size:15px;color:var(--text2);margin-bottom:8px;font-style:italic">"Do you have a number in mind, or open to hearing what we can do?"</div>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+          <span style="font-size:14px;color:var(--text3)">$</span>
+          <input id="cs-asking-${id}" class="form-input" type="number" placeholder="Their asking price" value="${c.cs_asking||c.askingPrice||''}">
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          ${['Flexible on price','Has firm number','Needs to think','Wants highest possible'].map(r=>`<button onclick="setCallField('${id}','cs_price_flex','${r}',this)" class="btn btn-sm btn-ghost" style="${c.cs_price_flex===r?'border-color:var(--accent);color:var(--accent)':''}">${r}</button>`).join('')}
+        </div>
+      </div>
+
+      <div style="margin-bottom:12px;padding:12px;background:var(--bg3);border-radius:8px;border-left:3px solid var(--text3)">
+        <div style="font-size:13px;font-weight:700;color:var(--text2);margin-bottom:4px">STEP 6 — CONDITIONS & FLAGS</div>
+        <div style="font-size:15px;color:var(--text2);margin-bottom:10px;font-style:italic">"Quick questions — taxes current? Anyone else on the title?"</div>
+        <div style="display:flex;gap:16px;flex-wrap:wrap">
+          ${[['cs_taxes_current','Taxes current'],['cs_multiple_owners','Multiple owners'],['cs_has_liens','Has liens'],['cs_probate','Probate/estate']].map(([field,label])=>`
+            <label style="display:flex;align-items:center;gap:7px;font-size:15px;cursor:pointer">
+              <input type="checkbox" id="${field}-${id}" ${c[field]?'checked':''} onchange="setCallField('${id}','${field}',this.checked,null)"> ${label}
+            </label>`).join('')}
+        </div>
+      </div>
+
+      <div style="margin-bottom:12px;padding:12px;background:var(--bg3);border-radius:8px;border-left:3px solid var(--blue)">
+        <div style="font-size:13px;font-weight:700;color:var(--blue);margin-bottom:4px">STEP 7 — ACCESS & CONDITIONS</div>
+        <div style="font-size:15px;color:var(--text2);margin-bottom:10px;font-style:italic">"Can you get to it easily? Any road? Easements? Ever been surveyed?"</div>
+        <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:8px">
+          ${[['cs_landlocked','Landlocked'],['cs_easement','Has easements'],['cs_surveyed','Has survey']].map(([field,label])=>`
+            <label style="display:flex;align-items:center;gap:7px;font-size:15px;cursor:pointer">
+              <input type="checkbox" id="${field}-${id}" ${c[field]?'checked':''} onchange="setCallField('${id}','${field}',this.checked,null)"> ${label}
+            </label>`).join('')}
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+          <span style="font-size:13px;color:var(--text3)">Road:</span>
+          ${['Paved','Dirt/gravel','No road','Unknown'].map(r=>`<button onclick="setCallField('${id}','cs_road_type','${r}',this)" class="btn btn-sm btn-ghost" style="${c.cs_road_type===r?'border-color:var(--blue);color:var(--blue)':''}">${r}</button>`).join('')}
+        </div>
+      </div>
+
+      <div style="margin-bottom:12px;padding:12px;background:var(--bg3);border-radius:8px;border-left:3px solid var(--accent)">
+        <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:4px">STEP 8 — NEXT STEP</div>
+        <div style="font-size:15px;color:var(--text2);margin-bottom:8px;font-style:italic">"Let me pull comps and get back to you with a number by [timeframe]. Best way to reach you?"</div>
+        <textarea id="cs-nextstep-${id}" class="form-textarea" placeholder="Next action, follow-up date, callback preference..." style="min-height:56px;font-size:16px">${c.cs_nextstep||''}</textarea>
+      </div>
+
+      <div style="margin-bottom:16px;padding:12px;background:var(--bg3);border-radius:8px">
+        <div style="font-size:13px;font-weight:700;color:var(--text2);margin-bottom:6px">ADDITIONAL NOTES</div>
+        <textarea id="cs-additional-${id}" class="form-textarea" placeholder="Multiple properties, unusual circumstances, referrals, anything else worth capturing..." style="min-height:64px;font-size:16px">${c.cs_additional||''}</textarea>
+      </div>
+
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-primary" onclick="saveCallScript('${id}')">💾 Save call notes</button>
+        <button class="btn btn-ghost" onclick="switchTab('${id}', 1)">Go to DD checklist →</button>
+      </div>`;
+  }
+
+  if (tabIdx === 1) {
+    // ── DUE DILIGENCE ──
+    return `
+      <div style="font-size:15px;color:var(--text2);margin-bottom:14px;padding:10px 12px;background:var(--adim);border-radius:8px">
+        Items auto-filled from call script are marked. Verify each independently via county records, title search, and site visit.
+        <span style="color:var(--accent);font-weight:500">${ddProgress(c)} items confirmed</span>
+      </div>
+      ${renderDD(c)}`;
+  }
+
+  if (tabIdx === 2) {
+    // ── PIPELINE ──
+    return `
+      <div style="margin-bottom:16px">
+        <div style="font-size:15px;color:var(--text2);margin-bottom:10px">Current: <strong style="color:var(--text)">${c.stage||'New Lead'}</strong></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">
           ${stages.map(s=>`<button class="btn btn-ghost btn-sm ${s===c.stage?'active':''}" onclick="moveStage('${id}','${s}')">${s}</button>`).join('')}
         </div>
         ${c.pipeline==='acq'?`<button class="btn btn-ghost btn-sm" style="border-color:rgba(168,255,110,0.3);color:var(--accent)" onclick="moveToDispo('${id}')">Move To Dispositions →</button>`:''}
-      <button class="btn btn-ghost btn-sm" style="margin-top:8px;border-color:rgba(92,184,255,0.3);color:var(--blue)" onclick="openCalcForContact('${id}')">&#x26A1; Run Offer Math</button>
       </div>
-
-      ${nextSMS?`<div style="background:var(--adim);border:1px solid rgba(168,255,110,0.2);border-radius:10px;padding:12px;margin-bottom:14px">
-        <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--accent);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:5px">Suggested Next SMS</div>
-        <div style="font-size:12px;font-weight:500;margin-bottom:3px">${nextSMS.day} — ${nextSMS.type}</div>
-        <div style="font-size:11px;color:var(--text3);margin-bottom:8px">${nextSMS.msg.replace(/\{name\}/g,c.name.split(' ')[0]).replace(/\{acres\}/g,c.acreage||'').replace(/\{county\}/g,c.county||'').slice(0,110)}…</div>
+      ${nextSMS?`<div style="background:var(--adim);border:1px solid rgba(168,255,110,0.2);border-radius:10px;padding:14px;margin-bottom:14px">
+        <div style="font-size:11px;color:var(--accent);font-weight:700;margin-bottom:4px">SUGGESTED NEXT SMS</div>
+        <div style="font-size:14px;font-weight:500;margin-bottom:4px">${nextSMS.day} — ${nextSMS.type}</div>
+        <div style="font-size:13px;color:var(--text3);margin-bottom:10px">${nextSMS.msg.replace(/\{name\}/g,c.name.split(' ')[0]).replace(/\{acres\}/g,c.acreage||'').replace(/\{county\}/g,c.county||'').slice(0,120)}…</div>
         <button class="btn btn-ghost btn-sm" onclick="copyText(\`${nextSMS.msg.replace(/`/g,"'").replace(/\{name\}/g,c.name.split(' ')[0]).replace(/\{acres\}/g,c.acreage||'').replace(/\{county\}/g,c.county||'')}\`)">Copy SMS</button>
-      </div>`:''}
+      </div>`:''}`;
+  }
 
-      <!-- TOUCH LOG -->
-      <div style="margin-bottom:6px;display:flex;align-items:center;justify-content:space-between">
-        <div class="section-label">Touch log — ${tc} total touches</div>
+  if (tabIdx === 3) {
+    // ── ACTIVITY ──
+    return `
+      <div style="margin-bottom:12px;display:flex;align-items:center;justify-content:space-between">
+        <div style="font-size:15px;color:var(--text2)">${tc} total touches</div>
       </div>
-      <div class="touch-log" id="touch-log-${id}">
-        ${renderTouchLog(c)}
-      </div>
-
-      <!-- ADD TOUCH -->
+      <div class="touch-log" id="touch-log-${id}" style="margin-bottom:16px">${renderTouchLog(c)}</div>
       <div class="add-touch-form">
-        <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">Log A Touch</div>
+        <div style="font-size:13px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Log a touch</div>
         <div class="add-touch-grid">
-          <div class="form-group"><label class="form-label">Channel</label>
-            <select class="form-select" id="touch-channel">
-              ${CHANNELS.map(ch=>`<option>${ch}</option>`).join('')}
-            </select>
-          </div>
-          <div class="form-group"><label class="form-label">Direction</label>
-            <select class="form-select" id="touch-direction">
-              <option>Outbound</option><option>Inbound</option>
-            </select>
-          </div>
-          <div class="form-group"><label class="form-label">Handled by</label>
-            <select class="form-select" id="touch-by">
-              <option>You</option><option>AI</option>
-            </select>
-          </div>
-          <div class="form-group"><label class="form-label">Outcome</label>
-            <select class="form-select" id="touch-outcome">
-              ${OUTCOMES.map(o=>`<option>${o}</option>`).join('')}
-            </select>
-          </div>
+          <div class="form-group"><label class="form-label">Channel</label><select class="form-select" id="touch-channel">${CHANNELS.map(ch=>`<option>${ch}</option>`).join('')}</select></div>
+          <div class="form-group"><label class="form-label">Direction</label><select class="form-select" id="touch-direction"><option>Outbound</option><option>Inbound</option></select></div>
+          <div class="form-group"><label class="form-label">By</label><select class="form-select" id="touch-by"><option>You</option><option>AI</option></select></div>
+          <div class="form-group"><label class="form-label">Outcome</label><select class="form-select" id="touch-outcome">${OUTCOMES.map(o=>`<option>${o}</option>`).join('')}</select></div>
         </div>
-        <div class="form-group" style="margin-bottom:10px"><label class="form-label">Note (optional)</label>
-          <input class="form-input" id="touch-note" placeholder="What happened on this touch?">
-        </div>
-        <div style="display:flex;gap:6px">
+        <div class="form-group" style="margin-bottom:10px"><label class="form-label">Note (optional)</label><input class="form-input" id="touch-note" placeholder="What happened?"></div>
+        <div style="display:flex;gap:8px">
           <button class="btn btn-ghost btn-sm" onclick="logTouch('${id}')">Log touch</button>
-          <button class="btn btn-primary btn-sm" onclick="logTouchAndMark('${id}')">Log touch + mark contacted today</button>
+          <button class="btn btn-primary btn-sm" onclick="logTouchAndMark('${id}')">Log + mark contacted today</button>
         </div>
-      </div>
+      </div>`;
+  }
 
-      <!-- NOTES -->
-      <div class="section-label" style="margin-top:14px;margin-bottom:8px">General Notes</div>
-      ${(c.notes||[]).map(n=>`<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:6px"><div style="font-size:9px;font-family:'DM Mono',monospace;color:var(--text3);margin-bottom:4px">${n.date}</div><div style="font-size:12px;line-height:1.5">${n.text}</div></div>`).join('')}
-      <textarea class="form-textarea" id="new-note-${id}" placeholder="Add a general note..." style="margin-top:8px;margin-bottom:8px"></textarea>
-      <button class="btn btn-ghost btn-sm" onclick="addNote('${id}')">Save note</button>
+  if (tabIdx === 4) {
+    // ── NOTES ──
+    return `
+      ${(c.notes||[]).map(n=>`<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:8px"><div style="font-size:11px;font-family:'DM Mono',monospace;color:var(--text3);margin-bottom:5px">${n.date}</div><div style="font-size:14px;line-height:1.6">${n.text}</div></div>`).join('')}
+      <textarea class="form-textarea" id="new-note-${id}" placeholder="Add a note..." style="margin-top:8px;margin-bottom:10px;font-size:14px"></textarea>
+      <button class="btn btn-ghost btn-sm" onclick="addNote('${id}')">Save note</button>`;
+  }
 
-      <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border2);">
-        <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px;">Due Diligence Checklist</div>
-        ${renderDD(c)}
-      </div>
-    </div>`);
-  // Init map after modal renders
-  setTimeout(function() { initContactMap(id, c.county, c.state, c.acreage, c.name); }, 100);
+  return '';
 }
+
+function csStep(num, title, color, script, questionLabel, buttonsHtml) {
+  return `<div style="margin-bottom:12px;padding:12px;background:var(--bg3);border-radius:8px;border-left:3px solid ${color}">
+    <div style="font-size:13px;font-weight:700;color:${color};margin-bottom:4px">STEP ${num} — ${title}</div>
+    <div style="font-size:15px;color:var(--text2);margin-bottom:8px;font-style:italic">${script}</div>
+    <div style="font-size:14px;color:var(--text3);margin-bottom:6px">${questionLabel}</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">${buttonsHtml}</div>
+  </div>`;
+}
+
 
 function renderTouchLog(c){
   if(!c.touches||!c.touches.length)return'<div style="font-size:11px;color:var(--text3);padding:4px 0">No touches logged yet.</div>';
@@ -1463,7 +1613,7 @@ function renderTouchLog(c){
     return`<div class="touch-entry">
       <span class="touch-entry-date">${t.date}</span>
       <span class="tag tag-neutral" style="text-align:center">${t.channel}</span>
-      <span style="font-size:10px;color:var(--text3);text-align:center">${t.direction}</span>
+      <span style="font-size:13px;color:var(--text3);text-align:center">${t.direction}</span>
       <span style="font-size:10px;color:${t.by==='AI'?'var(--ai-color)':'var(--accent)'};text-align:center">${t.by}</span>
       <span class="${outcomeCls}" style="font-size:10px">${t.outcome}${t.note?` — <span style="color:var(--text3)">${t.note}</span>`:''}</span>
     </div>`;
@@ -1773,12 +1923,12 @@ function openBuyerDetail(id){
     <div class="modal-body">
       <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:14px">${b.tags.map(t=>`<span class="tag tag-neutral">${t}</span>`).join('')}</div>
       <div class="form-grid" style="margin-bottom:14px">
-        <div><div class="detail-field-label" style="font-size:9px;font-family:'DM Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px">Phone</div><div style="font-size:12px">${b.phone||'—'}</div></div>
-        <div><div class="detail-field-label" style="font-size:9px;font-family:'DM Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px">Email</div><div style="font-size:12px">${b.email||'—'}</div></div>
-        <div><div class="detail-field-label" style="font-size:9px;font-family:'DM Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px">Type</div><div style="font-size:12px">${b.type}</div></div>
-        <div><div class="detail-field-label" style="font-size:9px;font-family:'DM Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px">States</div><div style="font-size:12px">${b.states.join(', ')}</div></div>
-        <div><div class="detail-field-label" style="font-size:9px;font-family:'DM Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px">Acreage range</div><div style="font-size:12px">${b.minAcres}–${b.maxAcres} acres</div></div>
-        <div><div class="detail-field-label" style="font-size:9px;font-family:'DM Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px">Max price</div><div style="font-size:12px">$${b.maxPrice.toLocaleString()}</div></div>
+        <div><div class="detail-field-label" style="font-size:12px;font-family:'DM Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px">Phone</div><div style="font-size:12px">${b.phone||'—'}</div></div>
+        <div><div class="detail-field-label" style="font-size:12px;font-family:'DM Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px">Email</div><div style="font-size:12px">${b.email||'—'}</div></div>
+        <div><div class="detail-field-label" style="font-size:12px;font-family:'DM Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px">Type</div><div style="font-size:12px">${b.type}</div></div>
+        <div><div class="detail-field-label" style="font-size:12px;font-family:'DM Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px">States</div><div style="font-size:12px">${b.states.join(', ')}</div></div>
+        <div><div class="detail-field-label" style="font-size:12px;font-family:'DM Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px">Acreage range</div><div style="font-size:12px">${b.minAcres}–${b.maxAcres} acres</div></div>
+        <div><div class="detail-field-label" style="font-size:12px;font-family:'DM Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px">Max price</div><div style="font-size:12px">$${b.maxPrice.toLocaleString()}</div></div>
       </div>
       <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:14px;font-size:12px;color:var(--text2)">${b.notes}</div>
       <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--accent);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">Matching available parcels (${matching.length})</div>
@@ -1904,7 +2054,7 @@ function showScript(key,idx){
     <div class="modal-body">
       <span class="tag" style="background:${seq.bg};color:${seq.color};margin-bottom:12px;display:inline-block">${step.type}</span>
       <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px;font-size:12px;line-height:1.7;color:var(--text2);white-space:pre-wrap;margin-bottom:12px">${step.msg}</div>
-      <p style="font-size:10px;color:var(--text3);margin-bottom:14px">Replace <code>{name}</code> <code>{acres}</code> <code>{county}</code> <code>{state}</code> <code>{price}</code> with actual values.</p>
+      <p style="font-size:13px;color:var(--text3);margin-bottom:14px">Replace <code>{name}</code> <code>{acres}</code> <code>{county}</code> <code>{state}</code> <code>{price}</code> with actual values.</p>
       <button class="btn btn-primary" onclick="copyText(\`${step.msg.replace(/`/g,"'")}\`)">Copy message</button>
     </div>`);
 }
@@ -2320,7 +2470,7 @@ async function loadQualifiedLeads() {
                 <div style="width:36px;height:36px;border-radius:8px;background:var(--adim);border:1px solid rgba(168,255,110,0.2);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:700;font-size:13px;color:var(--accent);flex-shrink:0">✓</div>
                 <div>
                   <div style="font-size:13px;font-weight:600">${lead.phone || '—'}</div>
-                  <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace">Qualified ${qDate}</div>
+                  <div style="font-size:13px;color:var(--text3);font-family:'DM Mono',monospace">Qualified ${qDate}</div>
                 </div>
                 ${isPending ? '<span style="font-family:\'DM Mono\',monospace;font-size:9px;padding:2px 8px;border-radius:20px;background:var(--adim);color:var(--accent);border:1px solid rgba(168,255,110,0.3)">Ready for call</span>' : '<span style="font-family:\'DM Mono\',monospace;font-size:9px;padding:2px 8px;border-radius:20px;background:var(--bg4);color:var(--text3);border:1px solid var(--border)">Called</span>'}
               </div>
@@ -2351,7 +2501,7 @@ async function loadQualifiedLeads() {
               <a href="sms:${lead.phone}" class="btn btn-primary btn-sm" style="text-decoration:none">📱 Text Now</a>
               <a href="tel:${lead.phone}" class="btn btn-ghost btn-sm" style="text-decoration:none">📞 Call Now</a>
               <button class="btn btn-ghost btn-sm" onclick="addQualifiedToContacts('${lead.phone}','${(d.county||'').replace(/'/g,"\\'")}','${d.acreage||''}',${i})">+ Add to CRM</button>
-              ${isPending ? `<button class="btn btn-ghost btn-sm" style="font-size:10px;color:var(--text3)" onclick="markQualifiedCalled(${i})">Mark Called</button>` : ''}
+              ${isPending ? `<button class="btn btn-ghost btn-sm" style="font-size:13px;color:var(--text3)" onclick="markQualifiedCalled(${i})">Mark Called</button>` : ''}
             </div>
           </div>
         </div>
@@ -2645,9 +2795,9 @@ function renderDD(c){
         var sf=(dd['setbacks']||{}).front||'';
         var ss=(dd['setbacks']||{}).sides||'';
         h+='<div style="display:flex;gap:10px;margin-bottom:6px;">';
-        h+='<div style="flex:1"><div style="font-size:10px;color:var(--text3);margin-bottom:3px;">Front (ft)</div>';
+        h+='<div style="flex:1"><div style="font-size:13px;color:var(--text3);margin-bottom:3px;">Front (ft)</div>';
         h+='<input class="dd-notes-input" style="min-height:0;padding:5px 8px;" type="text" placeholder="25" value="'+sf+'" onchange="saveDDSetback(\''+c.id+'\',\'front\',this.value)"></div>';
-        h+='<div style="flex:1"><div style="font-size:10px;color:var(--text3);margin-bottom:3px;">Sides (ft)</div>';
+        h+='<div style="flex:1"><div style="font-size:13px;color:var(--text3);margin-bottom:3px;">Sides (ft)</div>';
         h+='<input class="dd-notes-input" style="min-height:0;padding:5px 8px;" type="text" placeholder="10" value="'+ss+'" onchange="saveDDSetback(\''+c.id+'\',\'sides\',this.value)"></div>';
         h+='</div>';
         h+='<textarea class="dd-notes-input" placeholder="Notes..." onchange="saveDDNote(\''+c.id+'\',\'setbacks\',this.value)">'+n+'</textarea>';
@@ -2905,27 +3055,27 @@ Notes: ${(c.notes||[]).map(n=>n.text).join(' | ') || 'none'}
       <div class="modal-body" style="padding:20px">
 
         <div style="background:var(--adim);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
-          <div style="font-size:11px;font-weight:700;color:var(--accent);letter-spacing:.08em;margin-bottom:6px">🏡 PROPERTY SNAPSHOT</div>
+          <div style="font-size:13px;font-weight:700;color:var(--accent);letter-spacing:.08em;margin-bottom:6px">🏡 PROPERTY SNAPSHOT</div>
           <div style="font-size:13px;color:var(--text1);line-height:1.6">${brief.propertySnapshot}</div>
         </div>
 
         <div style="background:var(--adim);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
-          <div style="font-size:11px;font-weight:700;color:var(--accent);letter-spacing:.08em;margin-bottom:6px">💡 MOTIVATION SUMMARY</div>
+          <div style="font-size:13px;font-weight:700;color:var(--accent);letter-spacing:.08em;margin-bottom:6px">💡 MOTIVATION SUMMARY</div>
           <div style="font-size:13px;color:var(--text1);line-height:1.6">${brief.motivationSummary}</div>
         </div>
 
         <div style="background:var(--adim);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
-          <div style="font-size:11px;font-weight:700;color:var(--accent);letter-spacing:.08em;margin-bottom:6px">💰 PRICE EXPECTATIONS</div>
+          <div style="font-size:13px;font-weight:700;color:var(--accent);letter-spacing:.08em;margin-bottom:6px">💰 PRICE EXPECTATIONS</div>
           <div style="font-size:13px;color:var(--text1);line-height:1.6">${brief.priceExpectations}</div>
         </div>
 
         <div style="background:var(--adim);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
-          <div style="font-size:11px;font-weight:700;color:var(--coral);letter-spacing:.08em;margin-bottom:8px">⚠️ RISK FLAGS</div>
+          <div style="font-size:13px;font-weight:700;color:var(--coral);letter-spacing:.08em;margin-bottom:8px">⚠️ RISK FLAGS</div>
           ${riskHTML}
         </div>
 
         <div style="background:var(--adim);border:1px solid var(--border);border-radius:10px;padding:14px">
-          <div style="font-size:11px;font-weight:700;color:var(--accent);letter-spacing:.08em;margin-bottom:10px">📞 TALKING POINTS & CALL SCRIPT</div>
+          <div style="font-size:13px;font-weight:700;color:var(--accent);letter-spacing:.08em;margin-bottom:10px">📞 TALKING POINTS & CALL SCRIPT</div>
           ${talkHTML}
         </div>
 
@@ -3092,7 +3242,7 @@ async function runAICompAnalysis(params) {
         <!-- Offer Range Banner -->
         <div style="background:linear-gradient(135deg,rgba(168,255,110,0.15),rgba(168,255,110,0.05));border:1px solid rgba(168,255,110,0.3);border-radius:12px;padding:16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
           <div>
-            <div style="font-size:11px;font-weight:700;color:var(--accent);letter-spacing:.08em;margin-bottom:4px">SUGGESTED OFFER RANGE</div>
+            <div style="font-size:13px;font-weight:700;color:var(--accent);letter-spacing:.08em;margin-bottom:4px">SUGGESTED OFFER RANGE</div>
             <div style="font-size:26px;font-weight:800;color:var(--text1)">${a.offerRangeLow} – ${a.offerRangeHigh}</div>
             <div style="font-size:12px;color:var(--text2);margin-top:2px">Based on ${a.medianPricePerAcre}/acre median × ${acreage||'?'} acres</div>
           </div>
@@ -3105,20 +3255,20 @@ async function runAICompAnalysis(params) {
 
         <!-- Market Summary -->
         <div style="background:var(--adim);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
-          <div style="font-size:11px;font-weight:700;color:var(--accent);letter-spacing:.08em;margin-bottom:6px">📈 MARKET SUMMARY — ${county ? county.toUpperCase() : 'THIS COUNTY'}, ${state ? state.toUpperCase() : ''}</div>
+          <div style="font-size:13px;font-weight:700;color:var(--accent);letter-spacing:.08em;margin-bottom:6px">📈 MARKET SUMMARY — ${county ? county.toUpperCase() : 'THIS COUNTY'}, ${state ? state.toUpperCase() : ''}</div>
           <div style="font-size:13px;color:var(--text1);line-height:1.6">${a.marketSummary}</div>
         </div>
 
         <!-- Comps Table -->
         <div style="background:var(--adim);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
-          <div style="font-size:11px;font-weight:700;color:var(--accent);letter-spacing:.08em;margin-bottom:10px">📋 COMPARABLE SALES / MARKET DATA</div>
+          <div style="font-size:13px;font-weight:700;color:var(--accent);letter-spacing:.08em;margin-bottom:10px">📋 COMPARABLE SALES / MARKET DATA</div>
           <table style="width:100%;border-collapse:collapse">
             <thead>
               <tr>
-                <th style="font-size:10px;color:var(--text3);text-align:left;padding-bottom:6px">Property</th>
-                <th style="font-size:10px;color:var(--text3);text-align:right;padding-bottom:6px">Acres</th>
-                <th style="font-size:10px;color:var(--text3);text-align:right;padding-bottom:6px">$/Acre</th>
-                <th style="font-size:10px;color:var(--text3);text-align:right;padding-bottom:6px">Source</th>
+                <th style="font-size:13px;color:var(--text3);text-align:left;padding-bottom:6px">Property</th>
+                <th style="font-size:13px;color:var(--text3);text-align:right;padding-bottom:6px">Acres</th>
+                <th style="font-size:13px;color:var(--text3);text-align:right;padding-bottom:6px">$/Acre</th>
+                <th style="font-size:13px;color:var(--text3);text-align:right;padding-bottom:6px">Source</th>
               </tr>
             </thead>
             <tbody>${compsHTML}</tbody>
@@ -3128,7 +3278,7 @@ async function runAICompAnalysis(params) {
 
         <!-- Negotiation Notes -->
         <div style="background:var(--adim);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
-          <div style="font-size:11px;font-weight:700;color:var(--accent);letter-spacing:.08em;margin-bottom:6px">💡 NEGOTIATION NOTES</div>
+          <div style="font-size:13px;font-weight:700;color:var(--accent);letter-spacing:.08em;margin-bottom:6px">💡 NEGOTIATION NOTES</div>
           <div style="font-size:13px;color:var(--text1);line-height:1.6">${a.negotiationNotes}</div>
         </div>
 
@@ -3255,6 +3405,452 @@ async function initContactMap(contactId, county, state, acreage, name) {
 }
 
 
+// ══════════════════════════════════════════════════
+// LIVE CALL SCRIPT HELPERS
+// ══════════════════════════════════════════════════
+
+function setCallField(contactId, field, value, btn) {
+  var c = db.contacts.find(x => x.id === contactId);
+  if (!c) return;
+  c[field] = value;
+  save();
+  // Visual feedback on buttons
+  if (btn) {
+    var parent = btn.parentElement;
+    if (parent) {
+      Array.from(parent.querySelectorAll('button')).forEach(function(b) {
+        b.style.borderColor = '';
+        b.style.color = '';
+      });
+      btn.style.borderColor = 'var(--accent)';
+      btn.style.color = 'var(--accent)';
+    }
+  }
+}
+
+function saveCallScript(contactId) {
+  var c = db.contacts.find(x => x.id === contactId);
+  if (!c) return;
+
+  // Gather all text inputs
+  var motivationEl = document.getElementById('cs-motivation-' + contactId);
+  var askingEl = document.getElementById('cs-asking-' + contactId);
+  var nextstepEl = document.getElementById('cs-nextstep-' + contactId);
+  var taxesEl = document.getElementById('cs-taxes-' + contactId);
+  var liensEl = document.getElementById('cs-liens-' + contactId);
+  var probateEl = document.getElementById('cs-probate-' + contactId);
+  var multipleEl = document.getElementById('cs-multiple-' + contactId);
+
+  if (motivationEl && motivationEl.value) {
+    c.cs_motivation = motivationEl.value;
+    // Also update the main motivation field
+    c.motivation = motivationEl.value;
+  }
+  if (askingEl && askingEl.value) {
+    c.cs_asking = askingEl.value;
+    c.askingPrice = askingEl.value;
+  }
+  if (nextstepEl && nextstepEl.value) c.cs_nextstep = nextstepEl.value;
+  var additionalEl = document.getElementById('cs-additional-' + contactId);
+  if (additionalEl && additionalEl.value) c.cs_additional = additionalEl.value;
+  if (taxesEl) c.cs_taxes_current = taxesEl.checked;
+  if (liensEl) c.cs_has_liens = liensEl.checked;
+  if (probateEl) c.cs_probate = probateEl.checked;
+  if (multipleEl) c.cs_multiple_owners = multipleEl.checked;
+
+  // Log a touch automatically
+  var touch = {
+    id: 'cs-' + Date.now(),
+    date: today(),
+    timestamp: new Date().toISOString(),
+    channel: 'Call',
+    direction: 'Outbound',
+    by: 'You',
+    outcome: c.cs_reaction || 'Answered — not interested',
+    note: 'Live call script completed. ' + (c.cs_nextstep ? 'Next step: ' + c.cs_nextstep : '')
+  };
+  if (!c.touches) c.touches = [];
+  c.touches.push(touch);
+  c.lastContact = today();
+
+  // Capture access fields
+  var landlocked = document.getElementById('cs-landlocked-' + contactId);
+  var easement = document.getElementById('cs-easement-' + contactId);
+  var surveyed = document.getElementById('cs-surveyed-' + contactId);
+  if (landlocked) c.cs_landlocked = landlocked.checked;
+  if (easement) c.cs_easement = easement.checked;
+  if (surveyed) c.cs_surveyed = surveyed.checked;
+
+  // Auto-populate DD checklist from call script answers
+  if (!c.dd) c.dd = {};
+
+  // Taxes → DD
+  if (c.cs_taxes_current === true) {
+    if (!c.dd['tax_current']) c.dd['tax_current'] = {};
+    c.dd['tax_current'].value = 'yes';
+    c.dd['tax_current'].notes = 'Confirmed by seller on call';
+  }
+
+  // Multiple owners → DD
+  if (c.cs_multiple_owners === true) {
+    if (!c.dd['all_signed']) c.dd['all_signed'] = {};
+    c.dd['all_signed'].value = 'no';
+    c.dd['all_signed'].notes = 'Seller confirmed multiple owners — not all may have signed';
+  }
+
+  // Landlocked → DD physical access
+  if (c.cs_landlocked === true) {
+    if (!c.dd['physical_access']) c.dd['physical_access'] = {};
+    c.dd['physical_access'].value = 'no';
+    c.dd['physical_access'].notes = 'Seller says no road access — landlocked';
+    if (!c.dd['legal_access']) c.dd['legal_access'] = {};
+    c.dd['legal_access'].value = 'no';
+    c.dd['legal_access'].notes = 'Flagged as landlocked by seller on call';
+  }
+
+  save();
+  toast('Call notes saved to ' + c.name + ' — DD checklist updated', 'success');
+
+  // Refresh touch log
+  var tl = document.getElementById('touch-log-' + contactId);
+  if (tl) tl.innerHTML = renderTouchLog(c);
+}
+
+function quickSetTemp(contactId, temp) {
+  var c = db.contacts.find(x => x.id === contactId);
+  if (!c) return;
+  c.temp = temp;
+  save();
+  toast(c.name + ' marked as ' + temp, 'success');
+  // Refresh the detail modal
+  closeModal();
+  setTimeout(function() { openDetail(contactId); }, 50);
+}
+
+
+// ══════════════════════════════════════════════════
+// INTEL SUMMARY & DD PROGRESS
+// ══════════════════════════════════════════════════
+
+function renderIntelSummary(c) {
+  var badges = [];
+  var none = '<span style="font-size:11px;color:var(--text3);padding:4px 0">No data captured yet — open the Call Script or DD Checklist to start filling in details.</span>';
+
+  // From call script
+  if (c.cs_reaction) badges.push(badge('Reaction', c.cs_reaction, 'var(--accent)'));
+  if (c.cs_ownership) badges.push(badge('Ownership', c.cs_ownership, 'var(--accent)'));
+  if (c.cs_timeline) badges.push(badge('Timeline', c.cs_timeline, '#f59e0b'));
+  if (c.cs_motivation) badges.push(badge('Motivation', c.cs_motivation.slice(0,40) + (c.cs_motivation.length > 40 ? '…' : ''), 'var(--blue)'));
+  if (c.cs_asking || c.askingPrice) badges.push(badge('Asking', '$' + parseInt(c.cs_asking || c.askingPrice).toLocaleString(), 'var(--accent)'));
+  if (c.cs_price_flex) badges.push(badge('Price flex', c.cs_price_flex, 'var(--text2)'));
+
+  // Flags
+  if (c.cs_taxes_current === true) badges.push(flag('✅ Taxes current', 'var(--accent)'));
+  if (c.cs_taxes_current === false && c.cs_taxes_current !== undefined) badges.push(flag('⚠️ Taxes NOT current', 'var(--coral)'));
+  if (c.cs_multiple_owners) badges.push(flag('⚠️ Multiple owners', 'var(--coral)'));
+  if (c.cs_has_liens) badges.push(flag('⚠️ Has liens', 'var(--coral)'));
+  if (c.cs_probate) badges.push(flag('⚠️ Probate / estate', '#f59e0b'));
+  if (c.cs_landlocked) badges.push(flag('🚫 Landlocked', 'var(--coral)'));
+  if (c.cs_easement) badges.push(flag('📋 Has easements', '#f59e0b'));
+  if (c.cs_surveyed) badges.push(flag('📐 Has survey', 'var(--accent)'));
+  if (c.cs_road_type) badges.push(badge('Road', c.cs_road_type, 'var(--blue)'));
+
+  // From DD
+  var dd = c.dd || {};
+  var ddItems = [
+    {id:'deed_received', label:'Deed received'},
+    {id:'legal_access', label:'Legal access'},
+    {id:'physical_access', label:'Physical access'},
+    {id:'electric', label:'Electric'},
+    {id:'soil_tests', label:'Soil tests'},
+  ];
+  ddItems.forEach(function(item) {
+    var v = (dd[item.id] || {}).value;
+    if (v === 'yes') badges.push(flag('✅ ' + item.label, 'var(--accent)'));
+    if (v === 'no') badges.push(flag('❌ ' + item.label, 'var(--coral)'));
+  });
+
+  if (c.cs_nextstep) badges.push(badge('Next step', c.cs_nextstep.slice(0,50) + (c.cs_nextstep.length > 50 ? '…' : ''), 'var(--blue)'));
+  if (c.cs_additional) badges.push(badge('Notes', c.cs_additional.slice(0,50) + (c.cs_additional.length > 50 ? '…' : ''), 'var(--text2)'));
+
+  return badges.length ? badges.join('') : none;
+}
+
+function badge(label, value, color) {
+  return '<div style="display:flex;flex-direction:column;background:var(--adim);border:1px solid var(--border);border-radius:6px;padding:5px 9px;min-width:80px">' +
+    '<span style="font-size:9px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px">' + label + '</span>' +
+    '<span style="font-size:11px;font-weight:600;color:' + color + '">' + value + '</span>' +
+    '</div>';
+}
+
+function flag(text, color) {
+  return '<div style="display:flex;align-items:center;padding:5px 9px;border-radius:6px;border:1px solid ' + color + ';background:var(--adim);font-size:11px;font-weight:600;color:' + color + '">' + text + '</div>';
+}
+
+function ddProgress(c) {
+  var dd = c.dd || {};
+  var total = 0, done = 0;
+  DD_SECTIONS.forEach(function(sec) {
+    sec.items.forEach(function(item) {
+      if (item.type !== 'noteonly') {
+        total++;
+        var v = (dd[item.id] || {}).value;
+        if (v && v !== '') done++;
+      }
+    });
+  });
+  return done + '/' + total;
+}
+
+
+// ══════════════════════════════════════════════════════
+// REI RAZOR AI ASSISTANT
+// ══════════════════════════════════════════════════════
+
+var _aiHistory = [];
+var _aiOpen = false;
+var _aiTyping = false;
+
+function toggleAIAssistant() {
+  var panel = document.getElementById('ai-panel');
+  var fab = document.getElementById('ai-fab');
+  _aiOpen = !_aiOpen;
+  panel.style.display = _aiOpen ? 'flex' : 'none';
+  fab.style.transform = _aiOpen ? 'scale(0.9)' : '';
+  if (_aiOpen) {
+    setTimeout(function(){ 
+      var inp = document.getElementById('ai-input');
+      if (inp) inp.focus();
+    }, 100);
+  }
+}
+
+function buildCRMContext() {
+  var contacts = (db.contacts || []).map(function(c) {
+    return {
+      id: c.id,
+      name: c.name,
+      phone: c.phone,
+      county: c.county,
+      state: c.state,
+      acreage: c.acreage,
+      stage: c.stage,
+      pipeline: c.pipeline,
+      temp: c.temp,
+      source: c.source,
+      askingPrice: c.askingPrice,
+      ourOffer: c.ourOffer,
+      lastContact: c.lastContact,
+      touches: (c.touches || []).length,
+      notes: (c.notes || []).slice(-2),
+      motivation: c.motivation,
+      cs_reaction: c.cs_reaction,
+      cs_timeline: c.cs_timeline,
+      cs_motivation: c.cs_motivation,
+      cs_ownership: c.cs_ownership,
+      handoff: c.handoff,
+      apn: c.apn
+    };
+  });
+  return {
+    contacts: contacts,
+    currentView: document.getElementById('page-title') ? document.getElementById('page-title').textContent : 'Dashboard'
+  };
+}
+
+async function sendAIMessage(prefill) {
+  if (_aiTyping) return;
+  var input = document.getElementById('ai-input');
+  var msg = prefill || (input ? input.value.trim() : '');
+  if (!msg) return;
+
+  if (input) { input.value = ''; input.style.height = '42px'; }
+
+  // Hide quick prompts after first message
+  var qp = document.getElementById('ai-quick-prompts');
+  if (qp) qp.style.display = 'none';
+
+  // Add user message to UI
+  addAIMessage(msg, 'user');
+
+  // Add to history
+  _aiHistory.push({ role: 'user', content: msg });
+
+  // Show typing indicator
+  _aiTyping = true;
+  var typingId = addAIMessage('...', 'typing');
+
+  try {
+    var res = await fetch('/.netlify/functions/ai-assistant', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message: msg,
+        history: _aiHistory.slice(-10), // last 5 exchanges
+        crmContext: buildCRMContext()
+      })
+    });
+
+    var data = await res.json();
+    removeAIMessage(typingId);
+    _aiTyping = false;
+
+    if (!data.ok) {
+      addAIMessage('Something went wrong: ' + (data.error || 'unknown error'), 'assistant');
+      return;
+    }
+
+    // Add assistant reply
+    addAIMessage(data.reply, 'assistant', data.actions);
+
+    // Add to history
+    _aiHistory.push({ role: 'assistant', content: data.reply });
+
+    // Keep history manageable
+    if (_aiHistory.length > 20) _aiHistory = _aiHistory.slice(-20);
+
+    // Execute any actions
+    if (data.actions && data.actions.length) {
+      data.actions.forEach(function(action) {
+        setTimeout(function() { executeAIAction(action); }, 300);
+      });
+    }
+
+  } catch(e) {
+    removeAIMessage(typingId);
+    _aiTyping = false;
+    addAIMessage('Error connecting to AI: ' + e.message, 'assistant');
+  }
+}
+
+var _msgCounter = 0;
+function addAIMessage(text, role, actions) {
+  var container = document.getElementById('ai-messages');
+  if (!container) return null;
+
+  var id = 'ai-msg-' + (++_msgCounter);
+  var div = document.createElement('div');
+  div.id = id;
+
+  if (role === 'typing') {
+    div.className = 'ai-msg-assistant';
+    div.style.cssText = 'background:var(--adim);border:1px solid rgba(168,255,110,0.15);border-radius:10px;padding:11px 14px;font-size:14px;color:var(--text3)';
+    div.innerHTML = '<span style="letter-spacing:3px">●●●</span>';
+  } else if (role === 'user') {
+    div.className = 'ai-msg-user';
+    div.textContent = text;
+  } else {
+    div.className = 'ai-msg-assistant';
+    div.style.cssText = 'background:var(--adim);border:1px solid rgba(168,255,110,0.15);border-radius:10px;padding:11px 14px;font-size:14px;line-height:1.6;color:var(--text)';
+    // Render markdown-like formatting
+    div.innerHTML = text
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\n/g, '<br>');
+
+    // Add action buttons if present
+    if (actions && actions.length) {
+      var btnRow = document.createElement('div');
+      btnRow.style.marginTop = '10px';
+      actions.forEach(function(action) {
+        var btn = document.createElement('button');
+        btn.className = 'ai-action-btn';
+        var labels = {
+          move_stage: '✓ Move stage',
+          log_touch: '✓ Log touch',
+          add_note: '✓ Add note',
+          open_contact: '→ Open contact',
+          run_comps: '🔍 Run comps',
+          run_brief: '📋 Run brief'
+        };
+        btn.textContent = labels[action.type] || action.type;
+        btn.onclick = function() { executeAIAction(action); btn.textContent = '✓ Done'; btn.disabled = true; };
+        btnRow.appendChild(btn);
+      });
+      div.appendChild(btnRow);
+    }
+  }
+
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+  return id;
+}
+
+function removeAIMessage(id) {
+  var el = document.getElementById(id);
+  if (el) el.remove();
+}
+
+function executeAIAction(action) {
+  switch(action.type) {
+    case 'move_stage':
+      var c = db.contacts.find(function(x){ return x.id === action.contactId; });
+      if (c && action.stage) {
+        c.stage = action.stage;
+        save();
+        toast(c.name + ' moved to ' + action.stage, 'success');
+        renderSellers();
+        renderPipeline('acq');
+        renderPipeline('dis');
+      }
+      break;
+
+    case 'log_touch':
+      var c = db.contacts.find(function(x){ return x.id === action.contactId; });
+      if (c) {
+        if (!c.touches) c.touches = [];
+        c.touches.push({
+          id: 'ai-' + Date.now(),
+          date: today(),
+          timestamp: new Date().toISOString(),
+          channel: action.channel || 'Call',
+          direction: 'Outbound',
+          by: 'You',
+          outcome: action.outcome || 'No response',
+          note: action.note || ''
+        });
+        c.lastContact = today();
+        save();
+        toast('Touch logged for ' + c.name, 'success');
+      }
+      break;
+
+    case 'add_note':
+      var c = db.contacts.find(function(x){ return x.id === action.contactId; });
+      if (c && action.note) {
+        if (!c.notes) c.notes = [];
+        c.notes.push({ date: today(), text: action.note });
+        save();
+        toast('Note added to ' + c.name, 'success');
+      }
+      break;
+
+    case 'open_contact':
+      var c = db.contacts.find(function(x){ return x.id === action.contactId; });
+      if (c) {
+        toggleAIAssistant();
+        setTimeout(function(){ openDetail(action.contactId); }, 200);
+      }
+      break;
+
+    case 'run_comps':
+      var c = db.contacts.find(function(x){ return x.id === action.contactId; });
+      if (c) {
+        toggleAIAssistant();
+        setTimeout(function(){ runContactComps(action.contactId); }, 200);
+      }
+      break;
+
+    case 'run_brief':
+      var c = db.contacts.find(function(x){ return x.id === action.contactId; });
+      if (c) {
+        toggleAIAssistant();
+        setTimeout(function(){ generatePreCallBrief(action.contactId); }, 200);
+      }
+      break;
+  }
+}
+
+
 // INIT
 const savedTheme=localStorage.getItem('crm_theme');
 if(savedTheme==='light'){document.body.classList.add('light');}
@@ -3264,5 +3860,79 @@ renderDashboard();
 syncFromQuo();
 setInterval(syncFromQuo,60000);
 </script>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- REI RAZOR AI ASSISTANT                            -->
+<!-- ══════════════════════════════════════════════════ -->
+<div id="ai-fab" onclick="toggleAIAssistant()" title="AI Assistant" style="
+  position:fixed;bottom:28px;right:28px;z-index:9999;
+  width:54px;height:54px;border-radius:50%;
+  background:var(--accent);color:#000;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:22px;font-weight:700;
+  box-shadow:0 4px 20px rgba(168,255,110,0.4);
+  transition:transform .2s,box-shadow .2s;
+  user-select:none;
+">✦</div>
+
+<div id="ai-panel" style="
+  position:fixed;bottom:96px;right:28px;z-index:9998;
+  width:400px;height:560px;
+  background:var(--bg2);border:1px solid var(--border2);
+  border-radius:16px;overflow:hidden;
+  display:none;flex-direction:column;
+  box-shadow:0 16px 48px rgba(0,0,0,0.6);
+">
+  <!-- Header -->
+  <div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+    <div>
+      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:15px;color:var(--accent)">REI Razor AI</div>
+      <div style="font-size:12px;color:var(--text3);margin-top:1px">Ask anything about your deals</div>
+    </div>
+    <button onclick="toggleAIAssistant()" style="background:none;border:none;color:var(--text3);font-size:18px;cursor:pointer;padding:4px">✕</button>
+  </div>
+
+  <!-- Messages -->
+  <div id="ai-messages" style="flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:10px">
+    <div class="ai-msg ai-msg-assistant" style="background:var(--adim);border:1px solid rgba(168,255,110,0.15);border-radius:10px;padding:11px 14px;font-size:14px;line-height:1.6;color:var(--text)">
+      Hey — I'm your REI Razor assistant. Ask me about your leads, what needs attention today, or tell me to take an action like "move Gary Sutton to Qualified" or "run comps on Marcus Bell."
+    </div>
+  </div>
+
+  <!-- Quick prompts -->
+  <div id="ai-quick-prompts" style="padding:8px 12px;display:flex;gap:6px;flex-wrap:wrap;border-top:1px solid var(--border);flex-shrink:0">
+    <button onclick="sendAIMessage('What should I focus on today?')" class="ai-quick-btn">Today's priorities</button>
+    <button onclick="sendAIMessage('Which leads need follow-up?')" class="ai-quick-btn">Needs follow-up</button>
+    <button onclick="sendAIMessage('Who are my hottest leads?')" class="ai-quick-btn">Hot leads</button>
+    <button onclick="sendAIMessage('Give me a pipeline summary')" class="ai-quick-btn">Pipeline summary</button>
+  </div>
+
+  <!-- Input -->
+  <div style="padding:10px 12px;border-top:1px solid var(--border);display:flex;gap:8px;align-items:flex-end;flex-shrink:0">
+    <textarea id="ai-input" placeholder="Ask anything or give a command..." 
+      style="flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:10px 12px;font-size:14px;color:var(--text);resize:none;min-height:42px;max-height:100px;font-family:'DM Sans',sans-serif;line-height:1.5"
+      onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAIMessage();}"
+      oninput="this.style.height='42px';this.style.height=Math.min(this.scrollHeight,100)+'px'"
+    ></textarea>
+    <button onclick="sendAIMessage()" id="ai-send-btn" style="
+      width:40px;height:40px;border-radius:10px;border:none;
+      background:var(--accent);color:#000;font-size:17px;
+      cursor:pointer;display:flex;align-items:center;justify-content:center;
+      flex-shrink:0;font-weight:700;transition:opacity .15s
+    ">↑</button>
+  </div>
+</div>
+
+<style>
+.ai-msg-user{background:var(--bg4);border-radius:10px;padding:10px 14px;font-size:14px;line-height:1.6;color:var(--text);align-self:flex-end;max-width:85%;}
+.ai-msg-assistant{border-radius:10px;padding:11px 14px;font-size:14px;line-height:1.6;color:var(--text);align-self:flex-start;max-width:100%;}
+.ai-quick-btn{font-size:12px;padding:4px 10px;border-radius:20px;border:1px solid var(--border2);background:var(--bg3);color:var(--text2);cursor:pointer;white-space:nowrap;}
+.ai-quick-btn:hover{border-color:var(--accent);color:var(--accent);}
+.ai-action-btn{display:inline-flex;align-items:center;gap:6px;margin-top:8px;margin-right:6px;padding:5px 12px;border-radius:8px;border:1px solid rgba(168,255,110,0.3);background:rgba(168,255,110,0.08);color:var(--accent);font-size:13px;cursor:pointer;}
+.ai-action-btn:hover{background:rgba(168,255,110,0.15);}
+#ai-fab:hover{transform:scale(1.08);box-shadow:0 6px 24px rgba(168,255,110,0.5);}
+#ai-panel{animation:ai-slide-in .2s ease;}
+@keyframes ai-slide-in{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+</style>
+
 </body>
-</html>
