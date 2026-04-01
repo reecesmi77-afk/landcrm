@@ -939,7 +939,10 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
     <div id="view-calculator" class="view">
       <div style="max-width:660px;">
         <div class="card">
-          <div class="card-header"><span class="card-title">Land Offer Calculator — Per Acre Model</span></div>
+          <div class="card-header" style="display:flex;align-items:center;justify-content:space-between">
+            <span class="card-title">Land Offer Calculator — Per Acre Model</span>
+            <button class="btn btn-ghost btn-sm" onclick="openAIComps()" id="ai-comps-btn" style="font-size:11px">🔍 AI Comp Analysis</button>
+          </div>
           <div class="card-body">
             <div class="form-grid-3" style="margin-bottom:18px;">
               <div class="form-group"><label class="form-label">Acreage</label><input class="form-input" type="number" id="c-acres" placeholder="10" oninput="calcLand()"></div>
@@ -1311,6 +1314,7 @@ function openDetail(id){
       <div class="modal-title">Lead detail</div>
       <div style="display:flex;gap:6px">
         <button class="btn btn-ghost btn-sm" style="background:linear-gradient(135deg,rgba(168,255,110,0.15),rgba(168,255,110,0.05));border-color:rgba(168,255,110,0.3)" onclick="generatePreCallBrief(\'${id}\')" >📋 Pre-Call Brief</button>
+        <button class="btn btn-ghost btn-sm" onclick="runContactComps('${id}')" style="font-size:11px">🔍 Run Comps</button>
         <button class="btn btn-ghost btn-sm" onclick="openEditContact('${id}')">Edit</button>
         <button class="btn btn-danger btn-sm" onclick="deleteContact('${id}')">Delete</button>
         <button class="modal-close" onclick="closeModal()">&#x2715;</button>
@@ -2957,6 +2961,202 @@ function initiateQuoCall(phone, name) {
       toast('Opening Quo — dial ' + phone, 'info');
     }
   }
+}
+
+
+// ══════════════════════════════════════════════════════
+// AI COMP ANALYSIS ENGINE
+// ══════════════════════════════════════════════════════
+
+// Run comps from contact detail modal
+async function runContactComps(contactId) {
+  const c = db.contacts.find(x => x.id === contactId);
+  if (!c) return;
+  await runAICompAnalysis({
+    name: c.name,
+    county: c.county,
+    state: c.state,
+    acreage: c.acreage,
+    askingPrice: c.askingPrice,
+    source: c.source,
+    notes: (c.notes||[]).map(n=>n.text).join(' '),
+    motivation: c.motivation,
+    apn: c.apn
+  });
+}
+
+// Run comps from calculator (uses current calc inputs)
+async function openAIComps() {
+  const acres = document.getElementById('c-acres') ? document.getElementById('c-acres').value : '';
+  const county = document.getElementById('c-county-ctx') ? document.getElementById('c-county-ctx').value : '';
+  const state = document.getElementById('c-state-ctx') ? document.getElementById('c-state-ctx').value : '';
+  await runAICompAnalysis({
+    acreage: acres,
+    county: county || 'unknown county',
+    state: state || '',
+    fromCalculator: true
+  });
+}
+
+// Core comp analysis function
+async function runAICompAnalysis(params) {
+  const { name, county, state, acreage, askingPrice, source, notes, motivation, apn, fromCalculator } = params;
+
+  // Build recent deals context from CRM history
+  const recentDeals = (db.contacts || [])
+    .filter(c => c.stage === 'Closed — Assignment' || c.stage === 'Closed — Double Close')
+    .slice(0,10)
+    .map(c => `${c.acreage||'?'} acres in ${c.county||'?'}, ${c.state||''} — offer: $${c.ourOffer||'?'} — asking: $${c.askingPrice||'?'}`)
+    .join('\n') || 'No closed deals in CRM yet.';
+
+  // Build active comp context from similar contacts
+  const similarLeads = (db.contacts || [])
+    .filter(c => c.county && county && c.county.toLowerCase().includes(county.toLowerCase()) && c.id !== params.id)
+    .slice(0,5)
+    .map(c => `${c.name}: ${c.acreage||'?'} acres, asking $${c.askingPrice||'unknown'}, stage: ${c.stage||'?'}`)
+    .join('\n') || 'No similar leads in CRM for this county.';
+
+  // Show loading modal
+  openCustomModal(`
+    <div class="modal-header">
+      <div class="modal-title">🔍 AI Comp Analysis${name ? ' — ' + name : ''}</div>
+      <button class="modal-close" onclick="closeModal()">&#x2715;</button>
+    </div>
+    <div class="modal-body" style="text-align:center;padding:40px">
+      <div style="font-size:28px;margin-bottom:12px">📊</div>
+      <div style="color:var(--text2);font-size:14px">Analyzing ${acreage || '?'} acres in ${county || 'unknown county'}${state ? ', ' + state : ''}...</div>
+      <div style="color:var(--text3);font-size:12px;margin-top:8px">Claude is researching market conditions and comparable sales</div>
+    </div>
+  `);
+
+  try {
+    const res = await fetch('/.netlify/functions/run-comps', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        county: county || 'unknown',
+        state: state || '',
+        acreage: acreage || '',
+        askingPrice: askingPrice || '',
+        apn: apn || '',
+        recentDeals,
+        similarLeads,
+        notes: notes || '',
+        motivation: motivation || ''
+      })
+    });
+
+    const data = await res.json();
+    if (!data.ok || !data.analysis) throw new Error(data.error || 'Analysis failed');
+    const a = data.analysis;
+
+    // Build comps table HTML
+    const compsHTML = (a.comps || []).map(c => `
+      <tr>
+        <td style="font-size:12px;color:var(--text1)">${c.description}</td>
+        <td style="font-size:12px;color:var(--text2);text-align:right">${c.acreage} ac</td>
+        <td style="font-size:12px;color:var(--accent);text-align:right;font-weight:600">$${c.pricePerAcre}/ac</td>
+        <td style="font-size:12px;color:var(--text3);text-align:right">${c.source}</td>
+      </tr>`).join('');
+
+    // Build confidence badge
+    const confColor = a.confidence === 'High' ? 'var(--accent)' : a.confidence === 'Medium' ? '#f59e0b' : 'var(--coral)';
+
+    // Build AcreValue URL
+    const acrevalueURL = `https://www.acrevalue.com/map/${encodeURIComponent(state||'')}/${encodeURIComponent(county||'')}/`;
+
+    openCustomModal(`
+      <div class="modal-header">
+        <div class="modal-title">🔍 AI Comp Analysis${name ? ' — ' + name : ''}</div>
+        <button class="modal-close" onclick="closeModal()">&#x2715;</button>
+      </div>
+      <div class="modal-body" style="padding:20px">
+
+        <!-- Offer Range Banner -->
+        <div style="background:linear-gradient(135deg,rgba(168,255,110,0.15),rgba(168,255,110,0.05));border:1px solid rgba(168,255,110,0.3);border-radius:12px;padding:16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+          <div>
+            <div style="font-size:11px;font-weight:700;color:var(--accent);letter-spacing:.08em;margin-bottom:4px">SUGGESTED OFFER RANGE</div>
+            <div style="font-size:26px;font-weight:800;color:var(--text1)">${a.offerRangeLow} – ${a.offerRangeHigh}</div>
+            <div style="font-size:12px;color:var(--text2);margin-top:2px">Based on ${a.medianPricePerAcre}/acre median × ${acreage||'?'} acres</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:11px;color:var(--text3);margin-bottom:4px">Confidence</div>
+            <div style="font-size:16px;font-weight:700;color:${confColor}">${a.confidence}</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:4px">${a.confidenceReason}</div>
+          </div>
+        </div>
+
+        <!-- Market Summary -->
+        <div style="background:var(--adim);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
+          <div style="font-size:11px;font-weight:700;color:var(--accent);letter-spacing:.08em;margin-bottom:6px">📈 MARKET SUMMARY — ${county ? county.toUpperCase() : 'THIS COUNTY'}, ${state ? state.toUpperCase() : ''}</div>
+          <div style="font-size:13px;color:var(--text1);line-height:1.6">${a.marketSummary}</div>
+        </div>
+
+        <!-- Comps Table -->
+        <div style="background:var(--adim);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
+          <div style="font-size:11px;font-weight:700;color:var(--accent);letter-spacing:.08em;margin-bottom:10px">📋 COMPARABLE SALES / MARKET DATA</div>
+          <table style="width:100%;border-collapse:collapse">
+            <thead>
+              <tr>
+                <th style="font-size:10px;color:var(--text3);text-align:left;padding-bottom:6px">Property</th>
+                <th style="font-size:10px;color:var(--text3);text-align:right;padding-bottom:6px">Acres</th>
+                <th style="font-size:10px;color:var(--text3);text-align:right;padding-bottom:6px">$/Acre</th>
+                <th style="font-size:10px;color:var(--text3);text-align:right;padding-bottom:6px">Source</th>
+              </tr>
+            </thead>
+            <tbody>${compsHTML}</tbody>
+          </table>
+          ${a.dataLimitation ? `<div style="font-size:11px;color:var(--text3);margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">⚠️ ${a.dataLimitation}</div>` : ''}
+        </div>
+
+        <!-- Negotiation Notes -->
+        <div style="background:var(--adim);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
+          <div style="font-size:11px;font-weight:700;color:var(--accent);letter-spacing:.08em;margin-bottom:6px">💡 NEGOTIATION NOTES</div>
+          <div style="font-size:13px;color:var(--text1);line-height:1.6">${a.negotiationNotes}</div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:space-between;align-items:center">
+          <a href="${acrevalueURL}" target="_blank" class="btn btn-ghost btn-sm" style="font-size:11px;text-decoration:none">
+            🌾 Verify on AcreValue
+          </a>
+          <div style="display:flex;gap:8px">
+            ${!fromCalculator ? `<button class="btn btn-ghost btn-sm" onclick="applyCompsToCalculator('${a.medianPricePerAcre}','${acreage||''}')">Apply to Calculator</button>` : ''}
+            <button class="btn btn-primary btn-sm" onclick="closeModal()">Done</button>
+          </div>
+        </div>
+
+      </div>
+    `);
+
+  } catch(e) {
+    openCustomModal(`
+      <div class="modal-header">
+        <div class="modal-title">AI Comp Analysis</div>
+        <button class="modal-close" onclick="closeModal()">&#x2715;</button>
+      </div>
+      <div class="modal-body" style="padding:24px;text-align:center">
+        <div style="color:var(--coral);margin-bottom:8px">Analysis failed</div>
+        <div style="color:var(--text3);font-size:12px">${e.message}</div>
+      </div>
+    `);
+    console.error('Comp analysis error:', e);
+  }
+}
+
+// Apply comp result to calculator fields
+function applyCompsToCalculator(pricePerAcre, acreage) {
+  closeModal();
+  showView('calculator');
+  // Strip $ and commas, parse number
+  const ppa = parseFloat(String(pricePerAcre).replace(/[$,]/g,'')) || 0;
+  const ac = parseFloat(acreage) || 0;
+  const compInput = document.getElementById('c-comppacre');
+  const acreInput = document.getElementById('c-acres');
+  if (compInput && ppa) { compInput.value = ppa; }
+  if (acreInput && ac) { acreInput.value = ac; }
+  if (typeof calcLand === 'function') calcLand();
+  toast('Comp data applied to calculator', 'success');
 }
 
 
