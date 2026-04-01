@@ -1,6 +1,6 @@
 // get-qualified-leads.js
-// Returns all qualified leads from JSONbin for REI Razor to display
-// Called by the CRM to show AI-qualified leads in handoff queue
+// Returns qualified leads AND conversation history from JSONbin
+// Used by CRM for AI Handoff Queue and Pre-Call Brief generation
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'GET') {
@@ -11,7 +11,7 @@ exports.handler = async (event) => {
   const BIN = process.env.JSONBIN_BIN_ID;
 
   if (!KEY || !BIN) {
-    return { statusCode: 200, body: JSON.stringify({ qualifiedLeads: [] }) };
+    return { statusCode: 200, body: JSON.stringify({ qualifiedLeads: [], conversations: {} }) };
   }
 
   try {
@@ -20,17 +20,24 @@ exports.handler = async (event) => {
     });
     const data = await res.json();
     const record = data.record || {};
-    const qualifiedLeads = record.qualifiedLeads || [];
-    
+
     return {
       statusCode: 200,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ qualifiedLeads })
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      },
+      body: JSON.stringify({
+        qualifiedLeads: record.qualifiedLeads || [],
+        conversations: record.conversations || {},
+        callRequests: record.callRequests || [],
+        sequences: record.sequences || {}
+      })
     };
   } catch (e) {
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: e.message })
+      body: JSON.stringify({ error: e.message, qualifiedLeads: [], conversations: {} })
     };
   }
 };
