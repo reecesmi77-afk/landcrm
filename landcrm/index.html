@@ -2849,41 +2849,18 @@ Tags: ${(c.tags||[]).join(', ') || 'none'}
 Notes: ${(c.notes||[]).map(n=>n.text).join(' | ') || 'none'}
 `.trim();
 
-  const prompt = `You are preparing a Pre-Call Seller Brief for a land investor about to call a seller.
-
-CRM DATA:
-${crmContext}
-
-SMS CONVERSATION HISTORY:
-${convoText}
-
-Generate a structured Pre-Call Seller Brief with exactly these 5 sections. Be specific, concise, and actionable. Use only information that is actually available — don't fabricate details.
-
-Format your response as JSON with these exact keys:
-{
-  "propertySnapshot": "2-3 sentence summary of the property facts",
-  "motivationSummary": "What do we know about why they might sell? What's their situation?",
-  "priceExpectations": "What price expectations have been expressed or implied? How does this compare to likely market value?",
-  "riskFlags": ["flag 1", "flag 2"] (array of specific risks — back taxes, multiple owners, liens, title issues, landlocked, etc. Say 'None identified' if clean),
-  "talkingPoints": ["point 1", "point 2", "point 3"] (3-5 specific conversation starters or questions to ask on the call, tailored to this seller's situation)
-}
-
-Return ONLY the JSON object, no other text.`;
+// Brief generation handled server-side in generate-brief.js
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    const res = await fetch('/.netlify/functions/generate-brief', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        messages: [{ role: 'user', content: prompt }]
-      })
+      body: JSON.stringify({ contact: c, conversationHistory })
     });
 
     const data = await res.json();
-    const raw = data.content[0].text.trim();
-    const brief = JSON.parse(raw.replace(/```json|```/g, '').trim());
+    if (!data.ok || !data.brief) throw new Error(data.error || 'Brief generation failed');
+    const brief = data.brief;
 
     const riskHTML = (brief.riskFlags || []).map(f =>
       `<div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:6px">
