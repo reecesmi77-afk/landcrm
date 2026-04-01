@@ -383,6 +383,8 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
 .team-member-avatar{width:36px;height:36px;border-radius:8px;background:var(--bg4);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:700;font-size:12px;color:var(--accent);flex-shrink:0;}
 .team-role-badge{font-family:'DM Mono',monospace;font-size:9px;padding:2px 8px;border-radius:20px;border:1px solid var(--border2);color:var(--text3);background:var(--bg4);}
 </style>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 </head>
 <body>
 
@@ -1366,6 +1368,19 @@ function openDetail(id){
       ${c.apn?`<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);font-size:11px;color:var(--text2)">APN: <strong style="color:var(--text)">${c.apn}</strong></div>`:''}
       </div>
 
+    <!-- PROPERTY MAP -->
+    <div style="margin-bottom:14px;border-radius:12px;overflow:hidden;border:1px solid var(--border)">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--adim);border-bottom:1px solid var(--border)">
+        <div style="font-size:11px;font-weight:700;color:var(--accent);letter-spacing:.08em">📍 PROPERTY LOCATION</div>
+        <div style="display:flex;gap:6px">
+          <a href="https://www.acrevalue.com/map/${encodeURIComponent(c.state||'')}/${encodeURIComponent(c.county||'')}/" target="_blank" style="font-size:10px;color:var(--accent);text-decoration:none;padding:3px 8px;border:1px solid rgba(168,255,110,0.3);border-radius:4px">🌾 AcreValue</a>
+          <a id="gmaps-link-${c.id}" href="#" target="_blank" style="font-size:10px;color:var(--text2);text-decoration:none;padding:3px 8px;border:1px solid var(--border);border-radius:4px">🛰 Satellite</a>
+        </div>
+      </div>
+      <div id="map-${c.id}" style="height:220px;width:100%;background:var(--surface2)"></div>
+      <div style="padding:8px 12px;background:var(--adim);font-size:10px;color:var(--text3)">${c.county ? c.county + (c.state ? ', ' + c.state : '') : 'County not specified'}${c.acreage ? ' · ' + c.acreage + ' acres' : ''}${c.apn ? ' · APN: ' + c.apn : ''}</div>
+    </div>
+
     ${c.motivation?`<div class="motivation-box"><div class="motivation-label">Seller motivation</div><div style="font-size:12px;line-height:1.6;color:var(--text2)">${c.motivation}</div></div>`:''}
 
       <div style="margin-bottom:14px">
@@ -1437,6 +1452,8 @@ function openDetail(id){
         ${renderDD(c)}
       </div>
     </div>`);
+  // Init map after modal renders
+  setTimeout(function() { initContactMap(id, c.county, c.state, c.acreage, c.name); }, 100);
 }
 
 function renderTouchLog(c){
@@ -3157,6 +3174,84 @@ function applyCompsToCalculator(pricePerAcre, acreage) {
   if (acreInput && ac) { acreInput.value = ac; }
   if (typeof calcLand === 'function') calcLand();
   toast('Comp data applied to calculator', 'success');
+}
+
+
+// ══════════════════════════════════════════════════
+// CONTACT CARD MAP — Leaflet + OpenStreetMap
+// ══════════════════════════════════════════════════
+
+// Track active map instances to destroy before re-init
+var _activeMaps = {};
+
+async function initContactMap(contactId, county, state, acreage, name) {
+  var mapId = 'map-' + contactId;
+  var el = document.getElementById(mapId);
+  if (!el) return;
+
+  // Destroy existing map instance if any
+  if (_activeMaps[contactId]) {
+    try { _activeMaps[contactId].remove(); } catch(e) {}
+    delete _activeMaps[contactId];
+  }
+
+  // Build geocode query — county + state is enough for a good pin
+  var query = [county, state, 'USA'].filter(Boolean).join(', ');
+  if (!county) {
+    el.innerHTML = '<div style="height:220px;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:12px">No county specified — add county to enable map</div>';
+    return;
+  }
+
+  try {
+    // Geocode using Nominatim (free, no key needed)
+    var geoUrl = 'https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(query);
+    var res = await fetch(geoUrl, { headers: { 'Accept-Language': 'en' } });
+    var data = await res.json();
+
+    var lat, lng;
+    if (data && data.length > 0) {
+      lat = parseFloat(data[0].lat);
+      lng = parseFloat(data[0].lon);
+    } else {
+      el.innerHTML = '<div style="height:220px;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:12px">Location not found for ' + county + ', ' + state + '</div>';
+      return;
+    }
+
+    // Update satellite link
+    var gmapsLink = document.getElementById('gmaps-link-' + contactId);
+    if (gmapsLink) {
+      gmapsLink.href = 'https://www.google.com/maps/@' + lat + ',' + lng + ',13z/data=!3m1!1e3';
+    }
+
+    // Init Leaflet map
+    var map = L.map(mapId, {
+      center: [lat, lng],
+      zoom: 11,
+      zoomControl: true,
+      attributionControl: true,
+      scrollWheelZoom: false
+    });
+
+    // OpenStreetMap tiles — free, no key
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    }).addTo(map);
+
+    // Custom marker
+    var markerColor = '#a8ff6e';
+    var markerHtml = '<div style="background:' + markerColor + ';width:14px;height:14px;border-radius:50%;border:2px solid #000;box-shadow:0 2px 6px rgba(0,0,0,0.5)"></div>';
+    var icon = L.divIcon({ html: markerHtml, className: '', iconSize: [14,14], iconAnchor: [7,7] });
+
+    var marker = L.marker([lat, lng], { icon: icon }).addTo(map);
+    marker.bindPopup('<strong>' + (name||'Property') + '</strong><br>' + county + (state?', '+state:'') + (acreage?' · '+acreage+' ac':''));
+
+    _activeMaps[contactId] = map;
+
+  } catch(e) {
+    el.innerHTML = '<div style="height:220px;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:12px">Map unavailable</div>';
+    console.warn('Map error:', e.message);
+  }
 }
 
 
