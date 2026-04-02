@@ -2078,7 +2078,18 @@ function parsePastedLead() {
   var fullName  = (firstName + ' ' + lastName).trim() || extract('Name', raw);
   var phone     = extract('Phone Number', raw) || extract('Phone', raw) || extract('Cell', raw);
   var apn       = extract('APN', raw) || extract('Parcel', raw);
-  var acreage   = extract('Acres \(Land\)', raw) || extract('Acres', raw) || extract('Acreage', raw);
+  // Extract acreage - try label first, then scan transcript for "X acre" pattern
+  var acreage = extract('Acres', raw) || extract('Acreage', raw) || '';
+  if (!acreage) {
+    // Try "Acres (Land): 2" format with parentheses
+    var acreMatch = raw.match(/Acres\s*(?:\([^)]*\))?\s*[:\t]+\s*([\d.]+)/i);
+    if (acreMatch) acreage = acreMatch[1];
+  }
+  if (!acreage) {
+    // Fall back to transcript: "2 acre", "26.5 acres", etc.
+    var transcriptAcreMatch = raw.match(/([\d.]+)\s*acres?\b/i);
+    if (transcriptAcreMatch) acreage = transcriptAcreMatch[1];
+  }
   var address   = extract('Address', raw);
   var email     = extract('Email', raw);
 
@@ -2167,6 +2178,19 @@ function parsePastedLead() {
   }
 
   // Store raw transcript on window for sync after save
+  // Try to detect asking price from transcript - standalone numbers like "80" = $80,000
+  var askingPrice = '';
+  var priceMatch = transcript.match(/\b(\d{2,4})\b/);
+  if (priceMatch) {
+    var num = parseInt(priceMatch[1]);
+    // Numbers 10-9999 in a land context are likely thousands (10 = $10k, 80 = $80k)
+    if (num >= 10 && num <= 9999) askingPrice = String(num * 1000);
+  }
+  // Also check for explicit dollar amounts
+  var dollarMatch = transcript.match(/\$([\d,]+)/);
+  if (dollarMatch) askingPrice = dollarMatch[1].replace(/,/g,'');
+  if (askingPrice) fill('f-asking', askingPrice);
+
   window._pendingTranscript = { phone: phone, transcript: transcript, name: fullName, county: county, acreage: acreage };
 
   toast('Lead parsed — review fields and save', 'success');
