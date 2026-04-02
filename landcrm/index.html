@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -383,6 +381,14 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
 .team-member-row{display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;}
 .team-member-avatar{width:36px;height:36px;border-radius:8px;background:var(--bg4);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:700;font-size:12px;color:var(--accent);flex-shrink:0;}
 .team-role-badge{font-family:'DM Mono',monospace;font-size:9px;padding:2px 8px;border-radius:20px;border:1px solid var(--border2);color:var(--text3);background:var(--bg4);}
+
+.cockpit-card{background:var(--bg3);border-radius:8px;padding:12px 14px;margin-bottom:8px;cursor:pointer;transition:opacity .15s;}
+.cockpit-card:hover{opacity:0.85;}
+.cockpit-card:last-child{margin-bottom:0;}
+.cockpit-name{font-size:15px;font-weight:700;color:var(--text);margin-bottom:2px;}
+.cockpit-sub{font-size:12px;color:var(--text2);margin-bottom:2px;}
+.cockpit-msg{font-size:12px;color:var(--text3);font-style:italic;margin:4px 0;padding:4px 8px;background:var(--bg2);border-radius:4px;}
+.cockpit-actions{display:flex;gap:6px;margin-top:8px;}
 </style>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
@@ -507,31 +513,71 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
   </div>
   <div id="content">
 
-    <!-- DASHBOARD -->
+    <!-- DASHBOARD / COCKPIT -->
     <div id="view-dashboard" class="view active">
-      <div class="stats-grid">
+
+      <!-- COCKPIT LANES -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:20px;">
+
+        <!-- LANE 1: CALL NOW -->
+        <div class="card" style="border-top:3px solid var(--coral);">
+          <div class="card-header" style="padding-bottom:8px;">
+            <span style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--coral);">
+              <span style="font-size:16px;">🔴</span> Call Now
+            </span>
+            <span id="call-now-count" style="font-size:11px;background:var(--coral);color:#000;border-radius:20px;padding:2px 8px;font-weight:700;">0</span>
+          </div>
+          <div style="font-size:11px;color:var(--text3);padding:0 14px 8px;">Seller agreed to a call — reach out immediately</div>
+          <div class="card-body" id="lane-call-now" style="padding-top:0;"></div>
+        </div>
+
+        <!-- LANE 2: CALL TODAY -->
+        <div class="card" style="border-top:3px solid var(--amber);">
+          <div class="card-header" style="padding-bottom:8px;">
+            <span style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--amber);">
+              <span style="font-size:16px;">🟡</span> Call Today
+            </span>
+            <span id="call-today-count" style="font-size:11px;background:var(--amber);color:#000;border-radius:20px;padding:2px 8px;font-weight:700;">0</span>
+          </div>
+          <div style="font-size:11px;color:var(--text3);padding:0 14px 8px;">New leads — call before AI sequence fires</div>
+          <div class="card-body" id="lane-call-today" style="padding-top:0;"></div>
+        </div>
+
+        <!-- LANE 3: AI REVIEW -->
+        <div class="card" style="border-top:3px solid var(--accent);">
+          <div class="card-header" style="padding-bottom:8px;">
+            <span style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--accent);">
+              <span style="font-size:16px;">🟢</span> AI Review
+            </span>
+            <span id="ai-review-count" style="font-size:11px;background:var(--accent);color:#000;border-radius:20px;padding:2px 8px;font-weight:700;">0</span>
+          </div>
+          <div style="font-size:11px;color:var(--text3);padding:0 14px 8px;">AI qualified or flagged — review before calling</div>
+          <div class="card-body" id="lane-ai-review" style="padding-top:0;"></div>
+        </div>
+
+      </div>
+
+      <!-- STATS ROW -->
+      <div class="stats-grid" style="margin-bottom:20px;">
         <div class="stat-card green"><div class="stat-label">Total leads</div><div class="stat-value green" id="s-total">0</div><div class="stat-sub">all stages</div></div>
         <div class="stat-card coral"><div class="stat-label">Active acq.</div><div class="stat-value coral" id="s-acq">0</div><div class="stat-sub">in pipeline</div></div>
         <div class="stat-card amber"><div class="stat-label">Follow-ups due</div><div class="stat-value amber" id="s-fu">0</div><div class="stat-sub">today</div></div>
-        <div class="stat-card ai"><div class="stat-label">Need handoff</div><div class="stat-value ai" id="s-handoff">0</div><div class="stat-sub">AI → you</div></div>
+        <div class="stat-card ai"><div class="stat-label">Sequences active</div><div class="stat-value ai" id="s-handoff">0</div><div class="stat-sub">AI working</div></div>
         <div class="stat-card blue"><div class="stat-label">Under contract</div><div class="stat-value blue" id="s-uc">0</div><div class="stat-sub">active deals</div></div>
       </div>
+
+      <!-- PIPELINE SNAPSHOTS -->
       <div class="dash-grid">
         <div class="card">
-          <div class="card-header"><span class="card-title">Action Items — Today</span><button class="btn btn-ghost btn-sm" onclick="renderDashboard()">Refresh</button></div>
-          <div class="card-body" id="today-list"></div>
+          <div class="card-header"><span class="card-title">Acquisitions Pipeline</span></div>
+          <div class="card-body" id="acq-snapshot"></div>
         </div>
-        <div style="display:flex;flex-direction:column;gap:14px;">
-          <div class="card">
-            <div class="card-header"><span class="card-title">Acquisitions</span></div>
-            <div class="card-body" id="acq-snapshot"></div>
-          </div>
-          <div class="card">
-            <div class="card-header"><span class="card-title">Dispositions</span></div>
-            <div class="card-body" id="dis-snapshot"></div>
-          </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Dispositions Pipeline</span></div>
+          <div class="card-body" id="dis-snapshot"></div>
         </div>
       </div>
+
     </div>
 
     <!-- ACQ PIPELINE -->
@@ -1194,37 +1240,110 @@ function showView(v){
 // DASHBOARD
 // ══════════════════════════════════
 function renderDashboard(){
-  const c=db.contacts;
+  var c=db.contacts;
   document.getElementById('s-total').textContent=c.length;
-  document.getElementById('s-acq').textContent=c.filter(x=>x.pipeline==='acq'&&x.stage!=='Dead').length;
+  document.getElementById('s-acq').textContent=c.filter(function(x){return x.pipeline==='acq'&&x.stage!=='Dead';}).length;
   document.getElementById('s-fu').textContent=c.filter(followupDue).length;
-  document.getElementById('s-handoff').textContent=c.filter(needsHandoff).length;
-  document.getElementById('s-uc').textContent=c.filter(x=>x.stage==='Under Contract'||x.stage==='Under Agreement').length;
-  document.getElementById('sf-count').textContent=c.length;
-  document.getElementById('sf-fill').style.width=Math.min(c.length/100*100,100)+'%';
-  document.getElementById('nb-acq').textContent=c.filter(x=>x.pipeline==='acq'&&!['Dead','Not Motivated Yet'].includes(x.stage)).length;
-  document.getElementById('nb-dis').textContent=c.filter(x=>x.pipeline==='dis').length;
-  document.getElementById('nb-ai').textContent=c.filter(needsHandoff).length;
-  renderTodayList();
+  document.getElementById('s-handoff').textContent=c.filter(function(x){return x.sequenceActive||needsHandoff(x);}).length;
+  document.getElementById('s-uc').textContent=c.filter(function(x){return x.stage==='Under Contract'||x.stage==='Under Agreement';}).length;
+  var sfCount=document.getElementById('sf-count');if(sfCount)sfCount.textContent=c.length;
+  var sfFill=document.getElementById('sf-fill');if(sfFill)sfFill.style.width=Math.min(c.length/100*100,100)+'%';
+  var nbAcq=document.getElementById('nb-acq');if(nbAcq)nbAcq.textContent=c.filter(function(x){return x.pipeline==='acq'&&!['Dead','Not Motivated Yet'].includes(x.stage);}).length;
+  var nbDis=document.getElementById('nb-dis');if(nbDis)nbDis.textContent=c.filter(function(x){return x.pipeline==='dis';}).length;
+  var nbAi=document.getElementById('nb-ai');if(nbAi)nbAi.textContent=c.filter(needsHandoff).length;
+  renderCockpit();
   renderSnapshot('acq');
   renderSnapshot('dis');
 }
 
-function renderTodayList(){
-  const el=document.getElementById('today-list');
-  const items=[];
-  db.contacts.forEach(c=>{
-    if(needsHandoff(c))items.push({c,type:'handoff',priority:0});
-    else if(followupDue(c))items.push({c,type:'followup',priority:daysSince(lastTouchDate(c))});
+function renderCockpit(){
+  var callNow=db.contacts.filter(function(c){
+    return c.callRequested||(c.handoff==='Human active'&&c.touches&&c.touches.some(function(t){return t.direction==='Inbound'&&daysSince(t.date)<=1;}));
   });
-  items.sort((a,b)=>a.priority-b.priority);
-  if(!items.length){el.innerHTML='<div class="empty"><div class="empty-title">All caught up</div><p>No action items today.</p></div>';return;}
-  el.innerHTML=items.slice(0,10).map(({c,type})=>{
-    const tc=touchCount(c);
-    const color=type==='handoff'?'ai':daysSince(lastTouchDate(c))>5?'red':'amber';
-    const sub=type==='handoff'?`${tc} touches, no response — needs personal outreach · ${c.phone}`:`${c.stage} · ${tc} touches · ${daysSince(lastTouchDate(c))}d since last touch · ${c.phone}`;
-    return`<div class="today-item" onclick="openDetail('${c.id}')"><div class="today-dot ${color}"></div><div><div class="today-label">${c.name} — ${c.county}, ${c.state} (${c.acreage} ac)</div><div class="today-sub">${sub}</div></div></div>`;
-  }).join('');
+  var callToday=db.contacts.filter(function(c){
+    if(!c.source||!c.source.toLowerCase().includes('lead gen'))return false;
+    if(c.callRequested||c.callLogged)return false;
+    return daysSince(c.created)<=1;
+  });
+  var aiReview=db.contacts.filter(function(c){
+    return needsHandoff(c)&&!c.callRequested&&!c.callLogged;
+  });
+  document.getElementById('call-now-count').textContent=callNow.length;
+  document.getElementById('call-today-count').textContent=callToday.length;
+  document.getElementById('ai-review-count').textContent=aiReview.length;
+
+  var ln1=document.getElementById('lane-call-now');
+  if(!callNow.length){
+    ln1.innerHTML='<div style="font-size:13px;color:var(--text3);padding:4px 0;">No urgent calls right now</div>';
+  } else {
+    ln1.innerHTML=callNow.map(function(c){
+      var lastMsg=c.touches&&c.touches.filter(function(t){return t.direction==='Inbound';}).slice(-1)[0];
+      var msgText=lastMsg?lastMsg.note.replace('Inbound SMS: ','').replace(/"/g,''):'';
+      return '<div class="cockpit-card" onclick="openDetail(''+c.id+'')" style="border-left:3px solid var(--coral);">'+
+        '<div class="cockpit-name">'+c.name+'</div>'+
+        '<div class="cockpit-sub">'+c.county+' County, '+c.state+' &middot; '+c.acreage+' ac</div>'+
+        (msgText?'<div class="cockpit-msg">''+msgText+''</div>':'')+
+        '<div class="cockpit-actions">'+
+          '<a href="tel:'+c.phone+'" class="btn btn-primary btn-sm" onclick="event.stopPropagation();logCockpitCall(''+c.id+'')">&#128222; Call</a>'+
+          '<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openDetail(''+c.id+'')">View</button>'+
+        '</div>'+
+      '</div>';
+    }).join('');
+  }
+
+  var ln2=document.getElementById('lane-call-today');
+  if(!callToday.length){
+    ln2.innerHTML='<div style="font-size:13px;color:var(--text3);padding:4px 0;">No new leads pending a call</div>';
+  } else {
+    ln2.innerHTML=callToday.map(function(c){
+      return '<div class="cockpit-card" onclick="openDetail(''+c.id+'')" style="border-left:3px solid var(--amber);">'+
+        '<div class="cockpit-name">'+c.name+'</div>'+
+        '<div class="cockpit-sub">'+c.county+' County, '+c.state+' &middot; '+c.acreage+' ac</div>'+
+        '<div class="cockpit-sub" style="color:var(--amber);">'+c.phone+'</div>'+
+        '<div class="cockpit-actions">'+
+          '<a href="tel:'+c.phone+'" class="btn btn-primary btn-sm" onclick="event.stopPropagation();logCockpitCall(''+c.id+'')">&#128222; Call</a>'+
+          '<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();markNotInterested(''+c.id+'')">Not Interested</button>'+
+        '</div>'+
+      '</div>';
+    }).join('');
+  }
+
+  var ln3=document.getElementById('lane-ai-review');
+  if(!aiReview.length){
+    ln3.innerHTML='<div style="font-size:13px;color:var(--text3);padding:4px 0;">Nothing flagged for review</div>';
+  } else {
+    ln3.innerHTML=aiReview.map(function(c){
+      var tc=touchCount(c);
+      return '<div class="cockpit-card" onclick="openDetail(''+c.id+'')" style="border-left:3px solid var(--accent);">'+
+        '<div class="cockpit-name">'+c.name+'</div>'+
+        '<div class="cockpit-sub">'+c.county+' County, '+c.state+' &middot; '+c.acreage+' ac</div>'+
+        '<div class="cockpit-sub" style="color:var(--text3);">'+tc+' touches &middot; '+daysSince(lastTouchDate(c))+'d since last contact</div>'+
+        '<div class="cockpit-actions">'+
+          '<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();generatePreCallBrief(''+c.id+'')">Brief</button>'+
+          '<a href="tel:'+c.phone+'" class="btn btn-primary btn-sm" onclick="event.stopPropagation();logCockpitCall(''+c.id+'')">&#128222; Call</a>'+
+        '</div>'+
+      '</div>';
+    }).join('');
+  }
+}
+
+function logCockpitCall(id){
+  var c=db.contacts.find(function(x){return x.id===id;});
+  if(!c)return;
+  c.callLogged=true;
+  if(!c.touches)c.touches=[];
+  c.touches.push({id:'call-'+Date.now(),date:today(),timestamp:new Date().toISOString(),channel:'Call',direction:'Outbound',by:'You',outcome:'Called',note:'Call initiated from cockpit dashboard'});
+  c.lastContact=today();
+  save();renderCockpit();
+  toast('Call logged for '+c.name,'success');
+}
+
+function markNotInterested(id){
+  var c=db.contacts.find(function(x){return x.id===id;});
+  if(!c)return;
+  c.stage='Dead';c.temp='cold';c.callLogged=true;
+  save();renderCockpit();renderDashboard();
+  toast(c.name+' marked not interested','success');
 }
 
 function renderSnapshot(pipeline){
