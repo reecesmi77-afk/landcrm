@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1879,7 +1880,7 @@ function deleteContact(id){
 function openAddContact(editId, prefillType) {
   var c = editId ? db.contacts.find(function(x){return x.id===editId;}) : null;
   var ctype = (c && c.contactType) || prefillType || 'seller';
-  openCustomModal('<div class="modal-header"><div class="modal-title">'+(c?'Edit contact':'Add contact')+'</div><button class="modal-close" onclick="closeModal()">&#x2715;</button></div><div class="modal-body"><div class="form-group" style="margin-bottom:16px"><label class="form-label">Contact type</label><select class="form-select" id="f-ctype" onchange="updateAddContactFields(this.value,\''+(editId||'')+'\')"><option value="seller" '+(ctype==='seller'?'selected':'')+'>Seller</option><option value="buyer" '+(ctype==='buyer'?'selected':'')+'>Buyer</option><option value="title" '+(ctype==='title'?'selected':'')+'>Title &amp; Closing</option><option value="agent" '+(ctype==='agent'?'selected':'')+'>RE Agent</option><option value="referral" '+(ctype==='referral'?'selected':'')+'>Referral Partner</option><option value="lender" '+(ctype==='lender'?'selected':'')+'>Lender / Private Money</option></select></div><div id="add-contact-fields"></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveUnifiedContact(\''+(editId||'')+'\')">'+(c?'Save changes':'Add contact')+'</button></div>');
+  openCustomModal('<div class="modal-header"><div class="modal-title">'+(c?'Edit contact':'Add contact')+'</div><button class="modal-close" onclick="closeModal()">&#x2715;</button></div><div class="modal-body">'+(!c?'<div style="margin-bottom:16px;padding:12px 14px;background:var(--bg3);border-radius:8px;border:1px solid var(--border2);"><div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Quick Import</div><textarea id="f-paste-lead" class="form-textarea" rows="4" placeholder="Paste lead info from email here — CRM will auto-fill the form..."></textarea><button class="btn btn-ghost btn-sm" style="margin-top:6px;" onclick="parsePastedLead()">&#x26A1; Parse &amp; Auto-Fill</button></div>':'')+' <div class="form-group" style="margin-bottom:16px"><label class="form-label">Contact type</label><select class="form-select" id="f-ctype" onchange="updateAddContactFields(this.value,\''+(editId||'')+'\')"><option value="seller" '+(ctype==='seller'?'selected':'')+'>Seller</option><option value="buyer" '+(ctype==='buyer'?'selected':'')+'>Buyer</option><option value="title" '+(ctype==='title'?'selected':'')+'>Title &amp; Closing</option><option value="agent" '+(ctype==='agent'?'selected':'')+'>RE Agent</option><option value="referral" '+(ctype==='referral'?'selected':'')+'>Referral Partner</option><option value="lender" '+(ctype==='lender'?'selected':'')+'>Lender / Private Money</option></select></div><div id="add-contact-fields"></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveUnifiedContact(\''+(editId||'')+'\')">'+(c?'Save changes':'Add contact')+'</button></div>');
   updateAddContactFields(ctype, editId||'');
 }
 
@@ -2011,6 +2012,11 @@ function saveUnifiedContact(editId) {
       if(newC.source && (newC.source.toLowerCase().includes('lead gen') || newC.source.toLowerCase().includes('agency')) && newC.phone) {
         triggerLeadGenSequence(newC);
       }
+      // Sync transcript to JSONbin if we parsed a lead
+      if(window._pendingTranscript && window._pendingTranscript.phone) {
+        syncTranscriptToJSONbin(window._pendingTranscript, newC);
+        window._pendingTranscript = null;
+      }
     }
   } else {
     if(!db.allContacts) db.allContacts = [];
@@ -2046,6 +2052,124 @@ function saveUnifiedContact(editId) {
   if(currentView==='dashboard') renderDashboard();
 }
 
+
+
+function parsePastedLead() {
+  var raw = (document.getElementById('f-paste-lead') && document.getElementById('f-paste-lead').value) || '';
+  if (!raw.trim()) { toast('Paste some lead info first', 'error'); return; }
+
+  // Helper: extract field value from label
+  function extract(label, text) {
+    var patterns = [
+      new RegExp(label + '[:\s]+([^\n]+)', 'i'),
+      new RegExp(label + '\s*:\s*([^\n]+)', 'i')
+    ];
+    for (var i = 0; i < patterns.length; i++) {
+      var m = text.match(patterns[i]);
+      if (m && m[1] && m[1].trim()) return m[1].trim();
+    }
+    return '';
+  }
+
+  // Parse standard fields
+  var firstName = extract('First Name', raw);
+  var lastName  = extract('Last Name', raw);
+  var fullName  = (firstName + ' ' + lastName).trim() || extract('Name', raw);
+  var phone     = extract('Phone Number', raw) || extract('Phone', raw) || extract('Cell', raw);
+  var apn       = extract('APN', raw) || extract('Parcel', raw);
+  var acreage   = extract('Acres \(Land\)', raw) || extract('Acres', raw) || extract('Acreage', raw);
+  var address   = extract('Address', raw);
+  var email     = extract('Email', raw);
+
+  // Parse city, state, zip from address line: ", City, ST, Zip"
+  var city = '', state = '', zip = '';
+  if (address) {
+    var addrParts = address.split(',').map(function(p){ return p.trim(); }).filter(Boolean);
+    if (addrParts.length >= 3) {
+      city  = addrParts[addrParts.length - 3] || '';
+      state = addrParts[addrParts.length - 2] || '';
+      zip   = addrParts[addrParts.length - 1] || '';
+    } else if (addrParts.length === 2) {
+      city  = addrParts[0];
+      state = addrParts[1];
+    }
+  }
+
+  // Parse county from Notes section
+  var county = extract('County', raw) || '';
+
+  // Parse the conversation transcript from Notes section
+  // Everything after "Notes:" label
+  var transcript = '';
+  var notesMatch = raw.match(/Notes\s*:\s*([\s\S]*)/i);
+  if (notesMatch && notesMatch[1]) {
+    transcript = notesMatch[1].trim();
+  }
+
+  // Determine seller temperature from transcript
+  var temp = 'cold';
+  var lowerTranscript = transcript.toLowerCase();
+  if (lowerTranscript.match(/how much|interested|yes|sure|call|when|price|offer|what.*worth|want to sell/)) {
+    temp = 'warm';
+  }
+  if (lowerTranscript.match(/ready|asap|need to sell|motivated|deal|let.*go|make offer/)) {
+    temp = 'hot';
+  }
+
+  // Auto-fill form fields
+  function fill(id, val) {
+    var el = document.getElementById(id);
+    if (el && val) el.value = val;
+  }
+
+  fill('f-name', fullName);
+  fill('f-phone', phone);
+  fill('f-email', email);
+  fill('f-county', county);
+  fill('f-city', city);
+  fill('f-zip', zip);
+  fill('f-acreage', acreage);
+  fill('f-apn', apn);
+
+  // Set state dropdown
+  if (state) {
+    var stateEl = document.getElementById('f-state');
+    if (stateEl) {
+      var stateUpper = state.trim().toUpperCase();
+      for (var i = 0; i < stateEl.options.length; i++) {
+        if (stateEl.options[i].value.toUpperCase() === stateUpper ||
+            stateEl.options[i].text.toUpperCase() === stateUpper) {
+          stateEl.selectedIndex = i; break;
+        }
+      }
+    }
+  }
+
+  // Set temperature
+  var tempEl = document.getElementById('f-temp');
+  if (tempEl) tempEl.value = temp;
+
+  // Set source to Lead Gen Agency automatically
+  var sourceEl = document.getElementById('f-source');
+  if (sourceEl) sourceEl.value = 'Lead Gen Agency';
+
+  // Put transcript into notes field
+  if (transcript) {
+    var notesEl = document.getElementById('f-notes');
+    if (notesEl) notesEl.value = 'LEAD GEN TRANSCRIPT:\n' + transcript;
+  }
+
+  // Put motivation summary if seller responded
+  var motivationEl = document.getElementById('f-motivation');
+  if (motivationEl && lowerTranscript.match(/how much|price|offer|interested|want/)) {
+    motivationEl.value = 'Responded to lead gen outreach — asked about price/offer. Review transcript in notes.';
+  }
+
+  // Store raw transcript on window for sync after save
+  window._pendingTranscript = { phone: phone, transcript: transcript, name: fullName, county: county, acreage: acreage };
+
+  toast('Lead parsed — review fields and save', 'success');
+}
 
 function openEditContact(id){openAddContact(id);}
 
@@ -2386,6 +2510,41 @@ function toast(msg,type){const el=document.getElementById('toast');el.textConten
 
 // QUO SYNC
 const FUNCTIONS_BASE='/.netlify/functions';
+
+async function syncTranscriptToJSONbin(parsed, contact) {
+  try {
+    var JSONBIN_KEY = 'JSONBIN_API_KEY'; // accessed server-side only
+    // We call sync-contacts which already pushes to JSONbin
+    // Store transcript in the contact record for the AI to read
+    var phone = parsed.phone ? parsed.phone.replace(/\D/g,'') : '';
+    if(!phone) return;
+    // Normalize to E164
+    if(phone.length===10) phone='+1'+phone;
+    else if(phone.length===11&&phone[0]==='1') phone='+'+phone;
+
+    // Push transcript to sync-contacts function
+    var res = await fetch('/.netlify/functions/sync-contacts', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        contacts: db.contacts,
+        transcripts: [{
+          phone: phone,
+          transcript: parsed.transcript,
+          name: parsed.name,
+          county: parsed.county,
+          acreage: parsed.acreage
+        }]
+      })
+    });
+    if(res.ok) {
+      console.log('Transcript synced for', parsed.name);
+    }
+  } catch(e) {
+    console.warn('Transcript sync error:', e.message);
+  }
+}
+
 async function pushContactToQuo(contact){
   try{
     const res=await fetch(`${FUNCTIONS_BASE}/push-contact`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:contact.name,phone:contact.phone,county:contact.county,state:contact.state,acreage:contact.acreage})});
