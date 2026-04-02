@@ -1077,7 +1077,7 @@ const ACQ_STAGES_CONST = ['New Lead','Outreach Active','Awaiting Response','Conv
 const DIS_STAGES_CONST = ['Available','Buyer Identified','Due Diligence','Under Agreement','Title Opened','Closed — Assignment','Closed — Double Close','Back to Market'];
 const ACQ_COLORS = ['#4a554a','#5cb8ff','#f0a500','#4dd6b4','#a8ff6e','#c084fc','#ff7a5c','#ff6b6b','#7ed44a','#8a988a','#3a3a3a'];
 const DIS_COLORS = ['#5cb8ff','#4dd6b4','#ffb84d','#ff7a5c','#ff7a5c','#a8ff6e','#7ed44a','#555'];
-const SOURCES = ['Cold SMS','Cold call','Direct mail','Referral','Agent referral','Driving for dollars','Online / web','List pull','Networking','Other'];
+const SOURCES = ['Lead Gen Agency','Cold SMS','Cold call','Direct mail','Referral','Agent referral','Driving for dollars','Online / web','List pull','Networking','Other'];
 const CHANNELS = ['SMS','Call','Voicemail','Mail','Email','Agent'];
 const OUTCOMES = ['No response','Voicemail left','Replied','Answered — not interested','Opted out','Wrong number','Callback requested'];
 const HANDOFF_STATES = ['AI handling','Needs human review','Human active'];
@@ -1435,6 +1435,8 @@ function openDetail(id){
           <div><div style="font-size:13px;color:var(--text3);margin-bottom:2px">Asking</div><div style="font-size:16px;font-weight:500">${c.askingPrice?'$'+parseInt(c.askingPrice).toLocaleString():'—'}</div></div>
           <div><div style="font-size:13px;color:var(--text3);margin-bottom:2px">Our offer</div><div style="font-size:14px;font-weight:500;color:var(--accent)">${c.ourOffer?'$'+parseInt(c.ourOffer).toLocaleString():'—'}</div></div>
           <div><div style="font-size:13px;color:var(--text3);margin-bottom:2px">City / Zip</div><div style="font-size:13px;font-weight:500">${c.city||'—'}${c.zip?' '+c.zip:''}</div></div>
+          <div><div style="font-size:11px;color:var(--text3);margin-bottom:2px">Lead received</div><div style="font-size:13px;font-weight:500;color:var(--accent)">${c.leadReceived?new Date(c.leadReceived).toLocaleDateString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'—'}</div></div>
+          <div><div style="font-size:11px;color:var(--text3);margin-bottom:2px">Lead gen co.</div><div style="font-size:13px;font-weight:500">${c.leadGenCompany||'—'}</div></div>
         </div>
         ${c.motivation?`<div style="font-size:15px;color:var(--text2);padding:8px 10px;background:var(--adim);border-radius:8px;border-left:3px solid var(--accent)">${c.motivation}</div>`:''}
       </div>
@@ -1605,11 +1607,16 @@ function renderTabPanel(c, tabIdx) {
         ${c.pipeline==='acq'?`<button class="btn btn-ghost btn-sm" style="border-color:rgba(168,255,110,0.3);color:var(--accent)" onclick="moveToDispo('${id}')">Move To Dispositions →</button>`:''}
       </div>
       ${nextSMS?`<div style="background:var(--adim);border:1px solid rgba(168,255,110,0.2);border-radius:10px;padding:14px;margin-bottom:14px">
-        <div style="font-size:11px;color:var(--accent);font-weight:700;margin-bottom:4px">SUGGESTED NEXT SMS</div>
-        <div style="font-size:14px;font-weight:500;margin-bottom:4px">${nextSMS.day} — ${nextSMS.type}</div>
-        <div style="font-size:13px;color:var(--text3);margin-bottom:10px">${nextSMS.msg.replace(/\{name\}/g,c.name.split(' ')[0]).replace(/\{acres\}/g,c.acreage||'').replace(/\{county\}/g,c.county||'').slice(0,120)}…</div>
-        <button class="btn btn-ghost btn-sm" onclick="copyText(\`${nextSMS.msg.replace(/`/g,"'").replace(/\{name\}/g,c.name.split(' ')[0]).replace(/\{acres\}/g,c.acreage||'').replace(/\{county\}/g,c.county||'')}\`)">Copy SMS</button>
-      </div>`:''}`;
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <div style="font-size:11px;color:var(--accent);font-weight:700">${nextSMS.type} — Step ${nextSMS.step} of ${nextSMS.total}</div>
+          <div style="font-size:11px;color:var(--text3)">Sequence ${nextSMS.step <= nextSMS.total ? 'active' : 'complete'}</div>
+        </div>
+        <div style="font-size:14px;color:var(--text);line-height:1.6;margin-bottom:12px">${nextSMS.msg.slice(0,160)}${nextSMS.msg.length>160?'…':''}</div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-ghost btn-sm" onclick="copyText(\`${nextSMS.msg.replace(/\`/g,"'")}\`)">📋 Copy message</button>
+          <button class="btn btn-primary btn-sm" onclick="logSequenceTouch('${id}',\`${nextSMS.msg.replace(/\`/g,"'")}\`)">✓ Sent — log touch</button>
+        </div>
+      </div>`:'<div style="font-size:13px;color:var(--text3);padding:12px 0">Sequence complete — all messages sent. Move to 30-day re-engage or mark as Not Motivated Yet.</div>'}`;
   }
 
   if (tabIdx === 3) {
@@ -1789,6 +1796,8 @@ function updateAddContactFields(type, editId) {
       '<div class="form-group"><label class="form-label">Lead source</label><select class="form-select" id="f-source">' +
       SOURCES.map(function(s){return '<option '+(c&&c.source===s?'selected':'')+'>'+s+'</option>';}).join('') +
       '</select></div>' +
+      '<div class="form-group"><label class="form-label">Lead gen company</label><input class="form-input" id="f-leadgen-co" value="'+(c&&c.leadGenCompany||'')+'" placeholder="e.g. Launch Control"></div>' +
+      '<div class="form-group" style="grid-column:1/-1"><label class="form-label">Lead received <span style=\"color:var(--accent)\">&#9733; defaults to now</span></label><input class="form-input" id="f-lead-received" type="datetime-local" value="'+(c&&c.leadReceived||new Date().toISOString().slice(0,16))+'"></div>' +
       '<div class="form-group"><label class="form-label">Stage</label><select class="form-select" id="f-stage">' +
       ACQ_STAGES_CONST.map(function(s){return '<option '+(c&&c.stage===s?'selected':'')+'>'+s+'</option>';}).join('') +
       '</select></div>' +
@@ -1857,6 +1866,8 @@ function saveUnifiedContact(editId) {
       acreage: (document.getElementById('f-acreage') && document.getElementById('f-acreage').value.trim()) || '',
       apn: apn,
       source: (document.getElementById('f-source') && document.getElementById('f-source').value) || '',
+      leadGenCompany: (document.getElementById('f-leadgen-co') && document.getElementById('f-leadgen-co').value.trim()) || '',
+      leadReceived: (document.getElementById('f-lead-received') && document.getElementById('f-lead-received').value) || new Date().toISOString().slice(0,16),
       stage: (document.getElementById('f-stage') && document.getElementById('f-stage').value) || 'New Lead',
       askingPrice: (document.getElementById('f-asking') && document.getElementById('f-asking').value.trim()) || '',
       ourOffer: (document.getElementById('f-offer') && document.getElementById('f-offer').value.trim()) || '',
@@ -2158,11 +2169,8 @@ function showScript(key,idx){
     </div>`);
 }
 
-function getLandSMS(c){
-  const seq=SEQUENCES.seller;
-  const tc=touchCount(c);
-  const idx=Math.min(tc,seq.steps.length-1);
-  return{...seq.steps[idx],idx};
+function getLandSMS(contact) {
+  return getNextSequenceMessage(contact);
 }
 
 function openFollowupModal(){
@@ -3947,6 +3955,174 @@ function executeAIAction(action) {
       }
       break;
   }
+}
+
+
+// ══════════════════════════════════════════════════════════════════
+// SEQUENCE ENGINE — Lead Gen Follow-Up + Cold Outreach
+// ══════════════════════════════════════════════════════════════════
+
+// Spinner utility — picks a random variant from pipe-delimited string
+function spin(variants) {
+  var opts = variants.split('|');
+  return opts[Math.floor(Math.random() * opts.length)];
+}
+
+// Calculate days since lead was received
+function daysSinceReceived(contact) {
+  if (!contact.leadReceived) return 0;
+  var received = new Date(contact.leadReceived);
+  var now = new Date();
+  return Math.floor((now - received) / 86400000);
+}
+
+// Time-aware opener based on days since lead received
+function getFollowUpOpener(contact) {
+  var days = daysSinceReceived(contact);
+  var first = contact.name ? contact.name.split(' ')[0] : '';
+  var county = contact.county || 'your area';
+  var co = contact.leadGenCompany || 'our team';
+
+  if (days <= 1) {
+    return 'Hi ' + first + ', someone from ' + co + ' reached out to you earlier today about your land in ' + county + '. That was us.';
+  } else if (days <= 3) {
+    return 'Hi ' + first + ', earlier this week ' + co + ' reached out about your land in ' + county + '.';
+  } else if (days <= 7) {
+    return 'Hi ' + first + ', you may have heard from ' + co + ' recently about your land in ' + county + '.';
+  } else {
+    return 'Hi ' + first + ', you may remember getting a message a little while back about your land in ' + county + '.';
+  }
+}
+
+// Alt opener (no name/county data)
+function getAltOpener(contact) {
+  var days = daysSinceReceived(contact);
+  var co = contact.leadGenCompany || 'our team';
+  if (days <= 3) {
+    return 'Hi — ' + co + ' recently reached out about some vacant land you own.';
+  } else {
+    return 'Hi — you may have heard from ' + co + ' recently about some vacant land you own.';
+  }
+}
+
+// ── LEAD GEN FOLLOW-UP SEQUENCES (5 messages + alt + 30-day re-engage) ──
+function buildLeadGenSequence(contact) {
+  var first = contact.name ? contact.name.split(' ')[0] : null;
+  var county = contact.county || null;
+  var state = contact.state || '';
+  var acres = contact.acreage || null;
+  var opener = first && county ? getFollowUpOpener(contact) : getAltOpener(contact);
+  var optout = ' Reply STOP to opt out.';
+
+  var msgs = [
+    // Message 1 — warm intro, establish who you are
+    opener + ' I\'m William with Coldwater Property Group — the one who can actually ' + spin('close this|get you a number|make this happen') + '. Still ' + spin('open to|interested in|willing to consider') + ' a ' + spin('quick chat|brief call|conversation') + '?' + optout,
+
+    // Message 2 — value prop, simple process
+    (first || 'Hey') + ', just ' + spin('following up|circling back|checking in') + ' on my last message about your ' + spin('land|acreage|parcel') + (county ? ' in ' + county : '') + '. We ' + spin('close fast|move quickly|make it simple') + ' — ' + spin('all cash, no fees|we cover all costs|no agent commissions') + '. Worth a ' + spin('quick call|5 minutes|brief chat') + '?' + optout,
+
+    // Message 3 — social proof angle, urgency light
+    'Hi ' + (first || 'there') + ', William again from Coldwater Property Group. We ' + spin('close in as little as|can wrap this up in|have buyers ready in') + ' 2-3 weeks and handle all the ' + spin('paperwork|details|closing costs') + '. If you\'re even ' + spin('thinking about|open to|considering') + ' ' + spin('parting with|doing something with|moving') + ' that ' + spin('land|acreage|parcel') + (county ? ' in ' + county : '') + ', let\'s talk.' + optout,
+
+    // Message 4 — direct, no fluff
+    (first || 'Hey') + ', I won\'t keep ' + spin('reaching out|following up|messaging') + ' forever. If the timing\'s ever right to ' + spin('discuss|talk about|explore') + ' your ' + (acres ? acres + '-acre ' : '') + spin('land|parcel|acreage') + (county ? ' in ' + county : '') + ', I\'m just a text away. — William, Coldwater Property Group.' + optout,
+
+    // Message 5 — soft breakup, leave door open
+    'Last message from me, ' + (first || 'friend') + '. If you ever want a fast, ' + spin('fair|simple|hassle-free') + ' way to ' + spin('part with|do something with|move') + ' that ' + spin('land|property|acreage') + (county ? ' in ' + county : '') + ', reach out anytime. No pressure — take care. — William, Coldwater.' + optout,
+  ];
+
+  // Alt message (missing name or county data)
+  var alt = getAltOpener(contact) + ' I\'m William with Coldwater Property Group. We ' + spin('close fast|move quickly|work with any situation') + ' — ' + spin('all cash, no fees|we cover all costs|no agent needed') + '. ' + spin('Open to a quick chat?|Want to discuss?|Still interested?') + optout;
+
+  // 30-day re-engage
+  var reengage = 'Hi ' + (first || 'there') + ', I know I reached out about a month ago regarding your ' + spin('land|acreage|parcel') + (county ? ' in ' + county : '') + '. Still have strong interest if the timing is ever right. No pressure — just wanted to stay on your radar. — William, Coldwater Property Group.' + optout;
+
+  return { msgs, alt, reengage };
+}
+
+// ── COLD OUTREACH SEQUENCES (future self-generated campaigns) ──
+function buildColdSequence(contact) {
+  var first = contact.name ? contact.name.split(' ')[0] : null;
+  var county = contact.county || null;
+  var city = contact.city || county || 'your area';
+  var acres = contact.acreage || null;
+  var optout = ' Reply STOP to opt out.';
+
+  var msgs = [
+    // Cold 1
+    'Hi ' + (first || 'there') + ', I\'m ' + spin('seeking|pursuing|looking') + ' to ' + spin('acquire|purchase|buy') + ' ' + spin('vacant|raw|undeveloped') + ' land in ' + city + ' and wanted to reach out. We close in 2 weeks and keep it ' + spin('simple|easy|hassle-free') + '. ' + spin('Open to a chat?|Any interest?|Worth a quick call?') + ' — William, Coldwater Property Group.' + optout,
+
+    // Cold 2
+    (first || 'Hey') + ', I saw you own ' + spin('land|acreage|a parcel') + ' in ' + city + '. I\'m ' + spin('pursuing|seeking|acquiring') + ' ' + spin('vacant|raw|undeveloped') + ' land in your area — ' + spin('any interest in discussing?|open to a conversation?|willing to chat?') + ' We can close in 2 weeks. — William, Coldwater.' + optout,
+
+    // Cold 3
+    'Hi ' + (first || 'there') + ' — William from Coldwater Property Group. ' + spin('Searching for|Seeking|Looking to acquire') + ' ' + spin('raw|vacant|undeveloped') + ' land in ' + (county || city) + '. Do you have any interest in ' + spin('discussing a potential sale?|exploring options?|a conversation?') + optout,
+
+    // Cold 4
+    (first || 'Hey') + ', I saw you own ' + spin('vacant|raw|undeveloped') + ' land in ' + city + '. ' + spin('Seeking to purchase|Looking to acquire|Interested in buying') + ' land in the area — we close in 2 weeks, ' + spin('super easy|fast and simple|no hassle') + '. Still interested?' + optout,
+  ];
+
+  // Alt — no name or city
+  var alt = 'Hey — I came across your ' + spin('vacant|undeveloped|raw') + ' land and I\'d love to ' + spin('submit a bid|make an offer|discuss a potential sale') + '. We close in 2 weeks and cover all fees. Hope to hear from you — William, Coldwater Property Group.' + optout;
+
+  // 30-day re-engage
+  var reengage = 'Hey ' + (first || 'there') + ' — I know I texted about a month ago regarding your ' + spin('land|acreage|parcel') + (county ? ' in ' + county : '') + '. Still very interested if the timing works. No pressure at all. — William, Coldwater Property Group.' + optout;
+
+  return { msgs, alt, reengage };
+}
+
+// ── SEQUENCE PREVIEW — shows in contact detail Pipeline tab ──
+function getNextSequenceMessage(contact) {
+  var touches = (contact.touches || []).filter(function(t) { return t.channel === 'SMS' && t.direction === 'Outbound'; });
+  var touchCount = touches.length;
+  var isLeadGen = contact.source && (contact.source.toLowerCase().includes('lead gen') || contact.source.toLowerCase().includes('agency'));
+  var seq = isLeadGen ? buildLeadGenSequence(contact) : buildColdSequence(contact);
+
+  if (touchCount >= seq.msgs.length) return null; // sequence complete
+
+  var hasData = contact.name && contact.county;
+  var msg = hasData ? seq.msgs[touchCount] : seq.alt;
+
+  return {
+    step: touchCount + 1,
+    total: seq.msgs.length,
+    type: isLeadGen ? 'Lead Gen Follow-Up' : 'Cold Outreach',
+    msg: msg,
+    isComplete: false
+  };
+}
+
+// ── TRIGGER — called when Lead Gen contact is saved ──
+function triggerLeadGenSequence(contact) {
+  // Just log the intent — actual sending goes through Quo
+  // Store sequence state on contact
+  contact.sequenceType = 'leadgen';
+  contact.sequenceStep = 0;
+  contact.sequenceActive = true;
+  toast(contact.name + ' added to Lead Gen Follow-Up sequence', 'success');
+}
+
+
+function logSequenceTouch(contactId, msg) {
+  var c = db.contacts.find(function(x){ return x.id === contactId; });
+  if (!c) return;
+  if (!c.touches) c.touches = [];
+  c.touches.push({
+    id: 'seq-' + Date.now(),
+    date: today(),
+    timestamp: new Date().toISOString(),
+    channel: 'SMS',
+    direction: 'Outbound',
+    by: 'You',
+    outcome: 'Sent',
+    note: 'Sequence message: ' + msg.slice(0, 80) + '...'
+  });
+  c.lastContact = today();
+  if (c.sequenceStep !== undefined) c.sequenceStep = (c.sequenceStep || 0) + 1;
+  save();
+  toast('Touch logged — sequence advanced to step ' + ((c.sequenceStep || 1)), 'success');
+  // Refresh the pipeline tab
+  switchTab(contactId, 2);
 }
 
 
