@@ -1132,6 +1132,7 @@ let db = load();
 
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
 function today(){return new Date().toISOString().slice(0,10);}
+function localNow(){var d=new Date();var off=d.getTimezoneOffset();var local=new Date(d.getTime()-off*60000);return local.toISOString().slice(0,16);}
 function daysSince(d){if(!d)return 999;return Math.floor((Date.now()-new Date(d).getTime())/86400000);}
 function touchCount(c){return(c.touches||[]).length;}
 function lastTouchDate(c){const t=c.touches||[];return t.length?t[t.length-1].date:c.lastContact;}
@@ -1798,7 +1799,7 @@ function updateAddContactFields(type, editId) {
       SOURCES.map(function(s){return '<option '+(c&&c.source===s?'selected':'')+'>'+s+'</option>';}).join('') +
       '</select></div>' +
       '<div class="form-group"><label class="form-label">Lead gen company</label><input class="form-input" id="f-leadgen-co" value="'+(c&&c.leadGenCompany||'')+'" placeholder="e.g. Launch Control"></div>' +
-      '<div class="form-group" style="grid-column:1/-1"><label class="form-label">Lead received <span style=\"color:var(--accent)\">&#9733; defaults to now</span></label><input class="form-input" id="f-lead-received" type="datetime-local" value="'+(c&&c.leadReceived||new Date().toISOString().slice(0,16))+'"></div>' +
+      '<div class="form-group" style="grid-column:1/-1"><label class="form-label">Lead received <span style=\"color:var(--accent)\">&#9733; defaults to now</span></label><input class="form-input" id="f-lead-received" type="datetime-local" value="'+(c&&c.leadReceived||localNow())+'"></div>' +
       '<div class="form-group"><label class="form-label">Stage</label><select class="form-select" id="f-stage">' +
       ACQ_STAGES_CONST.map(function(s){return '<option '+(c&&c.stage===s?'selected':'')+'>'+s+'</option>';}).join('') +
       '</select></div>' +
@@ -1868,7 +1869,7 @@ function saveUnifiedContact(editId) {
       apn: apn,
       source: (document.getElementById('f-source') && document.getElementById('f-source').value) || '',
       leadGenCompany: (document.getElementById('f-leadgen-co') && document.getElementById('f-leadgen-co').value.trim()) || '',
-      leadReceived: (document.getElementById('f-lead-received') && document.getElementById('f-lead-received').value) || new Date().toISOString().slice(0,16),
+      leadReceived: (document.getElementById('f-lead-received') && document.getElementById('f-lead-received').value) || localNow(),
       stage: (document.getElementById('f-stage') && document.getElementById('f-stage').value) || 'New Lead',
       askingPrice: (document.getElementById('f-asking') && document.getElementById('f-asking').value.trim()) || '',
       ourOffer: (document.getElementById('f-offer') && document.getElementById('f-offer').value.trim()) || '',
