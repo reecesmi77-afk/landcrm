@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1280,13 +1281,13 @@ function renderCockpit(){
     ln1.innerHTML=callNow.map(function(c){
       var lastMsg=c.touches&&c.touches.filter(function(t){return t.direction==='Inbound';}).slice(-1)[0];
       var msgText=lastMsg?lastMsg.note.replace('Inbound SMS: ','').replace(/"/g,''):'';
-      return '<div class="cockpit-card" onclick="openDetail(''+c.id+'')" style="border-left:3px solid var(--coral);">'+
+      return '<div class="cockpit-card" onclick="openDetail('+ c.id +')" style="border-left:3px solid var(--coral);">'+
         '<div class="cockpit-name">'+c.name+'</div>'+
         '<div class="cockpit-sub">'+c.county+' County, '+c.state+' &middot; '+c.acreage+' ac</div>'+
-        (msgText?'<div class="cockpit-msg">''+msgText+''</div>':'')+
+        (msgText?'<div class="cockpit-msg">'+msgText+'</div>':'')+
         '<div class="cockpit-actions">'+
-          '<a href="tel:'+c.phone+'" class="btn btn-primary btn-sm" onclick="event.stopPropagation();logCockpitCall(''+c.id+'')">&#128222; Call</a>'+
-          '<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openDetail(''+c.id+'')">View</button>'+
+          '<a href="tel:'+c.phone+'" class="btn btn-primary btn-sm" onclick="event.stopPropagation();logCockpitCall('+ c.id +')">&#128222; Call</a>'+
+          '<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openDetail('+ c.id +')">View</button>'+
         '</div>'+
       '</div>';
     }).join('');
@@ -1297,13 +1298,13 @@ function renderCockpit(){
     ln2.innerHTML='<div style="font-size:13px;color:var(--text3);padding:4px 0;">No new leads pending a call</div>';
   } else {
     ln2.innerHTML=callToday.map(function(c){
-      return '<div class="cockpit-card" onclick="openDetail(''+c.id+'')" style="border-left:3px solid var(--amber);">'+
+      return '<div class="cockpit-card" onclick="openDetail('+ c.id +')" style="border-left:3px solid var(--amber);">'+
         '<div class="cockpit-name">'+c.name+'</div>'+
         '<div class="cockpit-sub">'+c.county+' County, '+c.state+' &middot; '+c.acreage+' ac</div>'+
         '<div class="cockpit-sub" style="color:var(--amber);">'+c.phone+'</div>'+
         '<div class="cockpit-actions">'+
-          '<a href="tel:'+c.phone+'" class="btn btn-primary btn-sm" onclick="event.stopPropagation();logCockpitCall(''+c.id+'')">&#128222; Call</a>'+
-          '<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();markNotInterested(''+c.id+'')">Not Interested</button>'+
+          '<a href="tel:'+c.phone+'" class="btn btn-primary btn-sm" onclick="event.stopPropagation();logCockpitCall('+ c.id +')">&#128222; Call</a>'+
+          '<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();markNotInterested('+ c.id +')">Not Interested</button>'+
         '</div>'+
       '</div>';
     }).join('');
@@ -1315,13 +1316,13 @@ function renderCockpit(){
   } else {
     ln3.innerHTML=aiReview.map(function(c){
       var tc=touchCount(c);
-      return '<div class="cockpit-card" onclick="openDetail(''+c.id+'')" style="border-left:3px solid var(--accent);">'+
+      return '<div class="cockpit-card" onclick="openDetail('+ c.id +')" style="border-left:3px solid var(--accent);">'+
         '<div class="cockpit-name">'+c.name+'</div>'+
         '<div class="cockpit-sub">'+c.county+' County, '+c.state+' &middot; '+c.acreage+' ac</div>'+
         '<div class="cockpit-sub" style="color:var(--text3);">'+tc+' touches &middot; '+daysSince(lastTouchDate(c))+'d since last contact</div>'+
         '<div class="cockpit-actions">'+
-          '<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();generatePreCallBrief(''+c.id+'')">Brief</button>'+
-          '<a href="tel:'+c.phone+'" class="btn btn-primary btn-sm" onclick="event.stopPropagation();logCockpitCall(''+c.id+'')">&#128222; Call</a>'+
+          '<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();generatePreCallBrief('+ c.id +')">Brief</button>'+
+          '<a href="tel:'+c.phone+'" class="btn btn-primary btn-sm" onclick="event.stopPropagation();logCockpitCall('+ c.id +')">&#128222; Call</a>'+
         '</div>'+
       '</div>';
     }).join('');
@@ -2156,7 +2157,7 @@ function parsePastedLead() {
   // Put transcript into notes field
   if (transcript) {
     var notesEl = document.getElementById('f-notes');
-    if (notesEl) notesEl.value = 'LEAD GEN TRANSCRIPT:\n' + transcript;
+    if (notesEl) notesEl.value = 'LEAD GEN TRANSCRIPT:' + '\n' + transcript;
   }
 
   // Put motivation summary if seller responded
