@@ -2125,7 +2125,7 @@ function parsePastedLead() {
 
   fill('f-name', fullName);
   fill('f-phone', phone);
-  fill('f-email', email);
+  fill('f-email', (email && email.toLowerCase() !== 'none' && email.toLowerCase() !== 'n/a') ? email : '');
   fill('f-county', county);
   fill('f-city', city);
   fill('f-zip', zip);
