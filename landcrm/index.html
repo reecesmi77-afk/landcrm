@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -4090,16 +4091,6 @@ function getNextSequenceMessage(contact) {
     msg: msg,
     isComplete: false
   };
-}
-
-// ── TRIGGER — called when Lead Gen contact is saved ──
-function triggerLeadGenSequence(contact) {
-  // Just log the intent — actual sending goes through Quo
-  // Store sequence state on contact
-  contact.sequenceType = 'leadgen';
-  contact.sequenceStep = 0;
-  contact.sequenceActive = true;
-  toast(contact.name + ' added to Lead Gen Follow-Up sequence', 'success');
 }
 
 
