@@ -24,7 +24,7 @@ function nextBizTimestamp() {
   if (h < 9 && d >= 1 && d <= 5) { ct.setHours(9, 0, 0, 0); return ct.getTime(); }
   ct.setDate(ct.getDate() + 1);
   while (ct.getDay() === 0 || ct.getDay() === 6) ct.setDate(ct.getDate() + 1);
-  ct.setHours(9, 15, 0, 0); // 9:15am — not exactly on the hour
+  ct.setHours(9, 15, 0, 0);
   return ct.getTime();
 }
 
@@ -33,61 +33,56 @@ function spin(variants) {
   return opts[Math.floor(Math.random() * opts.length)];
 }
 
-// Calculate days since lead was received
 function daysSinceReceived(leadReceived) {
   if (!leadReceived) return 0;
   return Math.floor((Date.now() - new Date(leadReceived).getTime()) / 86400000);
 }
 
-// Time-aware opener based on how long ago lead was received
 function getOpener(contact) {
   const days = daysSinceReceived(contact.leadReceived);
   const first = contact.name ? contact.name.split(' ')[0] : null;
-  const county = contact.county || 'your area';
+  const county = contact.county ? contact.county + ' County' : 'your area';
   const co = contact.leadGenCompany || 'our team';
   const greeting = first ? `Hi ${first}` : 'Hi';
 
   if (days <= 1) {
-    return `${greeting}, someone from ${co} reached out to you earlier today about your land in ${county}. That was us.`;
+    return `${greeting}, someone from ${co} reached out to you earlier today about your land in ${county} — that was us.`;
   } else if (days <= 3) {
-    return `${greeting}, earlier this week ${co} reached out about your land in ${county}.`;
+    return `${greeting}, earlier this week ${co} reached out about your land in ${county} —`;
   } else if (days <= 7) {
-    return `${greeting}, you may have heard from ${co} recently about your land in ${county}.`;
+    return `${greeting}, you may have heard from ${co} recently about your land in ${county} —`;
   } else {
-    return `${greeting}, you may remember getting a message a little while back about your land in ${county}.`;
+    return `${greeting}, you may remember getting a message a little while back about your land in ${county} —`;
   }
 }
 
-// Build all 5 sequence messages + alt + re-engage
 function buildSequenceMessages(contact) {
   const first = contact.name ? contact.name.split(' ')[0] : null;
-  const county = contact.county || null;
+  const county = contact.county ? contact.county + ' County' : null;
   const acres = contact.acreage || null;
   const opener = getOpener(contact);
   const opt = ' Reply STOP to opt out.';
 
   const msgs = [
-    // Step 1 — warm intro
-    opener + ` I\'m William with Coldwater Property Group — the one who can ${spin('close this|get you a number|make this happen')}. Still ${spin('open to|willing to consider|interested in')} a ${spin('quick chat|brief call|conversation')}?` + opt,
+    // Step 1 — warm intro, assumptive, no name drop, no sales language
+    opener + ` we ${spin('work with landowners|help landowners|partner with owners')} in that area and would love to ${spin('connect|chat|talk')}. Do you have a few minutes for a quick call?` + opt,
 
-    // Step 2 — value prop
-    `${first || 'Hey'}, just ${spin('following up|circling back|checking in')} on my last message about your ${spin('land|acreage|parcel')}${county ? ` in ${county}` : ''}. We ${spin('close fast|move quickly|make it simple')} — ${spin('all cash, no fees|we cover all closing costs|no agent commissions needed')}. Worth a ${spin('quick call|5 minutes|brief chat')}?` + opt,
+    // Step 2 — follow up, value focused
+    `${first || 'Hey'}, just ${spin('following up|circling back|checking in')} on our message about your ${spin('land|acreage|parcel')}${county ? ` in ${county}` : ''}. We ${spin('close fast and cover all costs|handle everything with no fees|keep it simple — no agent needed')}. Do you have a few minutes to ${spin('connect|chat|talk')}?` + opt,
 
-    // Step 3 — social proof / process
-    `Hi ${first || 'there'}, William again from Coldwater Property Group. We ${spin('close in as little as|can wrap this up in|have buyers ready in')} 2-3 weeks and handle all the ${spin('paperwork|details|closing costs')}. If you\'re ${spin('thinking about|open to|considering')} ${spin('parting with|doing something with|moving')} that ${spin('land|acreage|parcel')}${county ? ` in ${county}` : ''}, let\'s talk.` + opt,
+    // Step 3 — process focused
+    `${first || 'Hi'}, Coldwater Property Group here. We ${spin('close in as little as|can wrap things up in|typically move in')} 2-3 weeks and handle all the ${spin('paperwork|details|closing')} — no ${spin('fees|commissions|costs')} to you. If you are ${spin('open to|thinking about|considering')} ${spin('parting with|doing something with|moving on from')} that ${spin('land|acreage|parcel')}${county ? ` in ${county}` : ''}, we would love to talk.` + opt,
 
-    // Step 4 — direct, no fluff
-    `${first || 'Hey'}, I won\'t keep ${spin('reaching out|following up|messaging')} forever. If the timing\'s ever right to ${spin('discuss|talk about|explore')} your ${acres ? `${acres}-acre ` : ''}${spin('land|parcel|acreage')}${county ? ` in ${county}` : ''}, I\'m just a text away. — William, Coldwater Property Group.` + opt,
+    // Step 4 — direct, low pressure
+    `${first || 'Hey'}, we will not ${spin('keep reaching out|follow up|message you')} much longer. If the timing is ever right on your ${acres ? `${acres}-acre ` : ''}${spin('land|parcel|acreage')}${county ? ` in ${county}` : ''}, we are just a text away. — Coldwater Property Group` + opt,
 
     // Step 5 — soft breakup
-    `Last message from me, ${first || 'friend'}. If you ever want a fast, ${spin('fair|simple|hassle-free')} way to ${spin('part with|do something with|move on from')} that ${spin('land|property|acreage')}${county ? ` in ${county}` : ''}, reach out anytime. No pressure — take care. — William, Coldwater.` + opt,
+    `Last message from us${first ? `, ${first}` : ''}. If you ever want a ${spin('fast|simple|hassle-free')} way to ${spin('part with|do something with|move on from')} that ${spin('land|acreage|parcel')}${county ? ` in ${county}` : ''}, reach out anytime. No pressure — take care. — Coldwater Property Group` + opt,
   ];
 
-  // Alt message — missing name or county
-  const alt = `Hi — you may have recently heard from us about some ${spin('vacant|raw|undeveloped')} land you own. I\'m William with Coldwater Property Group. We ${spin('close fast|move quickly|work with any situation')} — ${spin('all cash, no fees|we cover all costs|no agent needed')}. ${spin('Open to a quick chat?|Want to discuss?|Still interested?')}` + opt;
+  const alt = `Hi — you may have recently heard from us about some ${spin('vacant|raw|undeveloped')} land you own. We are Coldwater Property Group and we ${spin('work with landowners|help owners|partner with sellers')} across the region. We ${spin('close fast and cover all costs|keep it simple with no fees|handle everything start to finish')}. Do you have a few minutes to connect?` + opt;
 
-  // 30-day re-engage
-  const reEngage = `Hi ${first || 'there'}, I know I reached out about a month ago regarding your ${spin('land|acreage|parcel')}${county ? ` in ${county}` : ''}. Still have strong interest if the timing is ever right. No pressure — just wanted to stay on your radar. — William, Coldwater Property Group.` + opt;
+  const reEngage = `${first ? `Hi ${first}` : 'Hi'}, we reached out about a month ago regarding your ${spin('land|acreage|parcel')}${county ? ` in ${county}` : ''}. Still have strong interest if the timing has changed. No pressure — just wanted to stay on your radar. — Coldwater Property Group` + opt;
 
   return { msgs, alt, reEngage };
 }
@@ -121,14 +116,12 @@ exports.handler = async (event) => {
   const BIN = process.env.JSONBIN_BIN_ID;
   if (!KEY || !BIN) return { statusCode: 500, body: JSON.stringify({ error: 'JSONbin not configured' }) };
 
-  // Read bin
   const readRes = await fetch(`https://api.jsonbin.io/v3/b/${BIN}/latest`, { headers: { 'X-Master-Key': KEY } });
   const readData = await readRes.json();
   const record = readData.record || {};
   const sequences = record.sequences || {};
   const conversations = record.conversations || {};
 
-  // Don't start if already active or already replied
   if (sequences[phone]?.active) return { statusCode: 200, body: JSON.stringify({ ok: true, msg: 'already active' }) };
   if (conversations[phone]?.messages?.length > 0) return { statusCode: 200, body: JSON.stringify({ ok: true, msg: 'conversation exists' }) };
 
@@ -140,7 +133,6 @@ exports.handler = async (event) => {
   const sent = inBizHours ? await sendQuoSMS(phone, message) : false;
   const scheduledFor = inBizHours ? null : new Date(nextBizTimestamp()).toISOString();
 
-  // Store full sequence state
   sequences[phone] = {
     active: true,
     paused: false,
@@ -156,7 +148,7 @@ exports.handler = async (event) => {
     step: 1,
     totalSteps: msgs.length,
     lastSentAt: sent ? Date.now() : null,
-    nextSendAt: sent ? (Date.now() + 3 * 86400000) : nextBizTimestamp(), // 3 days after step 1
+    nextSendAt: sent ? (Date.now() + 3 * 86400000) : nextBizTimestamp(),
     pendingMessage: sent ? null : message,
     messages: msgs,
     altMessage: alt,
@@ -180,11 +172,10 @@ exports.handler = async (event) => {
 
   console.log(`Sequence started for ${contact.name} (${phone}) step 1 ${sent ? 'sent' : `queued for ${scheduledFor}`}`);
 
-  // POST TO SLACK #action-list — call before texting card
   const ACTION_CH = process.env.SLACK_CHANNEL_ACTION;
   if (ACTION_CH) {
     try {
-      const autoFireAt = Date.now() + (4 * 60 * 60 * 1000); // 4hr window
+      const autoFireAt = Date.now() + (4 * 60 * 60 * 1000);
       const blocks = buildActionListCard(contact, autoFireAt);
       const slackTs = await sendSlackMessage(ACTION_CH, blocks, `📞 Call before texting: ${contact.name || phone}`);
       if (slackTs && sequences[phone]) {
@@ -205,6 +196,3 @@ exports.handler = async (event) => {
     body: JSON.stringify({ ok: true, phone, step: 1, sent, scheduledFor, message })
   };
 };
-
-// Note: Slack notification is injected by the module require above
-// The buildActionListCard and sendSlackMessage are available via slack-notify
