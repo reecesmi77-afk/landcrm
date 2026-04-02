@@ -1,4 +1,5 @@
-// quo-webhook.js — Quo webhook + AI SMS qualification engine (merged)
+// quo-webhook.js
+const { sendSlackMessage, buildHotLeadCard } = require('./slack-notify'); — Quo webhook + AI SMS qualification engine (merged)
 // Receives Quo events, stores touches, and runs AI conversation for inbound SMS
 
 const crypto = require('crypto');
@@ -298,6 +299,29 @@ async function runAIConversation(phone, message, KEY, BIN) {
         await sendQuoSMS(WILLIAM_PHONE, alertMsg);
         console.log('Alert sent to William at', WILLIAM_PHONE);
       }
+      // POST HOT LEAD TO SLACK
+      const HOT_CH = process.env.SLACK_CHANNEL_HOT;
+      if (HOT_CH) {
+        try {
+          const crmC = crmContact || { name: null, phone: phone, temp: 'warm' };
+          const hotBlocks = buildHotLeadCard(crmC, message, false);
+          const hotTs = await sendSlackMessage(HOT_CH, hotBlocks, `🔥 Seller replied — call now: ${crmC.name || phone}`);
+          // Store ts for 30-min escalation
+          if (hotTs) {
+            if (!record.hotLeadAlerts) record.hotLeadAlerts = {};
+            record.hotLeadAlerts[phone] = {
+              ts: hotTs,
+              channel: HOT_CH,
+              alertedAt: Date.now(),
+              escalateAt: Date.now() + (30 * 60 * 1000),
+              escalated: false,
+              name: crmC.name || phone,
+              message: message ? message.slice(0, 200) : ''
+            };
+          }
+        } catch(slackErr) { console.error('Slack hot lead error:', slackErr.message); }
+      }
+
       if (!record.callRequests) record.callRequests = [];
       record.callRequests.push({
         phone, contactName, contactCounty, contactAcreage,
@@ -435,6 +459,19 @@ exports.handler = async (event) => {
         needsHandoff: eventType === 'message.received'
       });
       if (record.touches.length > 200) record.touches = record.touches.slice(-200);
+
+      // Pause active sequence when seller replies
+      if (eventType === 'message.received' && contactPhone) {
+        const sequences = record.sequences || {};
+        if (sequences[contactPhone] && sequences[contactPhone].active) {
+          sequences[contactPhone].active = false;
+          sequences[contactPhone].paused = true;
+          sequences[contactPhone].pausedReason = 'replied';
+          sequences[contactPhone].pausedAt = new Date().toISOString();
+          record.sequences = sequences;
+          console.log('Sequence paused for:', contactPhone, '— seller replied');
+        }
+      }
 
       // Run AI conversation for inbound SMS (inline, no HTTP call)
       if (eventType === 'message.received' && messageText && KEY && BIN) {
