@@ -71,7 +71,15 @@ SECONDARY GOAL: If they decline a call but want to continue over text, collect t
 5. Whether taxes are current (taxes_current)
 6. Best time for a call (callback_time)
 
-IF CRM DATA IS PROVIDED: Use it. Reference what you already know to build rapport. Skip questions you already have answers to.
+IF CRM DATA IS PROVIDED: Use it. Reference what you already know naturally. Skip questions you already have answers to.
+
+IF LEAD GEN TRANSCRIPT IS PROVIDED: This is the conversation a partner company already had with this seller before we got involved. They were texted from a different number. Read it carefully — understand where the conversation left off, what the seller said, and what they want. Your first message must:
+1. Briefly re-introduce as a different team member following up ("someone from our team reached out recently — this is us following up from a different number")
+2. Reference the prior conversation naturally without quoting it verbatim
+3. Pick up where it left off — if they asked about price, acknowledge that; if they expressed interest, build on it
+4. Move toward booking a call
+
+NEVER pretend the prior conversation didn't happen. NEVER start from scratch if a transcript exists.
 
 CALL AGREEMENT DETECTION — when the seller agrees to a call, output [CALL_REQUESTED] on a new line.
 Trigger words that mean YES to a call: "yes", "sure", "ok", "okay", "call me", "go ahead", "sounds good", "free now", "available", "call anytime", "call today", "you can call", "give me a call", "yeah", "yep", "fine", "alright"
@@ -244,14 +252,25 @@ async function runAIConversation(phone, message, KEY, BIN) {
     return cp && pp && (cp === pp || cp === pp.slice(-10) || pp === cp.slice(-10));
   });
 
-  // Build user message with CRM context if available
+  // Build user message with CRM context + transcript if available
   let userMessage = message;
   if (crmContact && convo.messages.length === 0) {
-    const crmInfo = `
+    // Check for stored transcript
+    const transcripts = record.transcripts || {};
+    const normPhone = phone.replace(/\D/g,'');
+    const transcript = transcripts[normPhone] || transcripts[phone] || null;
 
-[CRM DATA for this seller: Name: ${crmContact.name||'unknown'}, County: ${crmContact.county||'unknown'}, State: ${crmContact.state||'unknown'}, Acreage: ${crmContact.acreage||'unknown'}, Source: ${crmContact.source||'unknown'}. Use this to confirm details rather than asking from scratch.]`;
+    let crmInfo = `\n\n[CRM DATA for this seller: Name: ${crmContact.name||'unknown'}, County: ${crmContact.county||'unknown'}, State: ${crmContact.state||'unknown'}, Acreage: ${crmContact.acreage||'unknown'} acres, Source: ${crmContact.source||'unknown'}.`;
+
+    if (transcript) {
+      crmInfo += `\n\nLEAD GEN TRANSCRIPT (conversation a partner company already had with this seller before us — they were texted from a different number):\n${transcript}\n\nThis seller is now texting YOUR number for the first time. Re-introduce briefly as a follow-up from a different number, pick up where the prior conversation left off, and move toward booking a call.]`;
+      console.log('Transcript found for:', crmContact.name);
+    } else {
+      crmInfo += ' Use this to confirm details rather than asking from scratch.]';
+    }
+
     userMessage = message + crmInfo;
-    console.log('CRM data found for:', crmContact.name);
+    console.log('CRM data injected for:', crmContact.name);
   }
 
   convo.messages.push({ role: 'user', content: userMessage });
