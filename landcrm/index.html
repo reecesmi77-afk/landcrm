@@ -4035,38 +4035,64 @@ async function initContactMap(contactId, county, state, acreage, name) {
     delete _activeMaps[contactId];
   }
 
-  // Build geocode query — county + state is enough for a good pin
-  var query = [county, state, 'USA'].filter(Boolean).join(', ');
-  if (!county) {
+  if (!county && !state) {
     el.innerHTML = '<div style="height:220px;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:12px">No county specified — add county to enable map</div>';
     return;
   }
 
   try {
-    // Geocode using Nominatim (free, no key needed)
-    var geoUrl = 'https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(query);
-    var res = await fetch(geoUrl, { headers: { 'Accept-Language': 'en' } });
-    var data = await res.json();
-
     var lat, lng;
-    if (data && data.length > 0) {
-      lat = parseFloat(data[0].lat);
-      lng = parseFloat(data[0].lon);
-    } else {
-      el.innerHTML = '<div style="height:220px;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:12px">Location not found for ' + county + ', ' + state + '</div>';
-      return;
+
+    // Priority 1: Use exact coordinates from PropertyAPI if available
+    var c = db.contacts.find(function(x){ return x.id === contactId; });
+    if (c && c.propertyData && c.propertyData.lat && c.propertyData.lng) {
+      lat = parseFloat(c.propertyData.lat);
+      lng = parseFloat(c.propertyData.lng);
+      console.log('Map using PropertyAPI coords:', lat, lng);
+    }
+
+    // Priority 2: Geocode the street address if we have it
+    if ((!lat || !lng) && c && c.city && state) {
+      var addrQuery = [c.city, county, state, 'USA'].filter(Boolean).join(', ');
+      var geoUrl = 'https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(addrQuery);
+      var res = await fetch(geoUrl, { headers: { 'Accept-Language': 'en' } });
+      var data = await res.json();
+      if (data && data.length > 0) {
+        lat = parseFloat(data[0].lat);
+        lng = parseFloat(data[0].lon);
+        console.log('Map using city geocode:', lat, lng);
+      }
+    }
+
+    // Priority 3: Fall back to county center
+    if (!lat || !lng) {
+      var query = [county, state, 'USA'].filter(Boolean).join(', ');
+      var geoUrl2 = 'https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(query);
+      var res2 = await fetch(geoUrl2, { headers: { 'Accept-Language': 'en' } });
+      var data2 = await res2.json();
+      if (data2 && data2.length > 0) {
+        lat = parseFloat(data2[0].lat);
+        lng = parseFloat(data2[0].lon);
+        console.log('Map using county geocode:', lat, lng);
+      } else {
+        el.innerHTML = '<div style="height:220px;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:12px">Location not found for ' + county + ', ' + state + '</div>';
+        return;
+      }
     }
 
     // Update satellite link
     var gmapsLink = document.getElementById('gmaps-link-' + contactId);
     if (gmapsLink) {
-      gmapsLink.href = 'https://www.google.com/maps/@' + lat + ',' + lng + ',13z/data=!3m1!1e3';
+      var satZoom = (c && c.propertyData && c.propertyData.lat) ? '17z' : '13z';
+      gmapsLink.href = 'https://www.google.com/maps/@' + lat + ',' + lng + ',' + satZoom + '/data=!3m1!1e3';
     }
 
     // Init Leaflet map
+    // Use tighter zoom if we have exact parcel coords, looser for county center
+    var zoomLevel = (c && c.propertyData && c.propertyData.lat) ? 15 : 11;
     var map = L.map(mapId, {
       center: [lat, lng],
-      zoom: 11,
+      zoom: zoomLevel,
       zoomControl: true,
       attributionControl: true,
       scrollWheelZoom: false
