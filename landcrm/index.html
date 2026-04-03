@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1579,6 +1577,50 @@ function openDetail(id){
         ${c.motivation?`<div style="font-size:15px;color:var(--text2);padding:8px 10px;background:var(--adim);border-radius:8px;border-left:3px solid var(--accent)">${c.motivation}</div>`:''}
       </div>
 
+      <!-- ── COUNTY RECORD (PropertyAPI) ── -->
+      ${c.propertyData ? `
+      <div style="padding:14px 20px;border-bottom:1px solid var(--border);background:linear-gradient(135deg,rgba(14,165,233,0.06),rgba(14,165,233,0.02))">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+          <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--accent);text-transform:uppercase;letter-spacing:.06em">🏛 County Record</div>
+          <span style="font-size:10px;color:var(--text3);">${c.propertyDataDate||''}</span>
+          <button onclick="runPropertyLookup('${c.id}')" style="margin-left:auto;font-size:11px;background:none;border:1px solid var(--border2);border-radius:4px;color:var(--text3);padding:2px 8px;cursor:pointer;font-family:'DM Mono',monospace">↻ Refresh</button>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px">
+          ${c.propertyData.assessedLandValue?`<div><div style="font-size:11px;color:var(--text3);margin-bottom:2px">ASSESSED LAND</div><div style="font-size:16px;font-weight:700;color:var(--accent)">$${Number(c.propertyData.assessedLandValue).toLocaleString()}</div></div>`:''}
+          ${c.propertyData.marketLandValue?`<div><div style="font-size:11px;color:var(--text3);margin-bottom:2px">MARKET VALUE</div><div style="font-size:15px;font-weight:600">$${Number(c.propertyData.marketLandValue).toLocaleString()}</div></div>`:''}
+          ${c.propertyData.estimatedValue?`<div><div style="font-size:11px;color:var(--text3);margin-bottom:2px">AVM ESTIMATE</div><div style="font-size:15px;font-weight:600">$${Number(c.propertyData.estimatedValue).toLocaleString()}</div></div>`:''}
+          ${c.propertyData.lastSalePrice?`<div><div style="font-size:11px;color:var(--text3);margin-bottom:2px">LAST SALE PRICE</div><div style="font-size:15px;font-weight:600">$${Number(c.propertyData.lastSalePrice).toLocaleString()}</div></div>`:''}
+          ${c.propertyData.lastSaleDate?`<div><div style="font-size:11px;color:var(--text3);margin-bottom:2px">SALE DATE</div><div style="font-size:14px;font-weight:500">${c.propertyData.lastSaleDate}</div></div>`:''}
+          ${c.propertyData.annualTaxAmount?`<div><div style="font-size:11px;color:var(--text3);margin-bottom:2px">ANNUAL TAX</div><div style="font-size:14px;font-weight:500">$${Number(c.propertyData.annualTaxAmount).toLocaleString()}</div></div>`:''}
+          ${c.propertyData.ownerName?`<div style="grid-column:1/-1"><div style="font-size:11px;color:var(--text3);margin-bottom:2px">OWNER OF RECORD</div><div style="font-size:14px;font-weight:500">${c.propertyData.ownerName}</div></div>`:''}
+        </div>
+        ${c.propertyData.assessedLandValue?`
+        <div style="background:var(--bg3);border-radius:8px;padding:10px 12px;border:1px solid var(--border)">
+          <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;letter-spacing:.5px;margin-bottom:8px">OFFER RANGE — BASED ON COUNTY ASSESSED LAND VALUE</div>
+          <div style="display:flex;gap:20px;align-items:flex-end">
+            <div>
+              <div style="font-size:11px;color:var(--text3);margin-bottom:2px">Open at 40%</div>
+              <div style="font-size:18px;font-weight:800;color:var(--accent)">$${Math.round(Number(c.propertyData.assessedLandValue)*0.40).toLocaleString()}</div>
+            </div>
+            <div>
+              <div style="font-size:11px;color:var(--text3);margin-bottom:2px">MAO at 55%</div>
+              <div style="font-size:18px;font-weight:800;color:var(--amber)">$${Math.round(Number(c.propertyData.assessedLandValue)*0.55).toLocaleString()}</div>
+            </div>
+            ${c.askingPrice?`
+            <div style="margin-left:auto;text-align:right">
+              <div style="font-size:11px;color:var(--text3);margin-bottom:2px">Asking vs assessed</div>
+              <div style="font-size:18px;font-weight:800;color:${Number(c.askingPrice)>Number(c.propertyData.assessedLandValue)*2?'var(--coral)':Number(c.askingPrice)>Number(c.propertyData.assessedLandValue)*1.2?'var(--amber)':'var(--teal)'}">
+                ${Math.round(Number(c.askingPrice)/Number(c.propertyData.assessedLandValue)*100)}% of assessed
+              </div>
+            </div>`:''}
+          </div>
+        </div>`:''}
+      </div>` : `
+      <div style="padding:10px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+        <span style="font-size:12px;color:var(--text3);font-family:'DM Mono',monospace">${c.apn?'🏛 County record not loaded yet':'🏛 Add APN to enable county record lookup'}</span>
+        ${c.apn?`<button onclick="runPropertyLookup('${c.id}')" class="btn btn-ghost btn-sm" style="font-size:11px">🔍 Load County Record</button>`:''}
+      </div>`}
+
       <!-- ── MAP ── -->
       <div style="border-bottom:1px solid var(--border)">
         <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 20px;background:var(--bg3)">
@@ -2032,6 +2074,10 @@ function saveUnifiedContact(editId) {
       if(window._pendingTranscript && window._pendingTranscript.phone) {
         syncTranscriptToJSONbin(window._pendingTranscript, newC);
         window._pendingTranscript = null;
+      }
+      // Auto-run PropertyAPI lookup if APN is present
+      if(newC.apn && newC.apn.trim()) {
+        runPropertyLookup(newC.id);
       }
     }
   } else {
@@ -2550,6 +2596,70 @@ function toast(msg,type){const el=document.getElementById('toast');el.textConten
 
 // QUO SYNC
 const FUNCTIONS_BASE='/.netlify/functions';
+
+async function runPropertyLookup(contactId) {
+  var c = db.contacts.find(function(x){ return x.id === contactId; });
+  if (!c || !c.apn) return;
+
+  console.log('Running PropertyAPI lookup for', c.name, 'APN:', c.apn);
+
+  // FIPS codes for common markets
+  var fipsMap = {
+    'TN': { 'Shelby': '47157', 'Fayette': '47047', 'Hardeman': '47069', 'Madison': '47113', 'Tipton': '47167' },
+    'MS': { 'DeSoto': '28033', 'Marshall': '28093', 'Tate': '28137', 'Benton': '28009', 'Union': '28159' },
+    'AR': { 'Crittenden': '05035', 'Craighead': '05031', 'Mississippi': '05093', 'Poinsett': '05111', 'Cross': '05033' },
+    'OK': { 'Tulsa': '40143', 'Oklahoma': '40109', 'Cleveland': '40027' },
+    'TX': { 'Dallas': '48113', 'Tarrant': '48439', 'Bexar': '48029' },
+    'MO': { 'St. Louis': '29189', 'Jackson': '29095', 'Greene': '29077' }
+  };
+
+  var fips = null;
+  if (c.state && c.county && fipsMap[c.state] && fipsMap[c.state][c.county]) {
+    fips = fipsMap[c.state][c.county];
+  }
+
+  try {
+    var payload = { apn: c.apn };
+    if (fips) payload.fips = fips;
+    if (c.county && c.state) {
+      payload.county = c.county;
+      payload.state = c.state;
+    }
+
+    var res = await fetch('/.netlify/functions/property-lookup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    var data = await res.json();
+
+    if (data.ok && data.data) {
+      var p = data.data;
+      // Store on contact
+      c.propertyData = p;
+      c.propertyDataDate = today();
+
+      // Auto-populate fields if missing
+      if (!c.acreage && p.acreage) c.acreage = String(p.acreage);
+      if (!c.city && p.city) c.city = p.city;
+      if (!c.zip && p.zip) c.zip = p.zip;
+
+      save();
+      console.log('PropertyAPI data stored for', c.name);
+      toast('Property data loaded for ' + c.name + (p.creditsRemaining !== null ? ' — ' + p.creditsRemaining + ' credits left' : ''), 'success');
+
+      // If contact detail is open, refresh it
+      if (document.querySelector('.modal-overlay.open')) {
+        // Brief flash to show data loaded
+      }
+    } else {
+      console.warn('PropertyAPI lookup failed:', data.error);
+      toast('Property lookup: ' + (data.error || 'No record found'), 'info');
+    }
+  } catch(e) {
+    console.warn('PropertyAPI error:', e.message);
+  }
+}
 
 async function syncTranscriptToJSONbin(parsed, contact) {
   try {
@@ -3432,6 +3542,24 @@ async function generatePreCallBrief(contactId) {
     ? conversationHistory.map(m => `${m.role === 'user' ? 'SELLER' : 'AI'}: ${m.content}`).join('\n')
     : 'No SMS conversation on record yet.';
 
+  // Build county record section if available
+  const propData = c.propertyData || null;
+  const countySection = propData ? `
+
+COUNTY RECORD DATA (from PropertyAPI — pulled ${c.propertyDataDate || 'recently'}):
+- Assessed Land Value: ${propData.assessedLandValue ? '$' + Number(propData.assessedLandValue).toLocaleString() : 'not available'}
+- Market Land Value: ${propData.marketLandValue ? '$' + Number(propData.marketLandValue).toLocaleString() : 'not available'}
+- AVM Estimate: ${propData.estimatedValue ? '$' + Number(propData.estimatedValue).toLocaleString() : 'not available'}
+- Last Sale Price: ${propData.lastSalePrice ? '$' + Number(propData.lastSalePrice).toLocaleString() : 'not available'}
+- Last Sale Date: ${propData.lastSaleDate || 'not available'}
+- Annual Property Tax: ${propData.annualTaxAmount ? '$' + Number(propData.annualTaxAmount).toLocaleString() : 'not available'}
+- Owner of Record: ${propData.ownerName || 'not available'}
+- Suggested Opening Offer (40% of assessed): ${propData.assessedLandValue ? '$' + Math.round(Number(propData.assessedLandValue)*0.40).toLocaleString() : 'N/A'}
+- MAO (55% of assessed): ${propData.assessedLandValue ? '$' + Math.round(Number(propData.assessedLandValue)*0.55).toLocaleString() : 'N/A'}
+- Asking vs Assessed: ${propData.assessedLandValue && c.askingPrice ? Math.round(Number(c.askingPrice)/Number(propData.assessedLandValue)*100) + '% of assessed value' : 'N/A'}` : `
+
+COUNTY RECORD DATA: Not yet loaded (no APN on file or lookup not run).`;
+
   const crmContext = `
 Contact: ${c.name}
 Phone: ${c.phone || 'unknown'}
@@ -3445,6 +3573,7 @@ Motivation notes: ${c.motivation || 'none recorded'}
 Asking price: ${c.askingPrice ? '$' + c.askingPrice : 'unknown'}
 Tags: ${(c.tags||[]).join(', ') || 'none'}
 Notes: ${(c.notes||[]).map(n=>n.text).join(' | ') || 'none'}
+${countySection}
 `.trim();
 
 // Brief generation handled server-side in generate-brief.js
