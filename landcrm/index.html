@@ -2168,11 +2168,19 @@ function parsePastedLead() {
     }
   }
 
-  // Parse county from Notes section
+  // Parse county — try explicit label first, then scan transcript body for "X County" pattern
   var county = extract('County', raw) || '';
+  if (!county) {
+    var countyBodyMatch = raw.match(/(?:in|near|around)\s+([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)?)\s+County/i);
+    if (countyBodyMatch) county = countyBodyMatch[1].trim();
+  }
+  if (!county) {
+    // Try "X County, ST" pattern anywhere in raw text
+    var countyDirectMatch = raw.match(/([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)?)\s+County/i);
+    if (countyDirectMatch) county = countyDirectMatch[1].trim();
+  }
 
   // Parse the conversation transcript from Notes section
-  // Everything after "Notes:" label
   var transcript = '';
   var notesMatch = raw.match(/Notes\s*:\s*([\s\S]*)/i);
   if (notesMatch && notesMatch[1]) {
@@ -2182,11 +2190,34 @@ function parsePastedLead() {
   // Determine seller temperature from transcript
   var temp = 'cold';
   var lowerTranscript = transcript.toLowerCase();
-  if (lowerTranscript.match(/how much|interested|yes|sure|call|when|price|offer|what.*worth|want to sell/)) {
+  // If seller replied at all with content, at minimum warm
+  if (transcript.length > 10) temp = 'warm';
+  if (lowerTranscript.match(/how much|interested|yes|sure|call|when|price|offer|what.*worth|want to sell|\$[0-9]/)) {
     temp = 'warm';
   }
   if (lowerTranscript.match(/ready|asap|need to sell|motivated|deal|let.*go|make offer/)) {
     temp = 'hot';
+  }
+
+  // Parse asking price from seller responses — "Yes. $100K" or "$100,000" patterns
+  var askingFromTranscript = '';
+  var pricePatterns = [
+    /\$([0-9,]+)\s*[Kk]\b/,   // $100K
+    /\$([0-9,]+)/,               // $100,000
+    /\b([0-9]+)\s*[Kk]\b/      // 100K without dollar sign
+  ];
+  for (var pi = 0; pi < pricePatterns.length; pi++) {
+    var pm = transcript.match(pricePatterns[pi]);
+    if (pm) {
+      var num = pm[1].replace(/,/g,'');
+      // If K suffix was used, multiply by 1000
+      if (pricePatterns[pi].toString().includes('[Kk]')) {
+        askingFromTranscript = String(parseFloat(num) * 1000);
+      } else {
+        askingFromTranscript = num;
+      }
+      break;
+    }
   }
 
   // Auto-fill form fields
@@ -2203,6 +2234,7 @@ function parsePastedLead() {
   fill('f-zip', zip);
   fill('f-acreage', acreage);
   fill('f-apn', apn);
+  if (askingFromTranscript) fill('f-asking', askingFromTranscript);
 
   // Set state dropdown
   if (state) {
