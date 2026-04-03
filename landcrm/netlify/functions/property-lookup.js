@@ -1,6 +1,6 @@
 // property-lookup.js
-// PropertyAPI.co integration — free search + 1-credit full record pull
-// Called automatically when a contact with APN is saved
+// PropertyAPI.co — correct base URL: propertyapi.co (not api.propertyapi.co)
+// Uses output_fields to request only land-relevant fields
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') return { statusCode: 405, body: 'Method not allowed' };
@@ -17,67 +17,73 @@ exports.handler = async (event) => {
     return { statusCode: 400, body: JSON.stringify({ error: 'apn or address required' }) };
   }
 
-  const BASE = 'https://api.propertyapi.co/api/v1';
-  const headers = { 'X-Api-Key': API_KEY };
+  // Correct base URL — propertyapi.co NOT api.propertyapi.co
+  const BASE = 'https://propertyapi.co/api/v1';
+  const headers = { 'X-Api-Key': API_KEY, 'Content-Type': 'application/json' };
+
+  // Fields we care about for land investing
+  const OUTPUT_FIELDS = [
+    'address', 'city', 'state', 'zip_code', 'county',
+    'apn', 'fips_code', 'zoning', 'legal_description',
+    'lot_size', 'acres_county', 'acres_county_preferred',
+    'property_type', 'land_use_standardized_desc',
+    'land_value', 'improvement_value', 'assessed_total', 'market_value',
+    'land_market_value', 'market_estimate', 'market_estimate_high', 'market_estimate_low',
+    'assessed_value_per_acre', 'market_value_per_acre',
+    'last_sale_date', 'last_sale_price', 'prior_sale_date', 'prior_sale_value',
+    'annual_tax', 'tax_year', 'tax_delinquent_year',
+    'owner', 'owner_name', 'owner_type', 'owner_occupied',
+    'mailing_address', 'mailing_city', 'mailing_state', 'mailing_zip',
+    'latitude', 'longitude',
+    'fema_flood_zone', 'fema_flood_zone_inside_sfha',
+    'wetlands_percent',
+    'road_within_30ft', 'road_within_160ft',
+    'sewer_code', 'sewer_desc', 'water_code', 'water_desc',
+    'topography_code', 'topography_desc',
+    'homestead_exemption'
+  ].join(',');
 
   try {
-    let uuid = null;
-    let resolvedFips = fips || null;
-
-    // ── STEP 1: Free search to get UUID + FIPS (0 credits) ──────────────
-    // If we have APN, try that first. Otherwise fall back to address.
-    let searchUrl = `${BASE}/parcels/search?`;
-    if (apn && resolvedFips) {
-      searchUrl += `apn=${encodeURIComponent(apn)}&fips=${resolvedFips}`;
-    } else if (apn) {
-      searchUrl += `apn=${encodeURIComponent(apn)}`;
-    } else if (address) {
-      searchUrl += `addr_address=${encodeURIComponent(address)}`;
-    }
-
-    const searchRes = await fetch(searchUrl, { headers });
-    const searchData = await searchRes.json();
-
-    if (searchData.data && searchData.data.length > 0) {
-      const first = searchData.data[0];
-      uuid = first.uuid || null;
-      resolvedFips = first.fips || resolvedFips;
-      console.log('Free search found:', uuid, resolvedFips);
-    } else {
-      console.log('Free search returned no results. Trying search-by-address...');
-    }
-
-    // ── STEP 2: Full record pull (1 credit) ─────────────────────────────
     let fullRecord = null;
     let creditsRemaining = null;
 
-    if (uuid && resolvedFips) {
-      // Best path — use UUID + FIPS from free search
-      const getUrl = `${BASE}/parcels/get?fips=${resolvedFips}&uuid=${uuid}`;
-      const getRes = await fetch(getUrl, { headers });
-      const getData = await getRes.json();
-      fullRecord = getData.data || null;
-      creditsRemaining = getData.credits_remaining;
-      console.log('Full record via UUID. Credits remaining:', creditsRemaining);
+    if (apn && fips) {
+      // Best path — FIPS + APN direct lookup (1 credit)
+      console.log('Trying FIPS + APN lookup:', fips, apn);
+      const url = `${BASE}/parcels/get?fips=${fips}&apn=${encodeURIComponent(apn)}&output_fields=${OUTPUT_FIELDS}`;
+      const res = await fetch(url, { headers });
+      const data = await res.json();
+      console.log('FIPS+APN response status:', data.status, 'credits:', data.credits_remaining);
+      if (data.status === 'ok' && data.data) {
+        fullRecord = data.data;
+        creditsRemaining = data.credits_remaining;
+      }
+    }
 
-    } else if (apn && resolvedFips) {
-      // Fallback — use APN + FIPS directly
-      const getUrl = `${BASE}/parcels/get?fips=${resolvedFips}&apn=${encodeURIComponent(apn)}`;
-      const getRes = await fetch(getUrl, { headers });
-      const getData = await getRes.json();
-      fullRecord = getData.data || null;
-      creditsRemaining = getData.credits_remaining;
-      console.log('Full record via APN+FIPS. Credits remaining:', creditsRemaining);
+    if (!fullRecord && address) {
+      // Fallback — search by address (1 credit, auto-geocodes)
+      console.log('Trying address lookup:', address);
+      const url = `${BASE}/parcels/search-by-address?address=${encodeURIComponent(address)}&output_fields=${OUTPUT_FIELDS}`;
+      const res = await fetch(url, { headers });
+      const data = await res.json();
+      console.log('Address response status:', data.status, 'credits:', data.credits_remaining);
+      if (data.status === 'ok' && data.data) {
+        fullRecord = data.data;
+        creditsRemaining = data.credits_remaining;
+      }
+    }
 
-    } else {
-      // Last resort — search-by-address (1 credit, auto-geocodes)
-      const addr = address || `${county} County, ${state}`;
-      const addrUrl = `${BASE}/parcels/search-by-address?address=${encodeURIComponent(addr)}`;
-      const addrRes = await fetch(addrUrl, { headers });
-      const addrData = await addrRes.json();
-      fullRecord = addrData.data || null;
-      creditsRemaining = addrData.credits_remaining;
-      console.log('Full record via address. Credits remaining:', creditsRemaining);
+    if (!fullRecord && county && state) {
+      // Last resort — county + state address
+      const fallbackAddr = `${county} County, ${state}`;
+      console.log('Trying county fallback:', fallbackAddr);
+      const url = `${BASE}/parcels/search-by-address?address=${encodeURIComponent(fallbackAddr)}&output_fields=${OUTPUT_FIELDS}`;
+      const res = await fetch(url, { headers });
+      const data = await res.json();
+      if (data.status === 'ok' && data.data) {
+        fullRecord = data.data;
+        creditsRemaining = data.credits_remaining;
+      }
     }
 
     if (!fullRecord) {
@@ -87,57 +93,67 @@ exports.handler = async (event) => {
       };
     }
 
-    // ── STEP 3: Extract the fields we care about ─────────────────────────
-    // PropertyAPI returns fields as display-name keys — normalize them
-    const get = (record, ...keys) => {
-      for (const k of keys) {
-        if (record[k] !== undefined && record[k] !== null && record[k] !== '') return record[k];
-      }
-      return null;
-    };
-
+    // Map snake_case field names from API to our display names
+    const d = fullRecord;
     const parsed = {
       // Valuation
-      assessedLandValue:  get(fullRecord, 'Assessed Land Value', 'assessed_land_value', 'land_value'),
-      assessedTotalValue: get(fullRecord, 'Assessed Total Value', 'assessed_total_value', 'total_assessed_value'),
-      marketLandValue:    get(fullRecord, 'Market Land Value', 'market_land_value', 'land_market_value'),
-      marketTotalValue:   get(fullRecord, 'Market Total Value', 'market_total_value'),
-      estimatedValue:     get(fullRecord, 'Estimated Value', 'estimated_value', 'avm_value'),
+      assessedLandValue:  d.land_value || null,
+      assessedTotalValue: d.assessed_total || null,
+      marketLandValue:    d.land_market_value || d.market_value || null,
+      marketEstimate:     d.market_estimate || null,
+      marketEstimateHigh: d.market_estimate_high || null,
+      marketEstimateLow:  d.market_estimate_low || null,
+      valuePerAcre:       d.assessed_value_per_acre || d.market_value_per_acre || null,
 
       // Last sale
-      lastSalePrice:  get(fullRecord, 'Last Sale Price', 'last_sale_price', 'sale_price', 'prior_sale_amount'),
-      lastSaleDate:   get(fullRecord, 'Last Sale Date', 'last_sale_date', 'sale_date', 'prior_sale_date'),
+      lastSalePrice:  d.last_sale_price || null,
+      lastSaleDate:   d.last_sale_date || null,
+      priorSalePrice: d.prior_sale_value || null,
+      priorSaleDate:  d.prior_sale_date || null,
 
       // Owner
-      ownerName:    get(fullRecord, 'Owner Name', 'owner_name', 'owner1_name'),
-      ownerMailing: get(fullRecord, 'Owner Mailing Address', 'owner_mailing_address', 'mail_address'),
+      ownerName:    d.owner_name || d.owner || null,
+      ownerType:    d.owner_type || null,
+      ownerOccupied: d.owner_occupied || null,
+      mailingAddress: [d.mailing_address, d.mailing_city, d.mailing_state, d.mailing_zip].filter(Boolean).join(', ') || null,
 
       // Taxes
-      annualTaxAmount: get(fullRecord, 'Annual Tax Amount', 'annual_tax_amount', 'tax_amount', 'property_tax'),
-      taxYear:         get(fullRecord, 'Tax Year', 'tax_year'),
-      taxStatus:       get(fullRecord, 'Tax Status', 'tax_status', 'delinquent_tax'),
+      annualTaxAmount:     d.annual_tax || null,
+      taxYear:             d.tax_year || null,
+      taxDelinquentYear:   d.tax_delinquent_year || null,
+      homesteadExemption:  d.homestead_exemption || null,
 
       // Parcel
-      acreage:    get(fullRecord, 'Lot Size Acres', 'lot_acres', 'acreage', 'lot_size_acres'),
-      lotSqft:    get(fullRecord, 'Lot Size Sqft', 'lot_sqft', 'lot_size_sqft'),
-      apnConfirm: get(fullRecord, 'APN', 'apn', 'parcel_number'),
-      zoning:     get(fullRecord, 'Zoning', 'zoning', 'zoning_code'),
-      landUse:    get(fullRecord, 'Land Use', 'land_use', 'property_type'),
+      acreage:     d.acres_county_preferred || d.acres_county || d.lot_size || null,
+      zoning:      d.zoning || null,
+      landUse:     d.land_use_standardized_desc || d.property_type || null,
+      legalDesc:   d.legal_description || null,
 
       // Location
-      address:  get(fullRecord, 'Address', 'address', 'site_address'),
-      city:     get(fullRecord, 'City', 'city', 'site_city'),
-      state:    get(fullRecord, 'State', 'state', 'site_state'),
-      county:   get(fullRecord, 'County', 'county', 'county_name'),
-      zip:      get(fullRecord, 'Zip', 'zip', 'zip_code', 'site_zip'),
-      lat:      get(fullRecord, 'Latitude', 'latitude', 'lat'),
-      lng:      get(fullRecord, 'Longitude', 'longitude', 'lng', 'lon'),
+      address:  d.address || null,
+      city:     d.city || null,
+      state:    d.state || null,
+      county:   d.county || null,
+      zip:      d.zip_code || null,
+      lat:      d.latitude || null,
+      lng:      d.longitude || null,
+
+      // Environmental — huge for land
+      floodZone:        d.fema_flood_zone || null,
+      insideSFHA:       d.fema_flood_zone_inside_sfha || null,
+      wetlandsPercent:  d.wetlands_percent || null,
+      roadWithin30ft:   d.road_within_30ft || null,
+      roadWithin160ft:  d.road_within_160ft || null,
+      sewerType:        d.sewer_desc || d.sewer_code || null,
+      waterType:        d.water_desc || d.water_code || null,
+      topography:       d.topography_desc || d.topography_code || null,
 
       creditsRemaining,
-      rawKeys: Object.keys(fullRecord).slice(0, 30) // for debugging field names
+      rawKeys: Object.keys(d).slice(0, 40)
     };
 
-    console.log('Parsed fields:', JSON.stringify(parsed).slice(0, 300));
+    console.log('Successfully parsed record for:', parsed.address || 'unknown address');
+    console.log('Key values — Land value:', parsed.assessedLandValue, 'Last sale:', parsed.lastSalePrice, 'Owner:', parsed.ownerName);
 
     return {
       statusCode: 200,
@@ -152,3 +168,7 @@ exports.handler = async (event) => {
     };
   }
 };
+
+// ── SKIP TRACE ENDPOINT ──────────────────────────────────────────────
+// Called separately via POST with action: 'skip-trace'
+// 2 credits per lookup, returns phone numbers + emails
