@@ -1588,6 +1588,7 @@ function openDetail(id){
           <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--accent);text-transform:uppercase;letter-spacing:.06em">🏛 County Record</div>
           <span style="font-size:10px;color:var(--text3);">${c.propertyDataDate||''}</span>
           <div style="margin-left:auto;display:flex;gap:6px">
+            <button onclick="runComps('${c.id}')" style="font-size:11px;background:var(--ambdim);border:1px solid rgba(251,191,36,0.3);border-radius:4px;color:var(--amber);padding:2px 8px;cursor:pointer;font-family:'DM Mono',monospace">📊 Run Comps</button>
             <button onclick="runSkipTrace('${c.id}')" style="font-size:11px;background:var(--pdim);border:1px solid rgba(192,132,252,0.3);border-radius:4px;color:var(--purple);padding:2px 8px;cursor:pointer;font-family:'DM Mono',monospace">🔍 Skip Trace</button>
             <button onclick="runPropertyLookup('${c.id}')" style="font-size:11px;background:none;border:1px solid var(--border2);border-radius:4px;color:var(--text3);padding:2px 8px;cursor:pointer;font-family:'DM Mono',monospace">↻ Refresh</button>
           </div>
@@ -1606,7 +1607,7 @@ function openDetail(id){
           ${c.propertyData.zoning?`<div><div style="font-size:11px;color:var(--text3);margin-bottom:2px">ZONING</div><div style="font-size:14px;font-weight:500">${c.propertyData.zoning}</div></div>`:''}
         </div>
         ${c.propertyData.assessedLandValue?`
-        <div style="background:var(--bg3);border-radius:8px;padding:10px 12px;border:1px solid var(--border)">
+        <div style="background:var(--bg3);border-radius:8px;padding:10px 12px;border:1px solid var(--border);margin-bottom:10px">
           <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;letter-spacing:.5px;margin-bottom:8px">OFFER RANGE — BASED ON COUNTY ASSESSED LAND VALUE</div>
           <div style="display:flex;gap:20px;align-items:flex-end">
             <div><div style="font-size:11px;color:var(--text3);margin-bottom:2px">Open at 40%</div><div style="font-size:18px;font-weight:800;color:var(--accent)">$${Math.round(Number(c.propertyData.assessedLandValue)*0.40).toLocaleString()}</div></div>
@@ -1614,6 +1615,31 @@ function openDetail(id){
             ${c.askingPrice?`<div style="margin-left:auto;text-align:right"><div style="font-size:11px;color:var(--text3);margin-bottom:2px">Asking vs assessed</div><div style="font-size:18px;font-weight:800;color:${Number(c.askingPrice)>Number(c.propertyData.assessedLandValue)*2?'var(--coral)':Number(c.askingPrice)>Number(c.propertyData.assessedLandValue)*1.2?'var(--amber)':'var(--teal)'}"> ${Math.round(Number(c.askingPrice)/Number(c.propertyData.assessedLandValue)*100)}% of assessed</div></div>`:''}
           </div>
         </div>`:''}
+        ${c.compsData ? `
+        <div style="background:var(--bg3);border-radius:8px;padding:12px;border:1px solid rgba(251,191,36,0.25)">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <div style="font-size:10px;color:var(--amber);font-family:'DM Mono',monospace;letter-spacing:.5px">COMPARABLE SALES — ${c.compsData.summary.cascadeLabel} — ${c.compsData.summary.confidence.toUpperCase()} CONFIDENCE</div>
+            <span style="font-size:10px;color:var(--text3)">${c.compsDataDate||''}</span>
+          </div>
+          <div style="display:flex;gap:16px;margin-bottom:12px;flex-wrap:wrap">
+            <div><div style="font-size:10px;color:var(--text3);margin-bottom:2px">MEDIAN $/ACRE</div><div style="font-size:20px;font-weight:800;color:var(--amber)">$${(c.compsData.summary.medianPricePerAcre||0).toLocaleString()}</div></div>
+            <div><div style="font-size:10px;color:var(--text3);margin-bottom:2px">COMPS FOUND</div><div style="font-size:20px;font-weight:800">${c.compsData.summary.compCount}</div></div>
+            <div><div style="font-size:10px;color:var(--text3);margin-bottom:2px">OPEN OFFER/ACRE</div><div style="font-size:20px;font-weight:800;color:var(--accent)">$${(c.compsData.summary.suggestedOfferPerAcre||0).toLocaleString()}</div></div>
+            <div><div style="font-size:10px;color:var(--text3);margin-bottom:2px">MAO/ACRE</div><div style="font-size:20px;font-weight:800;color:var(--amber)">$${(c.compsData.summary.maoPerAcre||0).toLocaleString()}</div></div>
+            ${c.acreage ? `<div><div style="font-size:10px;color:var(--text3);margin-bottom:2px">TOTAL OPEN (${c.acreage} ac)</div><div style="font-size:20px;font-weight:800;color:var(--accent)">$${Math.round((c.compsData.summary.suggestedOfferPerAcre||0)*parseFloat(c.acreage)).toLocaleString()}</div></div>` : ''}
+            ${c.acreage ? `<div><div style="font-size:10px;color:var(--text3);margin-bottom:2px">TOTAL MAO (${c.acreage} ac)</div><div style="font-size:20px;font-weight:800;color:var(--amber)">$${Math.round((c.compsData.summary.maoPerAcre||0)*parseFloat(c.acreage)).toLocaleString()}</div></div>` : ''}
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            ${c.compsData.comps.map(comp => `
+            <div style="background:var(--bg4);border-radius:6px;padding:8px 10px;display:grid;grid-template-columns:1fr auto auto auto auto;gap:8px;align-items:center;font-size:11px">
+              <div style="font-weight:500">${comp.address}${comp.city?', '+comp.city:''}<br><span style="font-size:10px;color:var(--text3)">${comp.acres?comp.acres.toFixed(1)+' ac':'?'} · ${comp.distanceMiles?comp.distanceMiles+' mi away':'?'}</span></div>
+              <div style="text-align:right"><div style="font-size:9px;color:var(--text3)">SALE PRICE</div><div style="font-weight:600">$${(comp.salePrice||0).toLocaleString()}</div></div>
+              <div style="text-align:right"><div style="font-size:9px;color:var(--text3)">$/ACRE</div><div style="font-weight:600;color:var(--amber)">$${(comp.pricePerAcre||0).toLocaleString()}</div></div>
+              <div style="text-align:right"><div style="font-size:9px;color:var(--text3)">DATE</div><div>${comp.saleDate||'—'}</div></div>
+              <div style="text-align:right"><div style="font-size:9px;color:var(--text3)">FLOOD</div><div style="color:${comp.floodZone&&comp.floodZone!=='X'?'var(--coral)':'var(--teal)'}">${comp.floodZone||'—'}</div></div>
+            </div>`).join('')}
+          </div>
+        </div>` : ''}
       </div>` : `
       <div style="padding:10px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
         <span style="font-size:12px;color:var(--text3);font-family:'DM Mono',monospace">${c.apn?'🏛 County record not loaded yet':'🏛 Add APN to enable county record lookup'}</span>
@@ -3512,6 +3538,19 @@ COUNTY RECORD DATA (PropertyAPI — ${c.propertyDataDate || 'recently'}):
 
 COUNTY RECORD: Not loaded (add APN to enable).`;
 
+  const compsSection = c.compsData ? `
+
+COMPARABLE SALES (${c.compsData.summary.compCount} comps — ${c.compsData.summary.cascadeLabel} — ${c.compsData.summary.confidence} confidence):
+- Median price per acre: ${c.compsData.summary.medianPricePerAcre ? '$' + c.compsData.summary.medianPricePerAcre.toLocaleString() : 'N/A'}
+- Suggested opening offer per acre (45%): ${c.compsData.summary.suggestedOfferPerAcre ? '$' + c.compsData.summary.suggestedOfferPerAcre.toLocaleString() : 'N/A'}
+- MAO per acre (60%): ${c.compsData.summary.maoPerAcre ? '$' + c.compsData.summary.maoPerAcre.toLocaleString() : 'N/A'}
+${c.acreage ? '- Total suggested open offer: $' + Math.round((c.compsData.summary.suggestedOfferPerAcre||0)*parseFloat(c.acreage)).toLocaleString() : ''}
+${c.acreage ? '- Total MAO: $' + Math.round((c.compsData.summary.maoPerAcre||0)*parseFloat(c.acreage)).toLocaleString() : ''}
+Individual comps:
+${c.compsData.comps.map(comp => '  • ' + comp.address + (comp.city?', '+comp.city:'') + ' | ' + (comp.acres?comp.acres.toFixed(1)+' ac':'?') + ' | $' + (comp.salePrice||0).toLocaleString() + ' | $' + (comp.pricePerAcre||0).toLocaleString() + '/acre | ' + (comp.saleDate||'?') + (comp.distanceMiles?' | '+comp.distanceMiles+' mi away':'')).join('\n')}` : `
+
+COMPARABLE SALES: Not run yet. Click "Run Comps" in the County Record panel.`;
+
   const crmContext = `
 Contact: ${c.name}
 Phone: ${c.phone || 'unknown'}
@@ -3526,6 +3565,7 @@ Asking price: ${c.askingPrice ? '$' + c.askingPrice : 'unknown'}
 Tags: ${(c.tags||[]).join(', ') || 'none'}
 Notes: ${(c.notes||[]).map(n=>n.text).join(' | ') || 'none'}
 ${countySection}
+${compsSection}
 `.trim();
 
 // Brief generation handled server-side in generate-brief.js
@@ -3669,6 +3709,55 @@ async function runPropertyLookup(contactId) {
     }
   } catch(e) {
     toast('Property lookup: ' + e.message, 'error');
+  }
+}
+
+async function runComps(contactId) {
+  var c = db.contacts.find(function(x){ return x.id === contactId; });
+  if (!c) return;
+
+  // Need coordinates from PropertyAPI
+  if (!c.propertyData || !c.propertyData.lat || !c.propertyData.lng) {
+    toast('Load County Record first to get parcel coordinates', 'error');
+    return;
+  }
+
+  toast('Running comps — searching for comparable sales...', 'info');
+
+  try {
+    var res = await fetch('/.netlify/functions/run-comps', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        lat: c.propertyData.lat,
+        lng: c.propertyData.lng,
+        acreage: c.acreage || 5,
+        contactName: c.name
+      })
+    });
+    var data = await res.json();
+
+    if (data.ok && data.comps && data.comps.length) {
+      c.compsData = data;
+      c.compsDataDate = today();
+      save();
+
+      var s = data.summary;
+      toast(
+        data.comps.length + ' comps found — median $' + (s.medianPricePerAcre||0).toLocaleString() + '/acre' +
+        ' (' + s.confidence + ' confidence) — ' + (data.creditsUsed||0) + ' credits used',
+        'success'
+      );
+
+      // Re-render open contact detail
+      var modal = document.getElementById('contact-modal');
+      if (modal && modal.style.display !== 'none') { openDetail(contactId); }
+
+    } else {
+      toast('Comps: ' + (data.error || 'No comparable sales found'), 'info');
+    }
+  } catch(e) {
+    toast('Comps error: ' + e.message, 'error');
   }
 }
 
