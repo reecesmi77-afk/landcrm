@@ -1912,15 +1912,33 @@ function updateHandoff(id,state){
 function moveStage(id,stage){
   const c=db.contacts.find(x=>x.id===id);
   if(!c)return;
+  var prevStage = c.stage;
   c.stage=stage;
   if(stage==='Dead'&&c.handoff!=='Human active')c.handoff='Human active';
   save();
+
+  // Fire sequence when manually moved to Outreach Active — but only once
+  // Guard: source is lead gen, has phone, wasn't already in Outreach Active, no prior touches
+  if(stage === 'Outreach Active' && prevStage !== 'Outreach Active') {
+    var isLeadGen = c.source && (c.source.toLowerCase().includes('lead gen') || c.source.toLowerCase().includes('agency'));
+    var noPriorSequence = !c.touches || !c.touches.some(function(t){ return t.by === 'AI' && t.channel === 'SMS'; });
+    if(isLeadGen && c.phone && noPriorSequence) {
+      setTimeout(function(){ triggerLeadGenSequence(c); }, 500);
+      toast('Stage → Outreach Active — AI sequence starting...', 'success');
+    } else if(isLeadGen && c.phone && !noPriorSequence) {
+      toast('Stage → Outreach Active — sequence already started, no duplicate sent', 'info');
+    } else {
+      toast('Stage updated','success');
+    }
+  } else {
+    toast('Stage updated','success');
+  }
+
   // Re-render the board behind the modal immediately
   if(c.pipeline==='acq')renderPipeline('acq');
   if(c.pipeline==='dis')renderPipeline('dis');
   renderDashboard();
   openDetail(id);
-  toast('Stage updated','success');
 }
 
 function moveToDispo(id){
@@ -2084,15 +2102,25 @@ function saveUnifiedContact(editId) {
     if(editId) {
       var c = db.contacts.find(function(x){return x.id===editId;});
       if(c) {
+        var prevStage = c.stage;
         Object.assign(c, fields);
         if(noteText) c.notes.unshift({date:today(), text:noteText});
+        // If stage was just changed to Outreach Active via edit, fire sequence
+        if(fields.stage === 'Outreach Active' && prevStage !== 'Outreach Active') {
+          var isLeadGen = c.source && (c.source.toLowerCase().includes('lead gen') || c.source.toLowerCase().includes('agency'));
+          var noPrior = !c.touches || !c.touches.some(function(t){ return t.by === 'AI' && t.channel === 'SMS'; });
+          if(isLeadGen && c.phone && noPrior) {
+            setTimeout(function(){ triggerLeadGenSequence(c); }, 500);
+          }
+        }
       }
     } else {
       var newC = Object.assign({id:uid(), created:today(), touches:[], notes:noteText?[{date:today(),text:noteText}]:[]}, fields);
       db.contacts.unshift(newC);
       if(newC.phone) pushContactToQuo(newC);
-      // Auto-trigger sequence for Lead Gen Agency contacts
-      if(newC.source && (newC.source.toLowerCase().includes('lead gen') || newC.source.toLowerCase().includes('agency')) && newC.phone) {
+      // Auto-trigger sequence ONLY if stage is explicitly set to Outreach Active
+      // New Lead = hold, review first. Outreach Active = you've approved it, fire the sequence.
+      if(newC.source && (newC.source.toLowerCase().includes('lead gen') || newC.source.toLowerCase().includes('agency')) && newC.phone && newC.stage === 'Outreach Active') {
         triggerLeadGenSequence(newC);
       }
       // Sync transcript to JSONbin if we parsed a lead
@@ -2275,18 +2303,25 @@ function parsePastedLead() {
     motivationEl.value = 'Responded to lead gen outreach — asked about price/offer. Review transcript in notes.';
   }
 
-  // Store raw transcript on window for sync after save
-  // Try to detect asking price from transcript - standalone numbers like "80" = $80,000
+  // Only extract asking price from explicit seller statements
+  // Must have a dollar sign OR "K" suffix AND be in seller response context
+  // Never grab standalone numbers — too many false positives (zips, APNs, acreage)
   var askingPrice = '';
-  var priceMatch = transcript.match(/\b(\d{2,4})\b/);
-  if (priceMatch) {
-    var num = parseInt(priceMatch[1]);
-    // Numbers 10-9999 in a land context are likely thousands (10 = $10k, 80 = $80k)
-    if (num >= 10 && num <= 9999) askingPrice = String(num * 1000);
+  // Pattern 1: explicit $100,000 or $100K in transcript
+  var dollarMatch = transcript.match(/\$([\d,]+)(?:\s*[Kk]\b)?/);
+  if (dollarMatch) {
+    var raw = dollarMatch[1].replace(/,/g,'');
+    // If followed by K, multiply
+    if (dollarMatch[0].match(/[Kk]$/)) raw = String(parseInt(raw) * 1000);
+    // Sanity check — must be between $1,000 and $10,000,000 to be a land price
+    var parsed = parseInt(raw);
+    if (parsed >= 1000 && parsed <= 10000000) askingPrice = raw;
   }
-  // Also check for explicit dollar amounts
-  var dollarMatch = transcript.match(/\$([\d,]+)/);
-  if (dollarMatch) askingPrice = dollarMatch[1].replace(/,/g,'');
+  // Pattern 2: "100K" or "100k" without dollar sign — but only if preceded by price context
+  if (!askingPrice) {
+    var kMatch = transcript.match(/(?:asking|want|price|sell for|take)\s*[:\-]?\s*(\d+)\s*[Kk]\b/i);
+    if (kMatch) askingPrice = String(parseInt(kMatch[1]) * 1000);
+  }
   if (askingPrice) fill('f-asking', askingPrice);
 
   window._pendingTranscript = { phone: phone, transcript: transcript, name: fullName, county: county, acreage: acreage };
