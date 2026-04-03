@@ -1293,13 +1293,14 @@ function renderCockpit(){
     ln1.innerHTML=callNow.map(function(c){
       var lastMsg=c.touches&&c.touches.filter(function(t){return t.direction==='Inbound';}).slice(-1)[0];
       var msgText=lastMsg?lastMsg.note.replace('Inbound SMS: ','').replace(/"/g,''):'';
-      return '<div class="cockpit-card" onclick="openDetail('+ c.id +')" style="border-left:3px solid var(--coral);">'+
-        '<div class="cockpit-name">'+c.name+'</div>'+
+      var cid=c.id, cphone=c.phone||'', cname=c.name||'';
+      return '<div class="cockpit-card" onclick="openDetail(\'' + cid + '\')" style="border-left:3px solid var(--coral);">'+
+        '<div class="cockpit-name">'+cname+'</div>'+
         '<div class="cockpit-sub">'+c.county+' County, '+c.state+' &middot; '+c.acreage+' ac</div>'+
         (msgText?'<div class="cockpit-msg">'+msgText+'</div>':'')+
         '<div class="cockpit-actions">'+
-          '<a href="tel:'+c.phone+'" class="btn btn-primary btn-sm" onclick="event.stopPropagation();logCockpitCall('+ c.id +')">&#128222; Call</a>'+
-          '<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openDetail('+ c.id +')">View</button>'+
+          '<button class="btn btn-primary btn-sm" onclick="event.stopPropagation();logCockpitCall(\'' + cid + '\');initiateQuoCall(\'' + cphone + '\',\'' + cname + '\')">&#128222; Call</button>'+
+          '<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openDetail(\'' + cid + '\')">View</button>'+
         '</div>'+
       '</div>';
     }).join('');
@@ -1310,13 +1311,14 @@ function renderCockpit(){
     ln2.innerHTML='<div style="font-size:13px;color:var(--text3);padding:4px 0;">No new leads pending a call</div>';
   } else {
     ln2.innerHTML=callToday.map(function(c){
-      return '<div class="cockpit-card" onclick="openDetail('+ c.id +')" style="border-left:3px solid var(--amber);">'+
-        '<div class="cockpit-name">'+c.name+'</div>'+
+      var cid=c.id, cphone=c.phone||'', cname=c.name||'';
+      return '<div class="cockpit-card" onclick="openDetail(\'' + cid + '\')" style="border-left:3px solid var(--amber);">'+
+        '<div class="cockpit-name">'+cname+'</div>'+
         '<div class="cockpit-sub">'+c.county+' County, '+c.state+' &middot; '+c.acreage+' ac</div>'+
-        '<div class="cockpit-sub" style="color:var(--amber);">'+c.phone+'</div>'+
+        '<div class="cockpit-sub" style="color:var(--amber);">'+cphone+'</div>'+
         '<div class="cockpit-actions">'+
-          '<a href="tel:'+c.phone+'" class="btn btn-primary btn-sm" onclick="event.stopPropagation();logCockpitCall('+ c.id +')">&#128222; Call</a>'+
-          '<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();markNotInterested('+ c.id +')">Not Interested</button>'+
+          '<button class="btn btn-primary btn-sm" onclick="event.stopPropagation();logCockpitCall(\'' + cid + '\');initiateQuoCall(\'' + cphone + '\',\'' + cname + '\')">&#128222; Call</button>'+
+          '<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();markNotInterested(\'' + cid + '\')">Not Interested</button>'+
         '</div>'+
       '</div>';
     }).join('');
@@ -1328,13 +1330,14 @@ function renderCockpit(){
   } else {
     ln3.innerHTML=aiReview.map(function(c){
       var tc=touchCount(c);
-      return '<div class="cockpit-card" onclick="openDetail('+ c.id +')" style="border-left:3px solid var(--accent);">'+
-        '<div class="cockpit-name">'+c.name+'</div>'+
+      var cid=c.id, cphone=c.phone||'', cname=c.name||'';
+      return '<div class="cockpit-card" onclick="openDetail(\'' + cid + '\')" style="border-left:3px solid var(--accent);">'+
+        '<div class="cockpit-name">'+cname+'</div>'+
         '<div class="cockpit-sub">'+c.county+' County, '+c.state+' &middot; '+c.acreage+' ac</div>'+
         '<div class="cockpit-sub" style="color:var(--text3);">'+tc+' touches &middot; '+daysSince(lastTouchDate(c))+'d since last contact</div>'+
         '<div class="cockpit-actions">'+
-          '<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();generatePreCallBrief('+ c.id +')">Brief</button>'+
-          '<a href="tel:'+c.phone+'" class="btn btn-primary btn-sm" onclick="event.stopPropagation();logCockpitCall('+ c.id +')">&#128222; Call</a>'+
+          '<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();generatePreCallBrief(\'' + cid + '\')">Brief</button>'+
+          '<button class="btn btn-primary btn-sm" onclick="event.stopPropagation();logCockpitCall(\'' + cid + '\');initiateQuoCall(\'' + cphone + '\',\'' + cname + '\')">&#128222; Call</button>'+
         '</div>'+
       '</div>';
     }).join('');
@@ -1542,7 +1545,7 @@ function openDetail(id){
         <!-- QUICK ACTIONS -->
         <div style="display:flex;gap:8px;margin-bottom:14px">
           <button class="btn btn-primary" style="flex:1" onclick="initiateQuoCall('${c.phone}','${c.name}')">📞 Call ${c.name.split(' ')[0]}</button>
-          <a href="sms:${c.phone}" class="btn btn-ghost" style="flex:1;text-decoration:none;justify-content:center">💬 Text</a>
+          <button class="btn btn-ghost" style="flex:1" onclick="openQuoText('${c.phone}','${c.name.split(' ')[0]}')">💬 Text</button>
           ${c.email?`<a href="mailto:${c.email}" class="btn btn-ghost" style="flex:1;text-decoration:none;justify-content:center">✉️ Email</a>`:'<button class="btn btn-ghost" style="flex:1;opacity:0.4" disabled>✉️ Email</button>'}
           <button class="btn btn-ghost" style="flex:1;border-color:rgba(92,184,255,0.3);color:var(--blue)" onclick="openCalcForContact('${id}')">⚡ Offer Math</button>
         </div>
@@ -2922,8 +2925,8 @@ async function loadQualifiedLeads() {
               </div>
             </div>
             <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
-              <a href="sms:${lead.phone}" class="btn btn-primary btn-sm" style="text-decoration:none">📱 Text Now</a>
-              <a href="tel:${lead.phone}" class="btn btn-ghost btn-sm" style="text-decoration:none">📞 Call Now</a>
+              <button class="btn btn-primary btn-sm" onclick="openQuoText('${lead.phone}','')">📱 Text in Quo</button>
+              <button class="btn btn-ghost btn-sm" onclick="initiateQuoCall('${lead.phone}','')">📞 Call in Quo</button>
               <button class="btn btn-ghost btn-sm" onclick="addQualifiedToContacts('${lead.phone}','${(d.county||'').replace(/'/g,"\\'")}','${d.acreage||''}',${i})">+ Add to CRM</button>
               ${isPending ? `<button class="btn btn-ghost btn-sm" style="font-size:13px;color:var(--text3)" onclick="markQualifiedCalled(${i})">Mark Called</button>` : ''}
             </div>
@@ -3531,27 +3534,25 @@ Notes: ${(c.notes||[]).map(n=>n.text).join(' | ') || 'none'}
 // ══════════════════════════════════
 function initiateQuoCall(phone, name) {
   if (!phone) { toast('No phone number on file', 'error'); return; }
-  // Quo API doesn't support programmatic call initiation
-  // Best path: open Quo web app to the contact, or fall back to tel: on mobile
-  var isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-  if (isMobile) {
-    // On mobile, tel: opens the phone app directly
-    window.location.href = 'tel:' + phone.replace(/\D/g,'');
-    toast('Opening dialer for ' + name, 'success');
-  } else {
-    // On desktop, open Quo web app - user can dial from there
-    window.open('https://my.quo.com', '_blank');
-    // Copy number to clipboard for convenience
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(phone).then(function() {
-        toast(phone + ' copied — dial in Quo', 'success');
-      }).catch(function() {
-        toast('Opening Quo — dial ' + phone, 'info');
-      });
-    } else {
-      toast('Opening Quo — dial ' + phone, 'info');
-    }
-  }
+  // Normalize phone to E164
+  var digits = phone.replace(/\D/g,'');
+  if (digits.length === 10) digits = '1' + digits;
+  var e164 = '+' + digits;
+  // OpenPhone deep link — opens Quo app pre-dialed on both desktop and mobile
+  var deepLink = 'openphone://call?number=' + encodeURIComponent(e164);
+  window.location.href = deepLink;
+  toast('Opening Quo — calling ' + (name || phone), 'success');
+}
+
+function openQuoText(phone, name) {
+  if (!phone) { toast('No phone number on file', 'error'); return; }
+  var digits = phone.replace(/\D/g,'');
+  if (digits.length === 10) digits = '1' + digits;
+  var e164 = '+' + digits;
+  // OpenPhone deep link — opens conversation in Quo
+  var deepLink = 'openphone://conversation?number=' + encodeURIComponent(e164);
+  window.location.href = deepLink;
+  toast('Opening Quo conversation with ' + (name || phone), 'success');
 }
 
 
