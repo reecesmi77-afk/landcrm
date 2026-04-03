@@ -2152,7 +2152,14 @@ function parsePastedLead() {
     if (transcriptAcreMatch) acreage = transcriptAcreMatch[1];
   }
   var address   = extract('Address', raw);
-  var email     = extract('Email', raw);
+  // Build full address string for PropertyAPI lookup (used as fallback when no FIPS)
+  if (address) window._pendingAddress = address;
+  var email = extract('Email', raw);
+  // If labeled field is empty or "None", scan full text for email pattern
+  if (!email || email.toLowerCase() === 'none' || email.toLowerCase() === 'n/a') {
+    var emailScan = raw.match(/[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/);
+    if (emailScan) email = emailScan[0];
+  }
 
   // Parse city, state, zip from address line: ", City, ST, Zip"
   var city = '', state = '', zip = '';
@@ -2229,6 +2236,14 @@ function parsePastedLead() {
   fill('f-name', fullName);
   fill('f-phone', phone);
   fill('f-email', (email && email.toLowerCase() !== 'none' && email.toLowerCase() !== 'n/a') ? email : '');
+  // Store street address if available (first segment before city)
+  if (address) {
+    var streetOnly = address.split(',')[0].trim();
+    var streetEl = document.getElementById('f-street');
+    if (streetEl) streetEl.value = streetOnly;
+    // Also store on window for PropertyAPI
+    window._pendingAddress = address;
+  }
   fill('f-county', county);
   fill('f-city', city);
   fill('f-zip', zip);
@@ -2656,6 +2671,10 @@ async function runPropertyLookup(contactId) {
     if (c.county && c.state) {
       payload.county = c.county;
       payload.state = c.state;
+    }
+    // Include full address as fallback for geocoding
+    if (c.city && c.state) {
+      payload.address = (c.address || '') + (c.city ? ' ' + c.city : '') + (c.state ? ', ' + c.state : '') + (c.zip ? ' ' + c.zip : '');
     }
 
     var res = await fetch('/.netlify/functions/property-lookup', {
