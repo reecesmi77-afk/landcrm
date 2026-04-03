@@ -389,13 +389,13 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
 .team-member-avatar{width:36px;height:36px;border-radius:8px;background:var(--bg4);display:flex;align-items:center;justify-content:center;font-family:'Inter',sans-serif;font-weight:700;font-size:12px;color:var(--accent);flex-shrink:0;}
 .team-role-badge{font-family:'DM Mono',monospace;font-size:9px;padding:2px 8px;border-radius:20px;border:1px solid var(--border2);color:var(--text3);background:var(--bg4);}
 
-.cockpit-card{background:var(--bg3);border-radius:8px;padding:12px 14px;margin-bottom:8px;cursor:pointer;transition:opacity .15s;}
+.cockpit-card{background:var(--bg3);border-radius:8px;padding:8px 11px;margin-bottom:5px;cursor:pointer;transition:opacity .15s;}
 .cockpit-card:hover{opacity:0.85;}
 .cockpit-card:last-child{margin-bottom:0;}
 .cockpit-name{font-size:15px;font-weight:700;color:var(--text);margin-bottom:2px;}
 .cockpit-sub{font-size:12px;color:var(--text2);margin-bottom:2px;}
 .cockpit-msg{font-size:12px;color:var(--text3);font-style:italic;margin:4px 0;padding:4px 8px;background:var(--bg2);border-radius:4px;}
-.cockpit-actions{display:flex;gap:6px;margin-top:8px;}
+.cockpit-actions{display:flex;gap:5px;margin-top:6px;}
 </style>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
@@ -540,7 +540,7 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
             <span id="call-now-count" style="font-size:11px;background:var(--coral);color:#fff;border-radius:20px;padding:2px 8px;font-weight:700;">0</span>
           </div>
           <div style="font-size:11px;color:var(--text3);padding:0 14px 8px;">Seller agreed to a call — reach out immediately</div>
-          <div class="card-body" id="lane-call-now" style="padding-top:0;"></div>
+          <div class="card-body" id="lane-call-now" style="padding-top:0;max-height:420px;overflow-y:auto;"></div>
         </div>
 
         <!-- LANE 2: CALL TODAY -->
@@ -552,7 +552,7 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
             <span id="call-today-count" style="font-size:11px;background:var(--amber);color:#000;border-radius:20px;padding:2px 8px;font-weight:700;">0</span>
           </div>
           <div style="font-size:11px;color:var(--text3);padding:0 14px 8px;">New leads — call before AI sequence fires</div>
-          <div class="card-body" id="lane-call-today" style="padding-top:0;"></div>
+          <div class="card-body" id="lane-call-today" style="padding-top:0;max-height:420px;overflow-y:auto;"></div>
         </div>
 
         <!-- LANE 3: AI REVIEW -->
@@ -564,7 +564,7 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
             <span id="ai-review-count" style="font-size:11px;background:var(--accent);color:#fff;border-radius:20px;padding:2px 8px;font-weight:700;">0</span>
           </div>
           <div style="font-size:11px;color:var(--text3);padding:0 14px 8px;">AI qualified or flagged — review before calling</div>
-          <div class="card-body" id="lane-ai-review" style="padding-top:0;"></div>
+          <div class="card-body" id="lane-ai-review" style="padding-top:0;max-height:420px;overflow-y:auto;"></div>
         </div>
 
       </div>
@@ -1269,15 +1269,19 @@ function renderDashboard(){
 }
 
 function renderCockpit(){
+  var DEAD_STAGES = ['Dead','Not Motivated Yet','Closed — Assignment','Closed — Double Close'];
   var callNow=db.contacts.filter(function(c){
+    if(DEAD_STAGES.includes(c.stage)) return false;
     return c.callRequested||(c.handoff==='Human active'&&c.touches&&c.touches.some(function(t){return t.direction==='Inbound'&&daysSince(t.date)<=1;}));
   });
   var callToday=db.contacts.filter(function(c){
+    if(DEAD_STAGES.includes(c.stage)) return false;
     if(!c.source||!c.source.toLowerCase().includes('lead gen'))return false;
     if(c.callRequested||c.callLogged)return false;
     return daysSince(c.created)<=1;
   });
   var aiReview=db.contacts.filter(function(c){
+    if(DEAD_STAGES.includes(c.stage)) return false;
     return needsHandoff(c)&&!c.callRequested&&!c.callLogged;
   });
   document.getElementById('call-now-count').textContent=callNow.length;
@@ -1576,62 +1580,6 @@ function openDetail(id){
         </div>
         ${c.motivation?`<div style="font-size:15px;color:var(--text2);padding:8px 10px;background:var(--adim);border-radius:8px;border-left:3px solid var(--accent)">${c.motivation}</div>`:''}
       </div>
-
-      <!-- ── COUNTY RECORD (PropertyAPI) ── -->
-      ${c.propertyData ? `
-      <div style="padding:14px 20px;border-bottom:1px solid var(--border);background:linear-gradient(135deg,rgba(14,165,233,0.06),rgba(14,165,233,0.02))">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
-          <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--accent);text-transform:uppercase;letter-spacing:.06em">🏛 County Record</div>
-          <span style="font-size:10px;color:var(--text3);">${c.propertyDataDate||''}</span>
-          <div style="margin-left:auto;display:flex;gap:6px"><button onclick="runSkipTrace('${c.id}')" style="font-size:11px;background:var(--pdim);border:1px solid rgba(192,132,252,0.3);border-radius:4px;color:var(--purple);padding:2px 8px;cursor:pointer;font-family:'DM Mono',monospace">🔍 Skip Trace</button><button onclick="runPropertyLookup('${c.id}')" style="font-size:11px;background:none;border:1px solid var(--border2);border-radius:4px;color:var(--text3);padding:2px 8px;cursor:pointer;font-family:'DM Mono',monospace">↻ Refresh</button></div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px">
-          ${c.propertyData.assessedLandValue?`<div><div style="font-size:11px;color:var(--text3);margin-bottom:2px">ASSESSED LAND</div><div style="font-size:16px;font-weight:700;color:var(--accent)">$${Number(c.propertyData.assessedLandValue).toLocaleString()}</div></div>`:''}
-          ${c.propertyData.marketLandValue?`<div><div style="font-size:11px;color:var(--text3);margin-bottom:2px">MARKET VALUE</div><div style="font-size:15px;font-weight:600">$${Number(c.propertyData.marketLandValue).toLocaleString()}</div></div>`:''}
-          ${c.propertyData.marketEstimate?`<div><div style="font-size:11px;color:var(--text3);margin-bottom:2px">AVM ESTIMATE</div><div style="font-size:15px;font-weight:600">$${Number(c.propertyData.marketEstimate).toLocaleString()}</div></div>`:''}
-          ${c.propertyData.lastSalePrice?`<div><div style="font-size:11px;color:var(--text3);margin-bottom:2px">LAST SALE PRICE</div><div style="font-size:15px;font-weight:600">$${Number(c.propertyData.lastSalePrice).toLocaleString()}</div></div>`:''}
-          ${c.propertyData.lastSaleDate?`<div><div style="font-size:11px;color:var(--text3);margin-bottom:2px">SALE DATE</div><div style="font-size:14px;font-weight:500">${c.propertyData.lastSaleDate}</div></div>`:''}
-          ${c.propertyData.annualTaxAmount?`<div><div style="font-size:11px;color:var(--text3);margin-bottom:2px">ANNUAL TAX</div><div style="font-size:14px;font-weight:500">$${Number(c.propertyData.annualTaxAmount).toLocaleString()}${c.propertyData.taxDelinquentYear?'<span style="color:var(--coral);font-size:10px;margin-left:4px">⚠ DELINQUENT '+c.propertyData.taxDelinquentYear+'</span>':''}</div></div>`:''}
-          ${c.propertyData.ownerName?`<div style="grid-column:1/-1"><div style="font-size:11px;color:var(--text3);margin-bottom:2px">OWNER OF RECORD</div><div style="font-size:14px;font-weight:500">${c.propertyData.ownerName}${c.propertyData.ownerType?' <span style="font-size:10px;color:var(--text3)">('+c.propertyData.ownerType+')</span>':''}</div></div>`:''}
-          ${c.skipTrace ? `
-          <div style="grid-column:1/-1;background:var(--pdim);border-radius:6px;padding:8px 10px;border:1px solid rgba(192,132,252,0.2)">
-            <div style="font-size:10px;color:var(--purple);font-family:'DM Mono',monospace;letter-spacing:.5px;margin-bottom:6px">SKIP TRACE RESULT — ${c.skipTraceDate||''}</div>
-            <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:13px">
-              ${c.skipTrace.phone1?`<div><span style="color:var(--text3);font-size:10px">PHONE 1</span><div style="font-weight:600">${c.skipTrace.phone1.number} <span style="font-size:10px;color:${c.skipTrace.phone1.reachable?'var(--teal)':'var(--text3)'}">${c.skipTrace.phone1.type||''} ${c.skipTrace.phone1.reachable?'✓ Reachable':''} ${c.skipTrace.phone1.dnc?'⚠ DNC':''}</span></div></div>`:''}
-              ${c.skipTrace.phone2?`<div><span style="color:var(--text3);font-size:10px">PHONE 2</span><div style="font-weight:600">${c.skipTrace.phone2.number} <span style="font-size:10px;color:var(--text3)">${c.skipTrace.phone2.type||''}</span></div></div>`:''}
-              ${c.skipTrace.email1?`<div><span style="color:var(--text3);font-size:10px">EMAIL</span><div style="font-weight:600">${c.skipTrace.email1}</div></div>`:''}
-            </div>
-          </div>` : ''}
-          ${c.propertyData.floodZone?`<div><div style="font-size:11px;color:var(--text3);margin-bottom:2px">FLOOD ZONE</div><div style="font-size:14px;font-weight:500;color:${c.propertyData.insideSFHA?'var(--coral)':'var(--teal)'}">${c.propertyData.floodZone}${c.propertyData.insideSFHA?' ⚠':'  ✓'}</div></div>`:''}
-          ${c.propertyData.roadWithin30ft!==null&&c.propertyData.roadWithin30ft!==undefined?`<div><div style="font-size:11px;color:var(--text3);margin-bottom:2px">ROAD ACCESS</div><div style="font-size:14px;font-weight:500;color:${c.propertyData.roadWithin30ft?'var(--teal)':'var(--coral)'}">${c.propertyData.roadWithin30ft?'Road within 30ft':'No road within 30ft'}</div></div>`:''}
-          ${c.propertyData.zoning?`<div><div style="font-size:11px;color:var(--text3);margin-bottom:2px">ZONING</div><div style="font-size:14px;font-weight:500">${c.propertyData.zoning}</div></div>`:''}
-        </div>
-        ${c.propertyData.assessedLandValue?`
-        <div style="background:var(--bg3);border-radius:8px;padding:10px 12px;border:1px solid var(--border)">
-          <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;letter-spacing:.5px;margin-bottom:8px">OFFER RANGE — BASED ON COUNTY ASSESSED LAND VALUE</div>
-          <div style="display:flex;gap:20px;align-items:flex-end">
-            <div>
-              <div style="font-size:11px;color:var(--text3);margin-bottom:2px">Open at 40%</div>
-              <div style="font-size:18px;font-weight:800;color:var(--accent)">$${Math.round(Number(c.propertyData.assessedLandValue)*0.40).toLocaleString()}</div>
-            </div>
-            <div>
-              <div style="font-size:11px;color:var(--text3);margin-bottom:2px">MAO at 55%</div>
-              <div style="font-size:18px;font-weight:800;color:var(--amber)">$${Math.round(Number(c.propertyData.assessedLandValue)*0.55).toLocaleString()}</div>
-            </div>
-            ${c.askingPrice?`
-            <div style="margin-left:auto;text-align:right">
-              <div style="font-size:11px;color:var(--text3);margin-bottom:2px">Asking vs assessed</div>
-              <div style="font-size:18px;font-weight:800;color:${Number(c.askingPrice)>Number(c.propertyData.assessedLandValue)*2?'var(--coral)':Number(c.askingPrice)>Number(c.propertyData.assessedLandValue)*1.2?'var(--amber)':'var(--teal)'}">
-                ${Math.round(Number(c.askingPrice)/Number(c.propertyData.assessedLandValue)*100)}% of assessed
-              </div>
-            </div>`:''}
-          </div>
-        </div>`:''}
-      </div>` : `
-      <div style="padding:10px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
-        <span style="font-size:12px;color:var(--text3);font-family:'DM Mono',monospace">${c.apn?'🏛 County record not loaded yet':'🏛 Add APN to enable county record lookup'}</span>
-        ${c.apn?`<button onclick="runPropertyLookup('${c.id}')" class="btn btn-ghost btn-sm" style="font-size:11px">🔍 Load County Record</button>`:''}
-      </div>`}
 
       <!-- ── MAP ── -->
       <div style="border-bottom:1px solid var(--border)">
@@ -2087,10 +2035,6 @@ function saveUnifiedContact(editId) {
         syncTranscriptToJSONbin(window._pendingTranscript, newC);
         window._pendingTranscript = null;
       }
-      // Auto-run PropertyAPI lookup if APN is present
-      if(newC.apn && newC.apn.trim()) {
-        runPropertyLookup(newC.id);
-      }
     }
   } else {
     if(!db.allContacts) db.allContacts = [];
@@ -2164,14 +2108,7 @@ function parsePastedLead() {
     if (transcriptAcreMatch) acreage = transcriptAcreMatch[1];
   }
   var address   = extract('Address', raw);
-  // Build full address string for PropertyAPI lookup (used as fallback when no FIPS)
-  if (address) window._pendingAddress = address;
-  var email = extract('Email', raw);
-  // If labeled field is empty or "None", scan full text for email pattern
-  if (!email || email.toLowerCase() === 'none' || email.toLowerCase() === 'n/a') {
-    var emailScan = raw.match(/[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/);
-    if (emailScan) email = emailScan[0];
-  }
+  var email     = extract('Email', raw);
 
   // Parse city, state, zip from address line: ", City, ST, Zip"
   var city = '', state = '', zip = '';
@@ -2187,19 +2124,11 @@ function parsePastedLead() {
     }
   }
 
-  // Parse county — try explicit label first, then scan transcript body for "X County" pattern
+  // Parse county from Notes section
   var county = extract('County', raw) || '';
-  if (!county) {
-    var countyBodyMatch = raw.match(/(?:in|near|around)\s+([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)?)\s+County/i);
-    if (countyBodyMatch) county = countyBodyMatch[1].trim();
-  }
-  if (!county) {
-    // Try "X County, ST" pattern anywhere in raw text
-    var countyDirectMatch = raw.match(/([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)?)\s+County/i);
-    if (countyDirectMatch) county = countyDirectMatch[1].trim();
-  }
 
   // Parse the conversation transcript from Notes section
+  // Everything after "Notes:" label
   var transcript = '';
   var notesMatch = raw.match(/Notes\s*:\s*([\s\S]*)/i);
   if (notesMatch && notesMatch[1]) {
@@ -2209,34 +2138,11 @@ function parsePastedLead() {
   // Determine seller temperature from transcript
   var temp = 'cold';
   var lowerTranscript = transcript.toLowerCase();
-  // If seller replied at all with content, at minimum warm
-  if (transcript.length > 10) temp = 'warm';
-  if (lowerTranscript.match(/how much|interested|yes|sure|call|when|price|offer|what.*worth|want to sell|\$[0-9]/)) {
+  if (lowerTranscript.match(/how much|interested|yes|sure|call|when|price|offer|what.*worth|want to sell/)) {
     temp = 'warm';
   }
   if (lowerTranscript.match(/ready|asap|need to sell|motivated|deal|let.*go|make offer/)) {
     temp = 'hot';
-  }
-
-  // Parse asking price from seller responses — "Yes. $100K" or "$100,000" patterns
-  var askingFromTranscript = '';
-  var pricePatterns = [
-    /\$([0-9,]+)\s*[Kk]\b/,   // $100K
-    /\$([0-9,]+)/,               // $100,000
-    /\b([0-9]+)\s*[Kk]\b/      // 100K without dollar sign
-  ];
-  for (var pi = 0; pi < pricePatterns.length; pi++) {
-    var pm = transcript.match(pricePatterns[pi]);
-    if (pm) {
-      var num = pm[1].replace(/,/g,'');
-      // If K suffix was used, multiply by 1000
-      if (pricePatterns[pi].toString().includes('[Kk]')) {
-        askingFromTranscript = String(parseFloat(num) * 1000);
-      } else {
-        askingFromTranscript = num;
-      }
-      break;
-    }
   }
 
   // Auto-fill form fields
@@ -2248,20 +2154,11 @@ function parsePastedLead() {
   fill('f-name', fullName);
   fill('f-phone', phone);
   fill('f-email', (email && email.toLowerCase() !== 'none' && email.toLowerCase() !== 'n/a') ? email : '');
-  // Store street address if available (first segment before city)
-  if (address) {
-    var streetOnly = address.split(',')[0].trim();
-    var streetEl = document.getElementById('f-street');
-    if (streetEl) streetEl.value = streetOnly;
-    // Also store on window for PropertyAPI
-    window._pendingAddress = address;
-  }
   fill('f-county', county);
   fill('f-city', city);
   fill('f-zip', zip);
   fill('f-acreage', acreage);
   fill('f-apn', apn);
-  if (askingFromTranscript) fill('f-asking', askingFromTranscript);
 
   // Set state dropdown
   if (state) {
@@ -2655,77 +2552,6 @@ function toast(msg,type){const el=document.getElementById('toast');el.textConten
 
 // QUO SYNC
 const FUNCTIONS_BASE='/.netlify/functions';
-
-async function runPropertyLookup(contactId) {
-  var c = db.contacts.find(function(x){ return x.id === contactId; });
-  if (!c || !c.apn) return;
-
-  console.log('Running PropertyAPI lookup for', c.name, 'APN:', c.apn);
-
-  // FIPS codes for common markets
-  var fipsMap = {
-    'TN': { 'Shelby': '47157', 'Fayette': '47047', 'Hardeman': '47069', 'Madison': '47113', 'Tipton': '47167' },
-    'MS': { 'DeSoto': '28033', 'Marshall': '28093', 'Tate': '28137', 'Benton': '28009', 'Union': '28159' },
-    'AR': { 'Crittenden': '05035', 'Craighead': '05031', 'Mississippi': '05093', 'Poinsett': '05111', 'Cross': '05033' },
-    'OK': { 'Tulsa': '40143', 'Oklahoma': '40109', 'Cleveland': '40027' },
-    'TX': { 'Dallas': '48113', 'Tarrant': '48439', 'Bexar': '48029' },
-    'MO': { 'St. Louis': '29189', 'Jackson': '29095', 'Greene': '29077' }
-  };
-
-  var fips = null;
-  if (c.state && c.county && fipsMap[c.state] && fipsMap[c.state][c.county]) {
-    fips = fipsMap[c.state][c.county];
-  }
-
-  try {
-    var payload = { apn: c.apn };
-    if (fips) payload.fips = fips;
-    if (c.county && c.state) {
-      payload.county = c.county;
-      payload.state = c.state;
-    }
-    // Include full address as fallback for geocoding
-    if (c.city && c.state) {
-      payload.address = (c.address || '') + (c.city ? ' ' + c.city : '') + (c.state ? ', ' + c.state : '') + (c.zip ? ' ' + c.zip : '');
-    }
-
-    var res = await fetch('/.netlify/functions/property-lookup', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-    var data = await res.json();
-
-    if (data.ok && data.data) {
-      var p = data.data;
-      // Store on contact
-      c.propertyData = p;
-      c.propertyDataDate = today();
-
-      // Auto-populate fields if missing
-      if (!c.acreage && p.acreage) c.acreage = String(p.acreage);
-      if (!c.city && p.city) c.city = p.city;
-      if (!c.zip && p.zip) c.zip = p.zip;
-
-      save();
-      console.log('PropertyAPI data stored for', c.name);
-      toast('Property data loaded for ' + c.name + (p.creditsRemaining !== null ? ' — ' + p.creditsRemaining + ' credits left' : ''), 'success');
-
-      // Re-render the open contact detail modal so county record panel appears immediately
-      if (typeof openDetail === 'function') {
-        var modal = document.getElementById('contact-modal');
-        if (modal && modal.style.display !== 'none') {
-          openDetail(contactId);
-        }
-      }
-    } else {
-      console.warn('PropertyAPI lookup failed:', data.error);
-      toast('Property lookup: ' + (data.error || 'No record found'), 'info');
-    }
-  } catch(e) {
-    console.warn('PropertyAPI error:', e.message);
-  }
-}
 
 async function syncTranscriptToJSONbin(parsed, contact) {
   try {
@@ -3608,30 +3434,6 @@ async function generatePreCallBrief(contactId) {
     ? conversationHistory.map(m => `${m.role === 'user' ? 'SELLER' : 'AI'}: ${m.content}`).join('\n')
     : 'No SMS conversation on record yet.';
 
-  // Build county record section if available
-  const propData = c.propertyData || null;
-  const anchorValue = propData ? (propData.assessedLandValue || propData.marketLandValue || propData.marketEstimate || null) : null;
-  const countySection = propData ? `
-
-COUNTY RECORD DATA (from PropertyAPI — pulled ${c.propertyDataDate || 'recently'}):
-- Assessed Land Value: ${propData.assessedLandValue ? '$' + Number(propData.assessedLandValue).toLocaleString() : 'not available'}
-- Market Land Value: ${propData.marketLandValue ? '$' + Number(propData.marketLandValue).toLocaleString() : 'not available'}
-- AVM Estimate: ${propData.marketEstimate ? '$' + Number(propData.marketEstimate).toLocaleString() : 'not available'}
-- Last Sale Price: ${propData.lastSalePrice ? '$' + Number(propData.lastSalePrice).toLocaleString() : 'not available'}
-- Last Sale Date: ${propData.lastSaleDate || 'not available'}
-- Annual Property Tax: ${propData.annualTaxAmount ? '$' + Number(propData.annualTaxAmount).toLocaleString() : 'not available'}
-- Tax Delinquent: ${propData.taxDelinquentYear ? 'YES — since ' + propData.taxDelinquentYear : 'No delinquency on record'}
-- Owner of Record: ${propData.ownerName || 'not available'} ${propData.ownerType ? '(' + propData.ownerType + ')' : ''}
-- Flood Zone: ${propData.floodZone || 'not available'} ${propData.insideSFHA ? '— INSIDE SFHA (HIGH RISK)' : ''}
-- Road Access: ${propData.roadWithin30ft !== null ? (propData.roadWithin30ft ? 'Road within 30ft' : 'No road within 30ft') : 'not available'}
-- Wetlands: ${propData.wetlandsPercent !== null ? propData.wetlandsPercent + '%' : 'not available'}
-- Zoning: ${propData.zoning || 'not available'}
-- Suggested Opening Offer (40% of anchor value): ${anchorValue ? '$' + Math.round(Number(anchorValue)*0.40).toLocaleString() : 'N/A'}
-- MAO (55% of anchor value): ${anchorValue ? '$' + Math.round(Number(anchorValue)*0.55).toLocaleString() : 'N/A'}
-- Asking vs County Value: ${anchorValue && c.askingPrice ? Math.round(Number(c.askingPrice)/Number(anchorValue)*100) + '% of county value' : 'N/A'}` : `
-
-COUNTY RECORD DATA: Not yet loaded (no APN on file or lookup not run).`;
-
   const crmContext = `
 Contact: ${c.name}
 Phone: ${c.phone || 'unknown'}
@@ -3645,7 +3447,6 @@ Motivation notes: ${c.motivation || 'none recorded'}
 Asking price: ${c.askingPrice ? '$' + c.askingPrice : 'unknown'}
 Tags: ${(c.tags||[]).join(', ') || 'none'}
 Notes: ${(c.notes||[]).map(n=>n.text).join(' | ') || 'none'}
-${countySection}
 `.trim();
 
 // Brief generation handled server-side in generate-brief.js
@@ -3743,70 +3544,6 @@ function initiateQuoCall(phone, name) {
   var deepLink = 'openphone://call?number=' + encodeURIComponent(e164);
   window.location.href = deepLink;
   toast('Opening Quo — calling ' + (name || phone), 'success');
-}
-
-async function runSkipTrace(contactId) {
-  var c = db.contacts.find(function(x){ return x.id === contactId; });
-  if (!c) return;
-  if (!c.apn && !c.city) { toast('Need APN or address to skip trace', 'error'); return; }
-
-  toast('Running skip trace — 2 credits...', 'info');
-
-  var fipsMap = {
-    'TN': {'Shelby':'47157','Fayette':'47047','Hardeman':'47069','Madison':'47113','Tipton':'47167'},
-    'MS': {'DeSoto':'28033','Marshall':'28093','Tate':'28137','Benton':'28009','Union':'28159'},
-    'AR': {'Crittenden':'05035','Craighead':'05031','Mississippi':'05093','Poinsett':'05111','Cross':'05033'},
-    'OK': {'Tulsa':'40143','Oklahoma':'40109','Cleveland':'40027'},
-    'TX': {'Dallas':'48113','Tarrant':'48439','Bexar':'48029'},
-    'MO': {'St. Louis':'29189','Jackson':'29095','Greene':'29077'}
-  };
-  var fips = (c.state && c.county && fipsMap[c.state]) ? fipsMap[c.state][c.county] : null;
-  var nameParts = (c.propertyData && c.propertyData.ownerName) ? c.propertyData.ownerName.trim().split(' ') : [];
-  var ownerFirst = nameParts.length > 1 ? nameParts[0] : null;
-  var ownerLast  = nameParts.length > 1 ? nameParts[nameParts.length-1] : null;
-
-  try {
-    var payload = {};
-    if (c.apn) {
-      payload.apn = c.apn;
-      if (fips) payload.fips = fips;
-      payload.county = c.county;
-      payload.state = c.state;
-    } else {
-      payload.address = c.city;
-      payload.city = c.city;
-      payload.state = c.state;
-      payload.zip = c.zip;
-    }
-    if (ownerFirst) payload.ownerFirst = ownerFirst;
-    if (ownerLast)  payload.ownerLast  = ownerLast;
-
-    var res = await fetch('/.netlify/functions/skip-trace', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify(payload)
-    });
-    var data = await res.json();
-
-    if (data.ok && data.data) {
-      var st = data.data;
-      c.skipTrace = st;
-      c.skipTraceDate = today();
-      if (!c.phone && st.phone1 && st.phone1.number) c.phone = st.phone1.number;
-      if (!c.email && st.email1) c.email = st.email1;
-      save();
-      toast('Skip trace done — ' + (st.phone1 ? st.phone1.number : 'no phone found') + ' (' + data.creditsRemaining + ' credits left)', 'success');
-      // Re-render open contact detail
-      if (typeof openDetail === 'function') {
-        var modal = document.getElementById('contact-modal');
-        if (modal && modal.style.display !== 'none') { openDetail(contactId); }
-      }
-    } else {
-      toast('Skip trace: ' + (data.error || 'No match found'), 'info');
-    }
-  } catch(e) {
-    toast('Skip trace error: ' + e.message, 'error');
-  }
 }
 
 function openQuoText(phone, name) {
@@ -4035,64 +3772,38 @@ async function initContactMap(contactId, county, state, acreage, name) {
     delete _activeMaps[contactId];
   }
 
-  if (!county && !state) {
+  // Build geocode query — county + state is enough for a good pin
+  var query = [county, state, 'USA'].filter(Boolean).join(', ');
+  if (!county) {
     el.innerHTML = '<div style="height:220px;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:12px">No county specified — add county to enable map</div>';
     return;
   }
 
   try {
+    // Geocode using Nominatim (free, no key needed)
+    var geoUrl = 'https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(query);
+    var res = await fetch(geoUrl, { headers: { 'Accept-Language': 'en' } });
+    var data = await res.json();
+
     var lat, lng;
-
-    // Priority 1: Use exact coordinates from PropertyAPI if available
-    var c = db.contacts.find(function(x){ return x.id === contactId; });
-    if (c && c.propertyData && c.propertyData.lat && c.propertyData.lng) {
-      lat = parseFloat(c.propertyData.lat);
-      lng = parseFloat(c.propertyData.lng);
-      console.log('Map using PropertyAPI coords:', lat, lng);
-    }
-
-    // Priority 2: Geocode the street address if we have it
-    if ((!lat || !lng) && c && c.city && state) {
-      var addrQuery = [c.city, county, state, 'USA'].filter(Boolean).join(', ');
-      var geoUrl = 'https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(addrQuery);
-      var res = await fetch(geoUrl, { headers: { 'Accept-Language': 'en' } });
-      var data = await res.json();
-      if (data && data.length > 0) {
-        lat = parseFloat(data[0].lat);
-        lng = parseFloat(data[0].lon);
-        console.log('Map using city geocode:', lat, lng);
-      }
-    }
-
-    // Priority 3: Fall back to county center
-    if (!lat || !lng) {
-      var query = [county, state, 'USA'].filter(Boolean).join(', ');
-      var geoUrl2 = 'https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(query);
-      var res2 = await fetch(geoUrl2, { headers: { 'Accept-Language': 'en' } });
-      var data2 = await res2.json();
-      if (data2 && data2.length > 0) {
-        lat = parseFloat(data2[0].lat);
-        lng = parseFloat(data2[0].lon);
-        console.log('Map using county geocode:', lat, lng);
-      } else {
-        el.innerHTML = '<div style="height:220px;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:12px">Location not found for ' + county + ', ' + state + '</div>';
-        return;
-      }
+    if (data && data.length > 0) {
+      lat = parseFloat(data[0].lat);
+      lng = parseFloat(data[0].lon);
+    } else {
+      el.innerHTML = '<div style="height:220px;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:12px">Location not found for ' + county + ', ' + state + '</div>';
+      return;
     }
 
     // Update satellite link
     var gmapsLink = document.getElementById('gmaps-link-' + contactId);
     if (gmapsLink) {
-      var satZoom = (c && c.propertyData && c.propertyData.lat) ? '17z' : '13z';
-      gmapsLink.href = 'https://www.google.com/maps/@' + lat + ',' + lng + ',' + satZoom + '/data=!3m1!1e3';
+      gmapsLink.href = 'https://www.google.com/maps/@' + lat + ',' + lng + ',13z/data=!3m1!1e3';
     }
 
     // Init Leaflet map
-    // Use tighter zoom if we have exact parcel coords, looser for county center
-    var zoomLevel = (c && c.propertyData && c.propertyData.lat) ? 15 : 11;
     var map = L.map(mapId, {
       center: [lat, lng],
-      zoom: zoomLevel,
+      zoom: 11,
       zoomControl: true,
       attributionControl: true,
       scrollWheelZoom: false
