@@ -2711,9 +2711,12 @@ async function runPropertyLookup(contactId) {
       console.log('PropertyAPI data stored for', c.name);
       toast('Property data loaded for ' + c.name + (p.creditsRemaining !== null ? ' — ' + p.creditsRemaining + ' credits left' : ''), 'success');
 
-      // If contact detail is open, refresh it
-      if (document.querySelector('.modal-overlay.open')) {
-        // Brief flash to show data loaded
+      // Re-render the open contact detail modal so county record panel appears immediately
+      if (typeof openDetail === 'function') {
+        var modal = document.getElementById('contact-modal');
+        if (modal && modal.style.display !== 'none') {
+          openDetail(contactId);
+        }
       }
     } else {
       console.warn('PropertyAPI lookup failed:', data.error);
@@ -3793,6 +3796,11 @@ async function runSkipTrace(contactId) {
       if (!c.email && st.email1) c.email = st.email1;
       save();
       toast('Skip trace done — ' + (st.phone1 ? st.phone1.number : 'no phone found') + ' (' + data.creditsRemaining + ' credits left)', 'success');
+      // Re-render open contact detail
+      if (typeof openDetail === 'function') {
+        var modal = document.getElementById('contact-modal');
+        if (modal && modal.style.display !== 'none') { openDetail(contactId); }
+      }
     } else {
       toast('Skip trace: ' + (data.error || 'No match found'), 'info');
     }
