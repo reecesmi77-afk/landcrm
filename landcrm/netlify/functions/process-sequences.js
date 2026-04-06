@@ -25,7 +25,6 @@ function nextBizTimestamp(daysAhead = 3) {
   return ct.getTime();
 }
 
-// Days between steps — stagger naturally
 const STEP_DELAYS = [
   3, // step 1 → 2: 3 days
   2, // step 2 → 3: 2 days
@@ -53,7 +52,6 @@ async function notifyWilliam(message) {
 }
 
 exports.handler = async (event) => {
-  // Accept GET (from cron) or POST (from manual trigger)
   const cronSecret = process.env.CRON_SECRET;
   const authHeader = event.headers?.authorization || event.headers?.Authorization || '';
   if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
@@ -69,12 +67,24 @@ exports.handler = async (event) => {
   const BIN = process.env.JSONBIN_BIN_ID;
   if (!KEY || !BIN) return { statusCode: 500, body: JSON.stringify({ error: 'JSONbin not configured' }) };
 
-  // Read bin
   const readRes = await fetch(`https://api.jsonbin.io/v3/b/${BIN}/latest`, { headers: { 'X-Master-Key': KEY } });
   const readData = await readRes.json();
   const record = readData.record || {};
   const sequences = record.sequences || {};
   const conversations = record.conversations || {};
+
+  // Build a quick phone → CRM stage lookup for Dead/Not Motivated checks
+  const crmContacts = record.crmContacts || [];
+  function getCrmStage(phone) {
+    const norm = phone.replace(/\D/g, '');
+    const contact = crmContacts.find(c => {
+      const cp = c.phone ? c.phone.replace(/\D/g, '') : '';
+      return cp && (cp === norm || cp === norm.slice(-10) || norm === cp.slice(-10));
+    });
+    return contact ? contact.stage : null;
+  }
+
+  const DEAD_STAGES = ['Dead', 'Not Motivated Yet'];
 
   const now = Date.now();
   let processed = 0, sent = 0, paused = 0, completed = 0;
@@ -86,8 +96,32 @@ exports.handler = async (event) => {
     // Skip if not active
     if (!seq.active) continue;
 
-    // Check if they've replied — if so, pause sequence
+    // ── HARD STOP 1: CRM stage check ─────────────────────────────────
+    // Never text Dead or Not Motivated Yet contacts regardless of sequence state
+    const crmStage = getCrmStage(phone);
+    if (crmStage && DEAD_STAGES.includes(crmStage)) {
+      seq.active = false;
+      seq.paused = true;
+      seq.pausedReason = `CRM stage: ${crmStage}`;
+      seq.pausedAt = new Date().toISOString();
+      // Also mark opted out in conversations so webhook never responds either
+      if (!conversations[phone]) conversations[phone] = {};
+      conversations[phone].optOut = true;
+      conversations[phone].optOutReason = `CRM stage: ${crmStage}`;
+      log.push(`BLOCKED ${seq.contactName || phone} — CRM stage is ${crmStage}`);
+      continue;
+    }
+
+    // ── HARD STOP 2: Opted out in conversation record ─────────────────
     const convo = conversations[phone];
+    if (convo?.optOut) {
+      seq.active = false;
+      seq.pausedReason = 'opted out';
+      log.push(`STOPPED ${seq.contactName || phone} — opted out`);
+      continue;
+    }
+
+    // ── HARD STOP 3: Has replied — pause sequence ─────────────────────
     if (convo?.messages?.some(m => m.direction === 'inbound')) {
       seq.active = false;
       seq.paused = true;
@@ -95,14 +129,6 @@ exports.handler = async (event) => {
       seq.pausedAt = new Date().toISOString();
       log.push(`PAUSED ${seq.contactName || phone} — replied`);
       paused++;
-      continue;
-    }
-
-    // Check if opted out
-    if (convo?.optOut) {
-      seq.active = false;
-      seq.pausedReason = 'opted out';
-      log.push(`STOPPED ${seq.contactName || phone} — opted out`);
       continue;
     }
 
@@ -119,13 +145,10 @@ exports.handler = async (event) => {
     const messages = seq.messages || [];
     const nextStep = currentStep + 1;
 
-    // Send pending message (queued from after-hours)
     let messageToSend = seq.pendingMessage;
 
-    // Or build next sequence message
     if (!messageToSend) {
       if (nextStep > messages.length) {
-        // Sequence complete — check if 30 days have passed for re-engage
         const lastTouch = seq.touches?.[seq.touches.length - 1];
         const daysSinceLast = lastTouch?.sentAt
           ? Math.floor((now - new Date(lastTouch.sentAt).getTime()) / 86400000)
@@ -141,14 +164,12 @@ exports.handler = async (event) => {
           seq.completedAt = new Date().toISOString();
           log.push(`COMPLETE ${seq.contactName || phone} — all messages sent`);
 
-          // Alert in #action-list — sequence exhausted, needs human decision
           const ACTION_CH2 = process.env.SLACK_CHANNEL_ACTION;
           if (ACTION_CH2) {
             try {
               await sendSlackMessage(ACTION_CH2, [
                 { type: 'header', text: { type: 'plain_text', text: `🏁 Sequence Complete — No Response`, emoji: true } },
-                { type: 'section', text: { type: 'mrkdwn', text: `*${seq.contactName || phone}* — ${seq.county || ''}${seq.state ? ', ' + seq.state : ''}
-All 5 messages sent with no reply. Decision needed:` } },
+                { type: 'section', text: { type: 'mrkdwn', text: `*${seq.contactName || phone}* — ${seq.county || ''}${seq.state ? ', ' + seq.state : ''}\nAll 5 messages sent with no reply. Decision needed:` } },
                 { type: 'actions', elements: [
                   { type: 'button', text: { type: 'plain_text', text: '📞 Make Personal Call', emoji: true }, style: 'primary', action_id: 'called_back', value: JSON.stringify({ phone, name: seq.contactName }) },
                   { type: 'button', text: { type: 'plain_text', text: '💤 Move to Long Nurture', emoji: true }, action_id: 'no_answer_ai', value: JSON.stringify({ phone, name: seq.contactName }) },
@@ -165,7 +186,7 @@ All 5 messages sent with no reply. Decision needed:` } },
           continue;
         }
       } else {
-        messageToSend = messages[nextStep - 1]; // 0-indexed
+        messageToSend = messages[nextStep - 1];
         seq.step = nextStep;
       }
     }
@@ -178,7 +199,6 @@ All 5 messages sent with no reply. Decision needed:` } },
       seq.lastSentAt = now;
       seq.pendingMessage = null;
 
-      // Calculate next send time based on step delays
       const delayDays = STEP_DELAYS[seq.step - 2] || 3;
       seq.nextSendAt = nextBizTimestamp(delayDays);
 
@@ -192,7 +212,6 @@ All 5 messages sent with no reply. Decision needed:` } },
 
       log.push(`SENT step ${seq.step} to ${seq.contactName || phone}`);
 
-      // Post to #sequences
       const SEQ_CH = process.env.SLACK_CHANNEL_SEQUENCES;
       if (SEQ_CH) {
         try {
@@ -202,7 +221,6 @@ All 5 messages sent with no reply. Decision needed:` } },
         } catch(e) { console.error('Slack seq error:', e.message); }
       }
 
-      // Alert William if this is the re-engage
       if (seq.reEngageSent && seq.step > (messages.length || 5)) {
         await notifyWilliam(`🔄 30-day re-engage sent to ${seq.contactName || phone}`);
       }
@@ -212,8 +230,8 @@ All 5 messages sent with no reply. Decision needed:` } },
   }
 
   record.sequences = sequences;
+  record.conversations = conversations;
 
-  // Write back
   await fetch(`https://api.jsonbin.io/v3/b/${BIN}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', 'X-Master-Key': KEY },
