@@ -1673,6 +1673,7 @@ function openDetail(id){
           <div style="display:flex;gap:6px">
             ${c.handoff!=='Human active'?`<button class="btn btn-human btn-sm" onclick="updateHandoff('${id}','Human active')">Claim lead</button>`:''}
             ${c.handoff==='Human active'?`<button class="btn btn-ai btn-sm" onclick="updateHandoff('${id}','AI handling')">Return to AI</button>`:''}
+            ${c.stage!=='Dead'?`<button class="btn btn-sm" onclick="stopComms('${id}')" style="background:var(--cdim);color:var(--coral);border:1px solid rgba(248,113,113,0.3);font-size:11px">🚫 Stop Comms</button>`:''}
           </div>
         </div>
       </div>
@@ -3821,6 +3822,51 @@ function initiateQuoCall(phone, name) {
   var deepLink = 'openphone://call?number=' + encodeURIComponent(e164);
   window.location.href = deepLink;
   toast('Opening Quo — calling ' + (name || phone), 'success');
+}
+
+async function stopComms(contactId) {
+  var c = db.contacts.find(function(x){ return x.id === contactId; });
+  if (!c) return;
+  if (!confirm('Stop all communications with ' + c.name + '? This marks them as Dead and opts them out of all sequences.')) return;
+
+  // 1. Update CRM
+  c.stage = 'Dead';
+  c.temp = 'cold';
+  c.handoff = 'Human active';
+  if (!c.touches) c.touches = [];
+  c.touches.push({
+    date: today(),
+    channel: 'SMS',
+    direction: 'Inbound',
+    by: 'You',
+    outcome: 'Opted out',
+    note: 'Comms stopped — opted out manually via Stop Comms button'
+  });
+  save();
+
+  // 2. Stop sequence + mark opted-out in JSONbin
+  try {
+    var phone = c.phone ? c.phone.replace(/\D/g,'') : null;
+    if (phone) {
+      var res = await fetch('/.netlify/functions/stop-comms', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ phone: phone, name: c.name })
+      });
+      var data = await res.json();
+      if (data.ok) {
+        toast('Comms stopped for ' + c.name + ' — sequence deactivated, opted out in system', 'success');
+      } else {
+        toast('CRM updated — but JSONbin stop failed: ' + (data.error||'unknown'), 'info');
+      }
+    }
+  } catch(e) {
+    toast('CRM updated — could not reach sequence engine: ' + e.message, 'info');
+  }
+
+  // Re-render
+  renderDashboard();
+  openDetail(contactId);
 }
 
 async function runPropertyLookup(contactId) {
