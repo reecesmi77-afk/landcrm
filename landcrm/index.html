@@ -501,6 +501,11 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h8M2 12h5"/></svg>
         SMS Sequences
       </button>
+      <button class="nav-item" onclick="showView('agents')" id="nav-agents">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="5" r="2.5"/><path d="M1 13c0-2.76 2.24-5 5-5s5 2.24 5 5"/><path d="M11 7l1.5 1.5L15 6"/></svg>
+        Agents
+        <span class="nb" id="nb-agents" style="display:none;background:var(--purple)">0</span>
+      </button>
       <button class="nav-item" onclick="showView('gmail')" id="nav-gmail">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12v9a1 1 0 01-1 1H3a1 1 0 01-1-1V4z"/><path d="M2 4l6 5 6-5"/></svg>
         Email
@@ -570,6 +575,18 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
           </div>
           <div style="font-size:11px;color:var(--text3);padding:0 14px 8px;">AI qualified or flagged — review before calling</div>
           <div class="card-body" id="lane-ai-review" style="padding-top:0;max-height:420px;overflow-y:auto;"></div>
+        </div>
+
+        <!-- Agent Touches Lane -->
+        <div class="card" style="border-top:2px solid var(--purple);">
+          <div class="card-header" style="padding-bottom:8px;">
+            <span style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--purple);">
+              <span style="font-size:16px;">🤝</span> Agent Touches
+            </span>
+            <span id="agent-touch-count" style="font-size:11px;background:var(--purple);color:#fff;border-radius:20px;padding:2px 8px;font-weight:700;">0</span>
+          </div>
+          <div style="font-size:11px;color:var(--text3);padding:0 14px 8px;">RE agents due for a touch</div>
+          <div class="card-body" id="lane-agent-touch" style="padding-top:0;max-height:420px;overflow-y:auto;"></div>
         </div>
 
       </div>
@@ -1001,6 +1018,33 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
       </div>
     </div>
 
+    <!-- AGENTS -->
+    <div id="view-agents" class="view">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+        <div>
+          <div style="font-size:11px;font-family:'DM Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">RE Agent Network</div>
+          <div style="font-size:13px;color:var(--text2)">Build relationships. Get deal flow.</div>
+        </div>
+        <button class="btn btn-primary" onclick="openAddAgent()">+ Add Agent</button>
+      </div>
+
+      <!-- Stats bar -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;" id="agent-stats"></div>
+
+      <!-- Filter tabs -->
+      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+        <button class="btn btn-ghost btn-sm agent-filter-btn active" onclick="filterAgents('all')" id="af-all">All</button>
+        <button class="btn btn-ghost btn-sm agent-filter-btn" onclick="filterAgents('Identified')" id="af-identified">Identified</button>
+        <button class="btn btn-ghost btn-sm agent-filter-btn" onclick="filterAgents('Contacted')" id="af-contacted">Contacted</button>
+        <button class="btn btn-ghost btn-sm agent-filter-btn" onclick="filterAgents('Building')" id="af-building">Building</button>
+        <button class="btn btn-ghost btn-sm agent-filter-btn" onclick="filterAgents('Active Partner')" id="af-active">Active Partner</button>
+        <button class="btn btn-ghost btn-sm agent-filter-btn" onclick="filterAgents('needs-touch')" id="af-touch" style="border-color:rgba(251,191,36,0.4);color:var(--amber)">⚡ Needs Touch</button>
+      </div>
+
+      <!-- Agent cards grid -->
+      <div id="agent-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;"></div>
+    </div>
+
     <!-- GMAIL -->
     <div id="view-gmail" class="view">
       <div style="display:grid;grid-template-columns:280px 1fr;gap:0;height:calc(100vh - 100px);background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden;">
@@ -1054,7 +1098,34 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
       </div>
     </div>
 
-    <!-- CALCULATOR -->    <!-- GMAIL -->
+    <!-- CALCULATOR -->    <!-- AGENTS -->
+    <div id="view-agents" class="view">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+        <div>
+          <div style="font-size:11px;font-family:'DM Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">RE Agent Network</div>
+          <div style="font-size:13px;color:var(--text2)">Build relationships. Get deal flow.</div>
+        </div>
+        <button class="btn btn-primary" onclick="openAddAgent()">+ Add Agent</button>
+      </div>
+
+      <!-- Stats bar -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;" id="agent-stats"></div>
+
+      <!-- Filter tabs -->
+      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+        <button class="btn btn-ghost btn-sm agent-filter-btn active" onclick="filterAgents('all')" id="af-all">All</button>
+        <button class="btn btn-ghost btn-sm agent-filter-btn" onclick="filterAgents('Identified')" id="af-identified">Identified</button>
+        <button class="btn btn-ghost btn-sm agent-filter-btn" onclick="filterAgents('Contacted')" id="af-contacted">Contacted</button>
+        <button class="btn btn-ghost btn-sm agent-filter-btn" onclick="filterAgents('Building')" id="af-building">Building</button>
+        <button class="btn btn-ghost btn-sm agent-filter-btn" onclick="filterAgents('Active Partner')" id="af-active">Active Partner</button>
+        <button class="btn btn-ghost btn-sm agent-filter-btn" onclick="filterAgents('needs-touch')" id="af-touch" style="border-color:rgba(251,191,36,0.4);color:var(--amber)">⚡ Needs Touch</button>
+      </div>
+
+      <!-- Agent cards grid -->
+      <div id="agent-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;"></div>
+    </div>
+
+    <!-- GMAIL -->
     <div id="view-gmail" class="view">
       <div style="display:grid;grid-template-columns:280px 1fr;gap:0;height:calc(100vh - 100px);background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden;">
 
@@ -1256,7 +1327,7 @@ const HANDOFF_STATES = ['AI handling','Needs human review','Human active'];
 // DATA
 // ══════════════════════════════════
 const KEY = 'landcrm_v2';
-function load(){try{const r=localStorage.getItem(KEY);return r?JSON.parse(r):{contacts:[],buyers:[]};}catch(e){return{contacts:[],buyers:[]};}}
+function load(){try{const r=localStorage.getItem(KEY);const d=r?JSON.parse(r):{contacts:[],buyers:[],agents:[]};if(!d.agents)d.agents=[];return d;}catch(e){return{contacts:[],buyers:[],agents:[]};}}
 function save(){
   localStorage.setItem(KEY,JSON.stringify(db));
   // Auto-sync to JSONbin in background on every save — no manual clicks needed
@@ -1345,7 +1416,7 @@ function showView(v){
   document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
   currentView=v;
   const _ve=document.getElementById('view-'+v);if(_ve)_ve.classList.add('active');
-  const titles={dashboard:'Dashboard','acq-pipeline':'Acquisitions Pipeline','dis-pipeline':'Dispositions Pipeline','ai-queue':'AI Handoff Queue',sellers:'All Leads',buyers:'Buyer List',calculator:'Offer Calculator',sequences:'SMS Sequences',settings:'Settings','ai-qualified':'AI Qualified Leads',reporting:'Reporting',gmail:'Email'};
+  const titles={dashboard:'Dashboard','acq-pipeline':'Acquisitions Pipeline','dis-pipeline':'Dispositions Pipeline','ai-queue':'AI Handoff Queue',sellers:'All Leads',buyers:'Buyer List',calculator:'Offer Calculator',sequences:'SMS Sequences',settings:'Settings','ai-qualified':'AI Qualified Leads',reporting:'Reporting',gmail:'Email',agents:'Agent Network'};
   document.getElementById('page-title').textContent=titles[v]||v;
   if(v==='dashboard')renderDashboard();
   if(v==='acq-pipeline')renderPipeline('acq');
@@ -1358,6 +1429,7 @@ function showView(v){
   if(v==='ai-qualified')loadQualifiedLeads();
   if(v==='reporting')renderReporting();
   if(v==='gmail')loadGmailInbox();
+  if(v==='agents'){renderAgents();renderAgentStats();}
 }
 
 // ══════════════════════════════════
@@ -1456,6 +1528,46 @@ function renderCockpit(){
       '</div>';
     }).join('');
   }
+}
+
+  // Agent touch lane
+  var agentsDue = (db.agents||[]).filter(agentNeedsTouch);
+  var atCount = document.getElementById('agent-touch-count');
+  if (atCount) atCount.textContent = agentsDue.length;
+  var ln4 = document.getElementById('lane-agent-touch');
+  if (ln4) {
+    if (!agentsDue.length) {
+      ln4.innerHTML = '<div style="font-size:13px;color:var(--text3);padding:4px 0;">All agents touched recently</div>';
+    } else {
+      ln4.innerHTML = agentsDue.map(function(agent) {
+        var days = daysSince(agent.lastContact);
+        var aid = agent.id, aname = agent.name||'Unknown';
+        var aphone = (agent.phone||'').replace(/[^0-9+]/g,'');
+        var card = '<div class="cockpit-card" onclick="openAgentDetail(\'' + aid + '\')" style="border-left:3px solid var(--purple);">';
+        card += '<div class="cockpit-name">' + aname + '</div>';
+        card += '<div class="cockpit-sub">' + (agent.brokerage||'Independent') + ' &middot; ' + (agent.markets||'') + '</div>';
+        card += '<div class="cockpit-sub" style="color:var(--amber);">' + days + 'd since last touch &middot; ' + (agent.stage||'') + '</div>';
+        card += '<div class="cockpit-actions">';
+        if (aphone) {
+          card += '<button class="btn btn-primary btn-sm" onclick="event.stopPropagation();window.location=\'openphone://call?number=' + aphone + '\';saveAgentQuickTouch(\'' + aid + '\')">&#128222; Call</button>';
+        }
+        card += '<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();logAgentTouch(\'' + aid + '\')">Log Touch</button>';
+        card += '<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();sendAgentDealAlert(\'' + aid + '\')">Alert</button>';
+        card += '</div></div>';
+        return card;
+      }).join('');
+    }
+  }
+
+function saveAgentQuickTouch(id) {
+  var agent = db.agents ? db.agents.find(function(a){ return a.id === id; }) : null;
+  if (!agent) return;
+  if (!agent.touches) agent.touches = [];
+  agent.touches.push({ date: today(), channel: 'Call', note: 'Called from cockpit' });
+  agent.lastContact = today();
+  if (agent.stage === 'Identified') agent.stage = 'Contacted';
+  save();
+  renderAgentStats();
 }
 
 function logCockpitCall(id){
@@ -5262,6 +5374,382 @@ async function openContactEmail(contactId) {
     'Your property in ' + (c.county||'') + ' County, ' + (c.state||''),
     'Hi ' + (c.name ? c.name.split(' ')[0] : '') + ','
   );
+}
+
+
+// ══════════════════════════════════════════════════════
+// AGENT NETWORK
+// ══════════════════════════════════════════════════════
+
+var _agentFilter = 'all';
+const AGENT_STAGES = ['Identified','Contacted','Building','Active Partner','Sent Deal'];
+const AGENT_TOUCH_DAYS = { 'Identified':7, 'Contacted':14, 'Building':30, 'Active Partner':45, 'Sent Deal':21 };
+
+function daysSince(dateStr) {
+  if (!dateStr) return 999;
+  return Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000);
+}
+
+function agentNeedsTouch(agent) {
+  var threshold = AGENT_TOUCH_DAYS[agent.stage] || 30;
+  return daysSince(agent.lastContact) >= threshold;
+}
+
+function renderAgentStats() {
+  var el = document.getElementById('agent-stats');
+  if (!el) return;
+  var agents = db.agents || [];
+  var total = agents.length;
+  var active = agents.filter(a => a.stage === 'Active Partner').length;
+  var needsTouch = agents.filter(agentNeedsTouch).length;
+  var dealsFrom = agents.filter(a => a.dealsReferred > 0).reduce((sum,a) => sum + (a.dealsReferred||0), 0);
+
+  var statStyle = 'background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:14px 16px;';
+  el.innerHTML = [
+    ['Total Agents', total, 'var(--text)'],
+    ['Active Partners', active, 'var(--teal)'],
+    ['Needs Touch', needsTouch, needsTouch > 0 ? 'var(--amber)' : 'var(--text)'],
+    ['Deals Referred', dealsFrom, 'var(--accent)'],
+  ].map(([label, val, color]) => `
+    <div style="${statStyle}">
+      <div style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">${label}</div>
+      <div style="font-size:24px;font-weight:700;color:${color}">${val}</div>
+    </div>`).join('');
+
+  // Update needs touch badge
+  var badge = document.getElementById('nb-agents');
+  if (badge) { badge.textContent = needsTouch; badge.style.display = needsTouch > 0 ? 'inline' : 'none'; }
+}
+
+function filterAgents(filter) {
+  _agentFilter = filter;
+  document.querySelectorAll('.agent-filter-btn').forEach(b => b.classList.remove('active'));
+  var btn = document.getElementById('af-' + (filter === 'Active Partner' ? 'active' : filter === 'needs-touch' ? 'touch' : filter === 'Building' ? 'building' : filter));
+  if (btn) btn.classList.add('active');
+  renderAgents();
+}
+
+function renderAgents() {
+  var el = document.getElementById('agent-grid');
+  if (!el) return;
+  var agents = db.agents || [];
+
+  var filtered = agents.filter(a => {
+    if (_agentFilter === 'all') return true;
+    if (_agentFilter === 'needs-touch') return agentNeedsTouch(a);
+    return a.stage === _agentFilter;
+  });
+
+  // Sort: needs touch first, then by last contact
+  filtered.sort((a, b) => {
+    var an = agentNeedsTouch(a), bn = agentNeedsTouch(b);
+    if (an && !bn) return -1;
+    if (!an && bn) return 1;
+    return daysSince(a.lastContact) - daysSince(b.lastContact);
+  });
+
+  if (!filtered.length) {
+    el.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--text3);">
+      <div style="font-size:28px;margin-bottom:12px;">🤝</div>
+      <div style="font-size:13px;margin-bottom:16px;">${_agentFilter === 'all' ? 'No agents yet — add your first RE agent contact' : 'No agents in this category'}</div>
+      ${_agentFilter === 'all' ? '<button class="btn btn-primary btn-sm" onclick="openAddAgent()">+ Add First Agent</button>' : ''}
+    </div>`;
+    return;
+  }
+
+  el.innerHTML = filtered.map(agent => {
+    var needsTouch = agentNeedsTouch(agent);
+    var days = daysSince(agent.lastContact);
+    var stageColor = {
+      'Identified':'var(--text3)',
+      'Contacted':'var(--accent)',
+      'Building':'var(--amber)',
+      'Active Partner':'var(--teal)',
+      'Sent Deal':'var(--purple)'
+    }[agent.stage] || 'var(--text3)';
+
+    return `<div style="background:var(--bg2);border:1px solid ${needsTouch ? 'rgba(251,191,36,0.35)' : 'var(--border)'};border-radius:var(--rl);padding:16px;cursor:pointer;transition:border-color 0.15s;" onclick="openAgentDetail('${agent.id}')">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:36px;height:36px;border-radius:50%;background:var(--adim);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:13px;color:var(--accent);flex-shrink:0;">${(agent.name||'?')[0].toUpperCase()}</div>
+          <div>
+            <div style="font-weight:600;font-size:14px;">${agent.name||'Unknown'}</div>
+            <div style="font-size:11px;color:var(--text3);">${agent.brokerage||'Independent'}</div>
+          </div>
+        </div>
+        <div style="font-size:10px;font-family:'DM Mono',monospace;color:${stageColor};text-transform:uppercase;letter-spacing:.05em;padding:2px 7px;border-radius:4px;background:${stageColor}18;">${agent.stage||'Identified'}</div>
+      </div>
+      <div style="display:flex;gap:14px;font-size:11px;color:var(--text3);margin-bottom:10px;flex-wrap:wrap;">
+        ${agent.phone ? `<span>📞 ${agent.phone}</span>` : ''}
+        ${agent.markets ? `<span>📍 ${agent.markets}</span>` : ''}
+        ${agent.dealsReferred ? `<span style="color:var(--teal)">🤝 ${agent.dealsReferred} deal${agent.dealsReferred>1?'s':''}</span>` : ''}
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div style="font-size:11px;color:${needsTouch ? 'var(--amber)' : 'var(--text3)'}">
+          ${needsTouch ? '⚡ Needs touch — ' : ''}${agent.lastContact ? days + 'd since last contact' : 'Never contacted'}
+        </div>
+        <div style="display:flex;gap:6px;">
+          <button onclick="event.stopPropagation();logAgentTouch('${agent.id}')" class="btn btn-ghost btn-sm" style="font-size:10px;padding:2px 8px;">Log touch</button>
+          ${agent.phone ? `<button onclick="event.stopPropagation();window.location='openphone://call?number=${encodeURIComponent(agent.phone)}'" class="btn btn-ghost btn-sm" style="font-size:10px;padding:2px 8px;color:var(--accent);">📞 Call</button>` : ''}
+        </div>
+      </div>
+      ${agent.notes && agent.notes.length ? `<div style="margin-top:8px;font-size:11px;color:var(--text3);border-top:1px solid var(--border);padding-top:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${agent.notes[agent.notes.length-1].text}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function openAddAgent(id) {
+  var agent = id ? db.agents.find(a => a.id === id) : null;
+  var isEdit = !!agent;
+  openCustomModal(`
+    <div class="modal-header">
+      <div class="modal-title">${isEdit ? 'Edit Agent' : '+ Add RE Agent'}</div>
+      <button class="modal-close" onclick="closeModal()">&#x2715;</button>
+    </div>
+    <div class="modal-body" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div class="form-group" style="grid-column:1/-1">
+        <label class="form-label">Full name</label>
+        <input class="form-input" id="ag-name" value="${agent?.name||''}" placeholder="Jane Smith">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Phone</label>
+        <input class="form-input" id="ag-phone" value="${agent?.phone||''}" placeholder="901-555-0100">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input class="form-input" id="ag-email" value="${agent?.email||''}" placeholder="jane@realty.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Brokerage</label>
+        <input class="form-input" id="ag-brokerage" value="${agent?.brokerage||''}" placeholder="Coldwell Banker, etc">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Markets (counties/states)</label>
+        <input class="form-input" id="ag-markets" value="${agent?.markets||''}" placeholder="Craighead AR, DeSoto MS">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Stage</label>
+        <select class="form-input" id="ag-stage">
+          ${AGENT_STAGES.map(s => `<option value="${s}" ${(agent?.stage||'Identified')===s?'selected':''}>${s}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Speciality</label>
+        <input class="form-input" id="ag-specialty" value="${agent?.specialty||''}" placeholder="Vacant land, rural, farms">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Deals referred</label>
+        <input class="form-input" type="number" id="ag-deals" value="${agent?.dealsReferred||0}" min="0">
+      </div>
+      <div class="form-group" style="grid-column:1/-1">
+        <label class="form-label">How we met / notes</label>
+        <textarea class="form-textarea" id="ag-note" style="min-height:70px;" placeholder="Met at land investing meetup, referred by X, found on Zillow...">${agent?.notes?.length ? agent.notes[agent.notes.length-1].text : ''}</textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveAgent('${id||''}')">${isEdit ? 'Save Changes' : 'Add Agent'}</button>
+    </div>`);
+  setTimeout(() => document.getElementById('ag-name')?.focus(), 100);
+}
+
+function saveAgent(id) {
+  var name = document.getElementById('ag-name')?.value?.trim();
+  if (!name) { toast('Name required', 'error'); return; }
+  var noteText = document.getElementById('ag-note')?.value?.trim();
+  if (id) {
+    var agent = db.agents.find(a => a.id === id);
+    if (!agent) return;
+    agent.name = name;
+    agent.phone = document.getElementById('ag-phone')?.value?.trim() || '';
+    agent.email = document.getElementById('ag-email')?.value?.trim() || '';
+    agent.brokerage = document.getElementById('ag-brokerage')?.value?.trim() || '';
+    agent.markets = document.getElementById('ag-markets')?.value?.trim() || '';
+    agent.stage = document.getElementById('ag-stage')?.value || 'Identified';
+    agent.specialty = document.getElementById('ag-specialty')?.value?.trim() || '';
+    agent.dealsReferred = parseInt(document.getElementById('ag-deals')?.value||0);
+    if (noteText) { if(!agent.notes)agent.notes=[]; agent.notes.unshift({date:today(),text:noteText}); }
+  } else {
+    var newAgent = {
+      id: uid(),
+      name,
+      phone: document.getElementById('ag-phone')?.value?.trim() || '',
+      email: document.getElementById('ag-email')?.value?.trim() || '',
+      brokerage: document.getElementById('ag-brokerage')?.value?.trim() || '',
+      markets: document.getElementById('ag-markets')?.value?.trim() || '',
+      stage: document.getElementById('ag-stage')?.value || 'Identified',
+      specialty: document.getElementById('ag-specialty')?.value?.trim() || '',
+      dealsReferred: parseInt(document.getElementById('ag-deals')?.value||0),
+      lastContact: null,
+      created: today(),
+      notes: noteText ? [{date:today(), text:noteText}] : [],
+      touches: [],
+    };
+    db.agents.unshift(newAgent);
+  }
+  save();
+  closeModal();
+  renderAgents();
+  renderAgentStats();
+  toast((id ? 'Agent updated' : 'Agent added — ') + name, 'success');
+}
+
+function openAgentDetail(id) {
+  var agent = db.agents.find(a => a.id === id);
+  if (!agent) return;
+  var needsTouch = agentNeedsTouch(agent);
+  var days = daysSince(agent.lastContact);
+
+  openCustomModal(`
+    <div class="modal-header">
+      <div class="modal-title">${agent.name}</div>
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-ghost btn-sm" onclick="closeModal();openAddAgent('${id}')">Edit</button>
+        <button class="modal-close" onclick="closeModal()">&#x2715;</button>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+        ${agent.phone ? `<button class="btn btn-primary btn-sm" onclick="window.location='openphone://call?number=${encodeURIComponent(agent.phone)}'">📞 Call ${agent.name.split(' ')[0]}</button>` : ''}
+        ${agent.phone ? `<button class="btn btn-ghost btn-sm" onclick="window.location='openphone://conversation?number=${encodeURIComponent(agent.phone)}'">💬 Text</button>` : ''}
+        ${agent.email ? `<button class="btn btn-ghost btn-sm" onclick="openContactEmailDirect('${agent.email}','${agent.name}')">✉️ Email</button>` : ''}
+        <button class="btn btn-ghost btn-sm" onclick="logAgentTouch('${id}')">✓ Log Touch</button>
+        <button class="btn btn-ghost btn-sm" style="color:var(--amber)" onclick="sendAgentDealAlert('${id}')">🤝 Send Deal Alert</button>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px;">
+        <div style="background:var(--bg3);border-radius:6px;padding:10px;">
+          <div style="font-size:10px;color:var(--text3);margin-bottom:3px;font-family:'DM Mono',monospace">STAGE</div>
+          <div style="font-size:13px;font-weight:600">${agent.stage}</div>
+        </div>
+        <div style="background:var(--bg3);border-radius:6px;padding:10px;">
+          <div style="font-size:10px;color:var(--text3);margin-bottom:3px;font-family:'DM Mono',monospace">LAST CONTACT</div>
+          <div style="font-size:13px;font-weight:600;color:${needsTouch?'var(--amber)':'var(--text)'}">${agent.lastContact ? days+'d ago' : 'Never'}</div>
+        </div>
+        <div style="background:var(--bg3);border-radius:6px;padding:10px;">
+          <div style="font-size:10px;color:var(--text3);margin-bottom:3px;font-family:'DM Mono',monospace">DEALS REFERRED</div>
+          <div style="font-size:13px;font-weight:600;color:var(--teal)">${agent.dealsReferred||0}</div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;font-size:12px;">
+        ${agent.brokerage ? `<div><span style="color:var(--text3)">Brokerage:</span> ${agent.brokerage}</div>` : ''}
+        ${agent.markets ? `<div><span style="color:var(--text3)">Markets:</span> ${agent.markets}</div>` : ''}
+        ${agent.specialty ? `<div><span style="color:var(--text3)">Specialty:</span> ${agent.specialty}</div>` : ''}
+        ${agent.email ? `<div><span style="color:var(--text3)">Email:</span> ${agent.email}</div>` : ''}
+      </div>
+
+      <!-- Stage progression -->
+      <div style="margin-bottom:14px;">
+        <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Move Stage</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          ${AGENT_STAGES.map(s => `<button class="btn btn-ghost btn-sm" onclick="moveAgentStage('${id}','${s}')" style="${s===agent.stage?'border-color:var(--accent);color:var(--accent);':''}font-size:11px;">${s}</button>`).join('')}
+        </div>
+      </div>
+
+      <!-- Touch history -->
+      <div style="margin-bottom:14px;">
+        <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Touch History</div>
+        ${(agent.touches||[]).length ? (agent.touches).slice().reverse().slice(0,5).map(t => `
+          <div style="display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:11px;">
+            <span style="color:var(--text3);min-width:70px">${t.date}</span>
+            <span style="color:var(--accent);min-width:50px">${t.channel}</span>
+            <span style="color:var(--text2)">${t.note||''}</span>
+          </div>`).join('') : '<div style="font-size:11px;color:var(--text3)">No touches logged yet</div>'}
+      </div>
+
+      <!-- Notes -->
+      <div>
+        <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Notes</div>
+        <textarea class="form-textarea" id="agent-note-input" style="min-height:60px;margin-bottom:8px;" placeholder="Add a note..."></textarea>
+        <button class="btn btn-ghost btn-sm" onclick="addAgentNote('${id}')">Save Note</button>
+        <div style="margin-top:10px;">
+          ${(agent.notes||[]).slice(0,4).map(n => `<div style="font-size:11px;color:var(--text2);padding:4px 0;border-bottom:1px solid var(--border);"><span style="color:var(--text3)">${n.date} — </span>${n.text}</div>`).join('')}
+        </div>
+      </div>
+    </div>`);
+}
+
+function moveAgentStage(id, stage) {
+  var agent = db.agents.find(a => a.id === id);
+  if (!agent) return;
+  agent.stage = stage;
+  save();
+  closeModal();
+  openAgentDetail(id);
+  renderAgents();
+  renderAgentStats();
+  toast(agent.name + ' → ' + stage, 'success');
+}
+
+function logAgentTouch(id) {
+  var agent = db.agents.find(a => a.id === id);
+  if (!agent) return;
+  openCustomModal(`
+    <div class="modal-header">
+      <div class="modal-title">Log touch — ${agent.name}</div>
+      <button class="modal-close" onclick="closeModal()">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group" style="margin-bottom:10px">
+        <label class="form-label">Channel</label>
+        <select class="form-input" id="touch-channel">
+          <option>Call</option><option>Text</option><option>Email</option><option>In person</option><option>Referral received</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes</label>
+        <textarea class="form-textarea" id="touch-note" style="min-height:70px;" placeholder="What was discussed..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveAgentTouch('${id}')">Log Touch</button>
+    </div>`);
+  setTimeout(() => document.getElementById('touch-note')?.focus(), 100);
+}
+
+function saveAgentTouch(id) {
+  var agent = db.agents.find(a => a.id === id);
+  if (!agent) return;
+  var channel = document.getElementById('touch-channel')?.value || 'Call';
+  var note = document.getElementById('touch-note')?.value?.trim() || '';
+  if (!agent.touches) agent.touches = [];
+  agent.touches.push({ date: today(), channel, note });
+  agent.lastContact = today();
+  // Auto-advance stage
+  if (agent.stage === 'Identified') agent.stage = 'Contacted';
+  save();
+  closeModal();
+  renderAgents();
+  renderAgentStats();
+  toast('Touch logged for ' + agent.name, 'success');
+}
+
+function addAgentNote(id) {
+  var agent = db.agents.find(a => a.id === id);
+  if (!agent) return;
+  var text = document.getElementById('agent-note-input')?.value?.trim();
+  if (!text) return;
+  if (!agent.notes) agent.notes = [];
+  agent.notes.unshift({ date: today(), text });
+  save();
+  closeModal();
+  openAgentDetail(id);
+  toast('Note saved', 'success');
+}
+
+function sendAgentDealAlert(id) {
+  var agent = db.agents.find(a => a.id === id);
+  if (!agent || !agent.email) { toast('Agent needs an email address', 'error'); return; }
+  var subject = 'Just closed a deal in your market — Coldwater Property Group';
+  var body = `Hi ${agent.name.split(' ')[0]},\n\nJust wanted to reach out — we recently closed on a vacant land deal in your market and are actively looking for more opportunities.\n\nIf you come across any sellers who need a quick, hassle-free solution for their land, we close in 2-3 weeks, all cash, no contingencies, and cover all closing costs.\n\nWould love to be a resource for you and your clients.\n\nBest,\nWilliam Smith\nColdwater Property Group`;
+  openCompose(agent.email, subject, body);
+}
+
+function openContactEmailDirect(email, name) {
+  var first = name ? name.split(' ')[0] : '';
+  openCompose(email, 'Following up — Coldwater Property Group', 'Hi ' + first + ',');
 }
 
 // INIT
