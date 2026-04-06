@@ -161,6 +161,31 @@ exports.handler = async (event) => {
       return { statusCode: 200, body: JSON.stringify({ ok: true }) };
     }
 
+    // ── MARK AS UNREAD ─────────────────────────────────────────────────
+    if (action === 'markUnread') {
+      const { messageId } = body;
+      await fetch(`${GMAIL_BASE}/messages/${messageId}/modify`, {
+        method: 'POST', headers, body: JSON.stringify({ addLabelIds: ['UNREAD'] }),
+      });
+      return { statusCode: 200, body: JSON.stringify({ ok: true }) };
+    }
+
+    // ── ARCHIVE ───────────────────────────────────────────────────────
+    if (action === 'archive') {
+      const { messageId } = body;
+      await fetch(`${GMAIL_BASE}/messages/${messageId}/modify`, {
+        method: 'POST', headers, body: JSON.stringify({ removeLabelIds: ['INBOX'] }),
+      });
+      return { statusCode: 200, body: JSON.stringify({ ok: true }) };
+    }
+
+    // ── TRASH ─────────────────────────────────────────────────────────
+    if (action === 'trash') {
+      const { messageId } = body;
+      await fetch(`${GMAIL_BASE}/messages/${messageId}/trash`, { method: 'POST', headers });
+      return { statusCode: 200, body: JSON.stringify({ ok: true }) };
+    }
+
     // ── SEARCH BY CONTACT EMAIL ───────────────────────────────────────
     if (action === 'searchContact') {
       const { email } = body;
