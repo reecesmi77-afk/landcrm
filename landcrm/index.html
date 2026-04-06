@@ -1011,6 +1011,11 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
             <button class="btn btn-primary btn-sm" onclick="openCompose()" style="flex:1">✏️ Compose</button>
             <button class="btn btn-ghost btn-sm" onclick="loadGmailInbox()" title="Refresh">↻</button>
           </div>
+          <div style="display:flex;border-bottom:1px solid var(--border);">
+            <button onclick="switchGmailFolder('in:inbox')" id="gf-inbox" style="flex:1;padding:8px;font-size:11px;font-family:'DM Mono',monospace;background:var(--adim);border:none;border-bottom:2px solid var(--accent);color:var(--accent);cursor:pointer;">Inbox</button>
+            <button onclick="switchGmailFolder('in:sent')" id="gf-sent" style="flex:1;padding:8px;font-size:11px;font-family:'DM Mono',monospace;background:none;border:none;border-bottom:2px solid transparent;color:var(--text3);cursor:pointer;">Sent</button>
+            <button onclick="switchGmailFolder('is:starred')" id="gf-starred" style="flex:1;padding:8px;font-size:11px;font-family:'DM Mono',monospace;background:none;border:none;border-bottom:2px solid transparent;color:var(--text3);cursor:pointer;">★ Starred</button>
+          </div>
           <div style="padding:8px;border-bottom:1px solid var(--border);">
             <input class="search-input" style="width:100%;font-size:11px;" placeholder="Search email..." id="gmail-search" oninput="searchGmail(this.value)">
           </div>
@@ -1019,17 +1024,29 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
 
         <!-- Right: email thread view -->
         <div style="display:flex;flex-direction:column;">
+          <!-- Action bar — shown when a thread is open -->
+          <div id="gmail-action-bar" style="display:none;padding:10px 16px;border-bottom:1px solid var(--border);display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+            <button class="btn btn-ghost btn-sm" onclick="showReplyBox()">↩ Reply</button>
+            <button class="btn btn-ghost btn-sm" onclick="showForwardBox()">↗ Forward</button>
+            <button class="btn btn-ghost btn-sm" onclick="archiveGmailThread()">Archive</button>
+            <button class="btn btn-ghost btn-sm" onclick="deleteGmailThread()">🗑 Delete</button>
+            <button class="btn btn-ghost btn-sm" onclick="markGmailUnread()" style="margin-left:auto;">Mark unread</button>
+          </div>
           <div id="gmail-thread" style="flex:1;overflow-y:auto;padding:24px;">
             <div style="text-align:center;padding:60px 20px;color:var(--text3);">
               <div style="font-size:32px;margin-bottom:12px;">✉️</div>
               <div style="font-size:13px;">Select an email to read</div>
             </div>
           </div>
-          <!-- Reply box -->
+          <!-- Reply / Forward box -->
           <div id="gmail-reply-box" style="display:none;border-top:1px solid var(--border);padding:14px 16px;">
-            <textarea id="gmail-reply-text" class="form-textarea" style="margin-bottom:8px;min-height:80px;" placeholder="Write a reply..."></textarea>
+            <div id="gmail-reply-label" style="font-size:10px;font-family:'DM Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Reply</div>
+            <div id="gmail-forward-to-row" style="display:none;margin-bottom:8px;">
+              <input class="form-input" id="gmail-forward-to" placeholder="Forward to: email@address.com" style="font-size:12px;">
+            </div>
+            <textarea id="gmail-reply-text" class="form-textarea" style="margin-bottom:8px;min-height:100px;" placeholder="Write your message..."></textarea>
             <div style="display:flex;gap:8px;">
-              <button class="btn btn-primary btn-sm" onclick="sendGmailReply()">Send Reply</button>
+              <button class="btn btn-primary btn-sm" onclick="sendGmailReply()">Send</button>
               <button class="btn btn-ghost btn-sm" onclick="document.getElementById('gmail-reply-box').style.display='none'">Cancel</button>
             </div>
           </div>
@@ -1047,6 +1064,11 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
             <button class="btn btn-primary btn-sm" onclick="openCompose()" style="flex:1">✏️ Compose</button>
             <button class="btn btn-ghost btn-sm" onclick="loadGmailInbox()" title="Refresh">↻</button>
           </div>
+          <div style="display:flex;border-bottom:1px solid var(--border);">
+            <button onclick="switchGmailFolder('in:inbox')" id="gf-inbox" style="flex:1;padding:8px;font-size:11px;font-family:'DM Mono',monospace;background:var(--adim);border:none;border-bottom:2px solid var(--accent);color:var(--accent);cursor:pointer;">Inbox</button>
+            <button onclick="switchGmailFolder('in:sent')" id="gf-sent" style="flex:1;padding:8px;font-size:11px;font-family:'DM Mono',monospace;background:none;border:none;border-bottom:2px solid transparent;color:var(--text3);cursor:pointer;">Sent</button>
+            <button onclick="switchGmailFolder('is:starred')" id="gf-starred" style="flex:1;padding:8px;font-size:11px;font-family:'DM Mono',monospace;background:none;border:none;border-bottom:2px solid transparent;color:var(--text3);cursor:pointer;">★ Starred</button>
+          </div>
           <div style="padding:8px;border-bottom:1px solid var(--border);">
             <input class="search-input" style="width:100%;font-size:11px;" placeholder="Search email..." id="gmail-search" oninput="searchGmail(this.value)">
           </div>
@@ -1055,17 +1077,29 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
 
         <!-- Right: email thread view -->
         <div style="display:flex;flex-direction:column;">
+          <!-- Action bar — shown when a thread is open -->
+          <div id="gmail-action-bar" style="display:none;padding:10px 16px;border-bottom:1px solid var(--border);display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+            <button class="btn btn-ghost btn-sm" onclick="showReplyBox()">↩ Reply</button>
+            <button class="btn btn-ghost btn-sm" onclick="showForwardBox()">↗ Forward</button>
+            <button class="btn btn-ghost btn-sm" onclick="archiveGmailThread()">Archive</button>
+            <button class="btn btn-ghost btn-sm" onclick="deleteGmailThread()">🗑 Delete</button>
+            <button class="btn btn-ghost btn-sm" onclick="markGmailUnread()" style="margin-left:auto;">Mark unread</button>
+          </div>
           <div id="gmail-thread" style="flex:1;overflow-y:auto;padding:24px;">
             <div style="text-align:center;padding:60px 20px;color:var(--text3);">
               <div style="font-size:32px;margin-bottom:12px;">✉️</div>
               <div style="font-size:13px;">Select an email to read</div>
             </div>
           </div>
-          <!-- Reply box -->
+          <!-- Reply / Forward box -->
           <div id="gmail-reply-box" style="display:none;border-top:1px solid var(--border);padding:14px 16px;">
-            <textarea id="gmail-reply-text" class="form-textarea" style="margin-bottom:8px;min-height:80px;" placeholder="Write a reply..."></textarea>
+            <div id="gmail-reply-label" style="font-size:10px;font-family:'DM Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Reply</div>
+            <div id="gmail-forward-to-row" style="display:none;margin-bottom:8px;">
+              <input class="form-input" id="gmail-forward-to" placeholder="Forward to: email@address.com" style="font-size:12px;">
+            </div>
+            <textarea id="gmail-reply-text" class="form-textarea" style="margin-bottom:8px;min-height:100px;" placeholder="Write your message..."></textarea>
             <div style="display:flex;gap:8px;">
-              <button class="btn btn-primary btn-sm" onclick="sendGmailReply()">Send Reply</button>
+              <button class="btn btn-primary btn-sm" onclick="sendGmailReply()">Send</button>
               <button class="btn btn-ghost btn-sm" onclick="document.getElementById('gmail-reply-box').style.display='none'">Cancel</button>
             </div>
           </div>
@@ -1311,7 +1345,7 @@ function showView(v){
   document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
   currentView=v;
   const _ve=document.getElementById('view-'+v);if(_ve)_ve.classList.add('active');
-  const titles={dashboard:'Dashboard','acq-pipeline':'Acquisitions Pipeline','dis-pipeline':'Dispositions Pipeline','ai-queue':'AI Handoff Queue',sellers:'All Leads',buyers:'Buyer List',calculator:'Offer Calculator',sequences:'SMS Sequences',settings:'Settings','ai-qualified':'AI Qualified Leads',reporting:'Reporting'};
+  const titles={dashboard:'Dashboard','acq-pipeline':'Acquisitions Pipeline','dis-pipeline':'Dispositions Pipeline','ai-queue':'AI Handoff Queue',sellers:'All Leads',buyers:'Buyer List',calculator:'Offer Calculator',sequences:'SMS Sequences',settings:'Settings','ai-qualified':'AI Qualified Leads',reporting:'Reporting',gmail:'Email'};
   document.getElementById('page-title').textContent=titles[v]||v;
   if(v==='dashboard')renderDashboard();
   if(v==='acq-pipeline')renderPipeline('acq');
@@ -4939,6 +4973,10 @@ async function loadGmailThread(threadId, messageId) {
       return;
     }
 
+    // Show action bar
+    var actionBar = document.getElementById('gmail-action-bar');
+    if (actionBar) actionBar.style.display = 'flex';
+
     // Mark as read
     fetch('/.netlify/functions/gmail-api', {
       method: 'POST',
@@ -4978,13 +5016,21 @@ async function loadGmailThread(threadId, messageId) {
 
 function showReplyBox() {
   var box = document.getElementById('gmail-reply-box');
+  var label = document.getElementById('gmail-reply-label');
+  var fwdRow = document.getElementById('gmail-forward-to-row');
+  if (label) label.textContent = 'Reply';
+  if (fwdRow) fwdRow.style.display = 'none';
   if (box) { box.style.display = 'block'; document.getElementById('gmail-reply-text').focus(); }
 }
 
 async function sendGmailReply() {
   if (!_gmailCurrentThread) return;
   var text = document.getElementById('gmail-reply-text').value.trim();
-  if (!text) { toast('Write a reply first', 'error'); return; }
+  if (!text) { toast('Write a message first', 'error'); return; }
+  // Check if this is a forward
+  var isForward = document.getElementById('gmail-reply-label')?.textContent === 'Forward';
+  var forwardTo = document.getElementById('gmail-forward-to')?.value?.trim();
+  if (isForward && !forwardTo) { toast('Enter a forward-to email address', 'error'); return; }
 
   // Get thread subject for reply
   try {
@@ -5074,6 +5120,78 @@ async function sendComposedEmail() {
   } catch(e) {
     toast('Send error: ' + e.message, 'error');
   }
+}
+
+function switchGmailFolder(query) {
+  // Update tab styles
+  var folders = { 'in:inbox': 'gf-inbox', 'in:sent': 'gf-sent', 'is:starred': 'gf-starred' };
+  Object.entries(folders).forEach(function(entry) {
+    var el = document.getElementById(entry[1]);
+    if (!el) return;
+    var isActive = entry[0] === query;
+    el.style.background = isActive ? 'var(--adim)' : 'none';
+    el.style.color = isActive ? 'var(--accent)' : 'var(--text3)';
+    el.style.borderBottom = isActive ? '2px solid var(--accent)' : '2px solid transparent';
+  });
+  loadGmailInbox(query);
+}
+
+async function archiveGmailThread() {
+  if (!_gmailCurrentThread) return;
+  try {
+    const res = await fetch('/.netlify/functions/gmail-api', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ action: 'archive', messageId: _gmailCurrentThread.messageId })
+    });
+    toast('Archived', 'success');
+    document.getElementById('gmail-thread').innerHTML = '<div style="text-align:center;padding:60px;color:var(--text3)">✉️<br><br>Select an email to read</div>';
+    document.getElementById('gmail-action-bar').style.display = 'none';
+    document.getElementById('gmail-reply-box').style.display = 'none';
+    _gmailCurrentThread = null;
+    loadGmailInbox();
+  } catch(e) { toast('Archive failed: ' + e.message, 'error'); }
+}
+
+async function deleteGmailThread() {
+  if (!_gmailCurrentThread) return;
+  if (!confirm('Move this email to trash?')) return;
+  try {
+    const res = await fetch('/.netlify/functions/gmail-api', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ action: 'trash', messageId: _gmailCurrentThread.messageId })
+    });
+    toast('Moved to trash', 'success');
+    document.getElementById('gmail-thread').innerHTML = '<div style="text-align:center;padding:60px;color:var(--text3)">✉️<br><br>Select an email to read</div>';
+    document.getElementById('gmail-action-bar').style.display = 'none';
+    document.getElementById('gmail-reply-box').style.display = 'none';
+    _gmailCurrentThread = null;
+    loadGmailInbox();
+  } catch(e) { toast('Delete failed: ' + e.message, 'error'); }
+}
+
+async function markGmailUnread() {
+  if (!_gmailCurrentThread) return;
+  try {
+    await fetch('/.netlify/functions/gmail-api', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ action: 'markUnread', messageId: _gmailCurrentThread.messageId })
+    });
+    toast('Marked unread', 'success');
+    loadGmailInbox();
+  } catch(e) { toast('Failed: ' + e.message, 'error'); }
+}
+
+function showForwardBox() {
+  var box = document.getElementById('gmail-reply-box');
+  var label = document.getElementById('gmail-reply-label');
+  var fwdRow = document.getElementById('gmail-forward-to-row');
+  if (box) box.style.display = 'block';
+  if (label) label.textContent = 'Forward';
+  if (fwdRow) fwdRow.style.display = 'block';
+  document.getElementById('gmail-forward-to')?.focus();
 }
 
 function searchGmail(query) {
