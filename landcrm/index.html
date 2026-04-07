@@ -485,13 +485,15 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
         Title & Closing
         <span class="nb" id="nb-title" style="display:none;background:var(--teal)">0</span>
       </button>
-      <button class="nav-item" onclick="showComingSoon('Referral Partners')">
+      <button class="nav-item" onclick="showView('referrals')" id="nav-referrals">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="6" r="3"/><path d="M2 14s-1 0-1-1 1-4 7-4 7 3 7 4-1 1-1 1H2z"/></svg>
         Referral Partners
+        <span class="nb" id="nb-referrals" style="display:none;background:var(--teal)">0</span>
       </button>
-      <button class="nav-item" onclick="showComingSoon('Lenders')">
-        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 2"/></svg>
+      <button class="nav-item" onclick="showView('lenders')" id="nav-lenders">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M6 8h4M8 6v4"/></svg>
         Lenders
+        <span class="nb" id="nb-lenders" style="display:none;background:var(--amber)">0</span>
       </button>
     </div>
     <div class="nav-section">
@@ -1143,6 +1145,55 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
       <div id="title-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;"></div>
     </div>
 
+    <!-- LENDERS & FUNDERS -->
+    <div id="view-lenders" class="view">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+        <div>
+          <div style="font-size:11px;font-family:'DM Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Lenders & Funders</div>
+          <div style="font-size:13px;color:var(--text2)">Transactional funders and land lenders — fuel your deals.</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <select class="form-select" id="lender-state-filter" onchange="renderLenders()" style="font-size:12px;padding:6px 10px;min-width:120px;">
+            <option value="">All states</option>
+            ${['TN','MS','AR','MO','AL','KY','GA','TX','OK','LA'].map(s => '<option>'+s+'</option>').join('')}
+          </select>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;" id="lender-stats"></div>
+      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+        <button class="btn btn-ghost btn-sm lender-filter-btn active" onclick="filterLenders('all')" id="lf-all">All</button>
+        <button class="btn btn-ghost btn-sm lender-filter-btn" onclick="filterLenders('transactional')" id="lf-transactional" style="border-color:rgba(14,165,233,0.4);color:var(--accent)">Transactional</button>
+        <button class="btn btn-ghost btn-sm lender-filter-btn" onclick="filterLenders('land-funder')" id="lf-land" style="border-color:rgba(251,191,36,0.4);color:var(--amber)">Land Funders</button>
+        <button class="btn btn-ghost btn-sm lender-filter-btn" onclick="filterLenders('needs-touch')" id="lf-touch" style="border-color:rgba(248,113,113,0.4);color:var(--coral)">⚡ Needs Touch</button>
+      </div>
+      <div id="lender-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;"></div>
+    </div>
+
+    <!-- REFERRAL PARTNERS -->
+    <div id="view-referrals" class="view">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+        <div>
+          <div style="font-size:11px;font-family:'DM Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Referral Partners</div>
+          <div style="font-size:13px;color:var(--text2)">Bird dogs, investors, attorneys — people who send you deals.</div>
+        </div>
+        <select class="form-select" id="referral-state-filter" onchange="renderReferrals()" style="font-size:12px;padding:6px 10px;min-width:120px;">
+          <option value="">All states</option>
+          ${['TN','MS','AR','MO','AL','KY','GA','TX','OK','LA'].map(s => '<option>'+s+'</option>').join('')}
+        </select>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;" id="referral-stats"></div>
+      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+        <button class="btn btn-ghost btn-sm referral-filter-btn active" onclick="filterReferrals('all')" id="rf-all">All</button>
+        <button class="btn btn-ghost btn-sm referral-filter-btn" onclick="filterReferrals('bird-dog')" id="rf-bird">Bird Dogs</button>
+        <button class="btn btn-ghost btn-sm referral-filter-btn" onclick="filterReferrals('investor')" id="rf-investor">Investors</button>
+        <button class="btn btn-ghost btn-sm referral-filter-btn" onclick="filterReferrals('attorney')" id="rf-attorney">Attorneys</button>
+        <button class="btn btn-ghost btn-sm referral-filter-btn" onclick="filterReferrals('accountant')" id="rf-accountant">Accountants</button>
+        <button class="btn btn-ghost btn-sm referral-filter-btn" onclick="filterReferrals('other')" id="rf-other">Other</button>
+        <button class="btn btn-ghost btn-sm referral-filter-btn" onclick="filterReferrals('needs-touch')" id="rf-touch" style="border-color:rgba(251,191,36,0.4);color:var(--amber)">⚡ Needs Touch</button>
+      </div>
+      <div id="referral-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;"></div>
+    </div>
+
     <!-- GMAIL -->
     <div id="view-gmail" class="view">
       <div style="display:grid;grid-template-columns:280px 1fr;gap:0;height:calc(100vh - 100px);background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden;">
@@ -1289,6 +1340,55 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
       </div>
 
       <div id="title-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;"></div>
+    </div>
+
+    <!-- LENDERS & FUNDERS -->
+    <div id="view-lenders" class="view">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+        <div>
+          <div style="font-size:11px;font-family:'DM Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Lenders & Funders</div>
+          <div style="font-size:13px;color:var(--text2)">Transactional funders and land lenders — fuel your deals.</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <select class="form-select" id="lender-state-filter" onchange="renderLenders()" style="font-size:12px;padding:6px 10px;min-width:120px;">
+            <option value="">All states</option>
+            ${['TN','MS','AR','MO','AL','KY','GA','TX','OK','LA'].map(s => '<option>'+s+'</option>').join('')}
+          </select>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;" id="lender-stats"></div>
+      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+        <button class="btn btn-ghost btn-sm lender-filter-btn active" onclick="filterLenders('all')" id="lf-all">All</button>
+        <button class="btn btn-ghost btn-sm lender-filter-btn" onclick="filterLenders('transactional')" id="lf-transactional" style="border-color:rgba(14,165,233,0.4);color:var(--accent)">Transactional</button>
+        <button class="btn btn-ghost btn-sm lender-filter-btn" onclick="filterLenders('land-funder')" id="lf-land" style="border-color:rgba(251,191,36,0.4);color:var(--amber)">Land Funders</button>
+        <button class="btn btn-ghost btn-sm lender-filter-btn" onclick="filterLenders('needs-touch')" id="lf-touch" style="border-color:rgba(248,113,113,0.4);color:var(--coral)">⚡ Needs Touch</button>
+      </div>
+      <div id="lender-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;"></div>
+    </div>
+
+    <!-- REFERRAL PARTNERS -->
+    <div id="view-referrals" class="view">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+        <div>
+          <div style="font-size:11px;font-family:'DM Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Referral Partners</div>
+          <div style="font-size:13px;color:var(--text2)">Bird dogs, investors, attorneys — people who send you deals.</div>
+        </div>
+        <select class="form-select" id="referral-state-filter" onchange="renderReferrals()" style="font-size:12px;padding:6px 10px;min-width:120px;">
+          <option value="">All states</option>
+          ${['TN','MS','AR','MO','AL','KY','GA','TX','OK','LA'].map(s => '<option>'+s+'</option>').join('')}
+        </select>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;" id="referral-stats"></div>
+      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+        <button class="btn btn-ghost btn-sm referral-filter-btn active" onclick="filterReferrals('all')" id="rf-all">All</button>
+        <button class="btn btn-ghost btn-sm referral-filter-btn" onclick="filterReferrals('bird-dog')" id="rf-bird">Bird Dogs</button>
+        <button class="btn btn-ghost btn-sm referral-filter-btn" onclick="filterReferrals('investor')" id="rf-investor">Investors</button>
+        <button class="btn btn-ghost btn-sm referral-filter-btn" onclick="filterReferrals('attorney')" id="rf-attorney">Attorneys</button>
+        <button class="btn btn-ghost btn-sm referral-filter-btn" onclick="filterReferrals('accountant')" id="rf-accountant">Accountants</button>
+        <button class="btn btn-ghost btn-sm referral-filter-btn" onclick="filterReferrals('other')" id="rf-other">Other</button>
+        <button class="btn btn-ghost btn-sm referral-filter-btn" onclick="filterReferrals('needs-touch')" id="rf-touch" style="border-color:rgba(251,191,36,0.4);color:var(--amber)">⚡ Needs Touch</button>
+      </div>
+      <div id="referral-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;"></div>
     </div>
 
     <!-- GMAIL -->
@@ -1493,7 +1593,7 @@ const HANDOFF_STATES = ['AI handling','Needs human review','Human active'];
 // DATA
 // ══════════════════════════════════
 const KEY = 'landcrm_v2';
-function load(){try{const r=localStorage.getItem(KEY);const d=r?JSON.parse(r):{contacts:[],buyers:[],agents:[],titleCos:[],tasks:[]};if(!d.agents)d.agents=[];if(!d.titleCos)d.titleCos=[];if(!d.tasks)d.tasks=[];return d;}catch(e){return{contacts:[],buyers:[],agents:[],titleCos:[],tasks:[]};}
+function load(){try{const r=localStorage.getItem(KEY);const d=r?JSON.parse(r):{contacts:[],buyers:[],agents:[],titleCos:[],tasks:[],lenders:[],referrals:[]};if(!d.agents)d.agents=[];if(!d.titleCos)d.titleCos=[];if(!d.tasks)d.tasks=[];if(!d.lenders)d.lenders=[];if(!d.referrals)d.referrals=[];return d;}catch(e){return{contacts:[],buyers:[],agents:[],titleCos:[],tasks:[],lenders:[],referrals:[]};}
 function save(){
   localStorage.setItem(KEY,JSON.stringify(db));
   // Auto-sync to JSONbin in background on every save — no manual clicks needed
@@ -1582,7 +1682,7 @@ function showView(v){
   document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
   currentView=v;
   const _ve=document.getElementById('view-'+v);if(_ve)_ve.classList.add('active');
-  const titles={dashboard:'Dashboard','acq-pipeline':'Acquisitions Pipeline','dis-pipeline':'Dispositions Pipeline','ai-queue':'AI Handoff Queue',sellers:'All Leads',buyers:'Buyer Network',calculator:'Offer Calculator',sequences:'SMS Sequences',settings:'Settings','ai-qualified':'AI Qualified Leads',reporting:'Reporting',gmail:'Email',agents:'Agent Network',title:'Title & Closing',tasks:'Tasks'};
+  const titles={dashboard:'Dashboard','acq-pipeline':'Acquisitions Pipeline','dis-pipeline':'Dispositions Pipeline','ai-queue':'AI Handoff Queue',sellers:'All Leads',buyers:'Buyer Network',calculator:'Offer Calculator',sequences:'SMS Sequences',settings:'Settings','ai-qualified':'AI Qualified Leads',reporting:'Reporting',gmail:'Email',agents:'Agent Network',title:'Title & Closing',tasks:'Tasks',lenders:'Lenders & Funders',referrals:'Referral Partners'};
   document.getElementById('page-title').textContent=titles[v]||v;
   if(v==='dashboard')renderDashboard();
   if(v==='acq-pipeline')renderPipeline('acq');
@@ -2388,7 +2488,7 @@ function deleteContact(id){
 function openAddContact(editId, prefillType) {
   var c = editId ? db.contacts.find(function(x){return x.id===editId;}) : null;
   var ctype = (c && c.contactType) || prefillType || 'seller';
-  openCustomModal('<div class="modal-header"><div class="modal-title">'+(c?'Edit contact':'Add contact')+'</div><button class="modal-close" onclick="closeModal()">&#x2715;</button></div><div class="modal-body">'+(!c?'<div style="margin-bottom:16px;padding:12px 14px;background:var(--bg3);border-radius:8px;border:1px solid var(--border2);"><div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Quick Import</div><textarea id="f-paste-lead" class="form-textarea" rows="4" placeholder="Paste lead info from email here — CRM will auto-fill the form..."></textarea><button class="btn btn-ghost btn-sm" style="margin-top:6px;" onclick="parsePastedLead()">&#x26A1; Parse &amp; Auto-Fill</button></div>':'')+' <div class="form-group" style="margin-bottom:16px"><label class="form-label">Contact type</label><select class="form-select" id="f-ctype" onchange="updateAddContactFields(this.value,\''+(editId||'')+'\')"><option value="seller" '+(ctype==='seller'?'selected':'')+'>Seller</option><option value="buyer" '+(ctype==='buyer'?'selected':'')+'>Buyer</option><option value="title" '+(ctype==='title'?'selected':'')+'>Title &amp; Closing</option><option value="agent" '+(ctype==='agent'?'selected':'')+'>RE Agent</option><option value="referral" '+(ctype==='referral'?'selected':'')+'>Referral Partner</option><option value="lender" '+(ctype==='lender'?'selected':'')+'>Lender / Private Money</option></select></div><div id="add-contact-fields"></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveUnifiedContact(\''+(editId||'')+'\')">'+(c?'Save changes':'Add contact')+'</button></div>');
+  openCustomModal('<div class="modal-header"><div class="modal-title">'+(c?'Edit contact':'Add contact')+'</div><button class="modal-close" onclick="closeModal()">&#x2715;</button></div><div class="modal-body">'+(!c?'<div style="margin-bottom:16px;padding:12px 14px;background:var(--bg3);border-radius:8px;border:1px solid var(--border2);"><div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Quick Import</div><textarea id="f-paste-lead" class="form-textarea" rows="4" placeholder="Paste lead info from email here — CRM will auto-fill the form..."></textarea><button class="btn btn-ghost btn-sm" style="margin-top:6px;" onclick="parsePastedLead()">&#x26A1; Parse &amp; Auto-Fill</button></div>':'')+' <div class="form-group" style="margin-bottom:16px"><label class="form-label">Contact type</label><select class="form-select" id="f-ctype" onchange="updateAddContactFields(this.value,\''+(editId||'')+'\')"><option value="seller" '+(ctype==='seller'?'selected':'')+'>Seller</option><option value="buyer" '+(ctype==='buyer'?'selected':'')+'>Buyer</option><option value="title" '+(ctype==='title'?'selected':'')+'>Title &amp; Closing</option><option value="agent" '+(ctype==='agent'?'selected':'')+'>RE Agent</option><option value="referral" '+(ctype==='referral'?'selected':'')+'>Referral Partner</option><option value="lender" '+(ctype==='lender'?'selected':'')+'>Lender / Private Money</option><option value="referral" '+(ctype==='referral'?'selected':'')+'>Referral Partner</option></select></div><div id="add-contact-fields"></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveUnifiedContact(\''+(editId||'')+'\')">'+(c?'Save changes':'Add contact')+'</button></div>');
   updateAddContactFields(ctype, editId||'');
 }
 
@@ -2449,6 +2549,14 @@ function updateAddContactFields(type, editId) {
   } else if(type === 'title') {
     closeModal();
     setTimeout(function(){ openAddTitleModal(editId||''); }, 150);
+    return;
+  } else if(type === 'lender') {
+    closeModal();
+    setTimeout(function(){ openAddLenderModal(editId||''); }, 150);
+    return;
+  } else if(type === 'referral') {
+    closeModal();
+    setTimeout(function(){ openAddReferralModal(editId||''); }, 150);
     return;
   } else {
     var extraLabel = {lender:'Loan terms / max amount', referral:'How they send deals', title:'Firm / office'}[type] || 'Details';
@@ -7652,6 +7760,729 @@ function generateSystemTasks() {
     save();
   }
   return newTasks.length;
+}
+
+
+// ══════════════════════════════════════════════════════
+// LENDERS & FUNDERS
+// ══════════════════════════════════════════════════════
+
+var _lenderFilter = 'all';
+const LENDER_TOUCH_DAYS = { 'transactional':30, 'land-funder':45 };
+const LENDER_TYPES = [
+  { value:'transactional', label:'Transactional Funder', color:'var(--accent)' },
+  { value:'land-funder',   label:'Land Funder',          color:'var(--amber)'  },
+];
+
+function lenderNeedsTouch(l) {
+  var threshold = LENDER_TOUCH_DAYS[l.type] || 45;
+  return daysSince(l.lastContact) >= threshold;
+}
+
+function getLenderTypeLabel(v) {
+  var t = LENDER_TYPES.find(function(x){ return x.value===v; });
+  return t ? t.label : v;
+}
+function getLenderTypeColor(v) {
+  var t = LENDER_TYPES.find(function(x){ return x.value===v; });
+  return t ? t.color : 'var(--text3)';
+}
+
+function filterLenders(f) {
+  _lenderFilter = f;
+  document.querySelectorAll('.lender-filter-btn').forEach(function(b){ b.classList.remove('active'); });
+  var btn = document.getElementById('lf-'+(f==='transactional'?'transactional':f==='land-funder'?'land':f==='needs-touch'?'touch':'all'));
+  if (btn) btn.classList.add('active');
+  renderLenders();
+}
+
+function renderLenderStats() {
+  var el = document.getElementById('lender-stats');
+  if (!el) return;
+  var ls = db.lenders || [];
+  var statStyle = 'background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:14px 16px;';
+  el.innerHTML = [
+    ['Total Lenders', ls.length, 'var(--text)'],
+    ['Transactional', ls.filter(function(l){ return l.type==='transactional'; }).length, 'var(--accent)'],
+    ['Land Funders',  ls.filter(function(l){ return l.type==='land-funder'; }).length, 'var(--amber)'],
+    ['Needs Touch',   ls.filter(lenderNeedsTouch).length, 'var(--coral)'],
+  ].map(function(s){
+    return '<div style="'+statStyle+'"><div style="font-size:11px;color:var(--text3);font-family:monospace;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">'+s[0]+'</div><div style="font-size:24px;font-weight:700;color:'+s[2]+'">'+s[1]+'</div></div>';
+  }).join('');
+}
+
+function renderLenders() {
+  var el = document.getElementById('lender-grid');
+  if (!el) return;
+  var ls = db.lenders || [];
+  var stateF = document.getElementById('lender-state-filter')?.value || '';
+
+  var filtered = ls.filter(function(l) {
+    if (_lenderFilter === 'needs-touch') return lenderNeedsTouch(l);
+    if (_lenderFilter !== 'all' && l.type !== _lenderFilter) return false;
+    if (stateF && !(l.states||[]).includes(stateF)) return false;
+    return true;
+  });
+
+  filtered.sort(function(a,b){
+    var an = lenderNeedsTouch(a), bn = lenderNeedsTouch(b);
+    if (an && !bn) return -1; if (!an && bn) return 1;
+    return daysSince(a.lastContact) - daysSince(b.lastContact);
+  });
+
+  if (!filtered.length) {
+    el.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--text3);"><div style="font-size:28px;margin-bottom:12px;">💰</div><div>No lenders yet — add via Add Contact → Lender / Private Money</div></div>';
+    return;
+  }
+
+  el.innerHTML = filtered.map(function(l) {
+    var color = getLenderTypeColor(l.type);
+    var label = getLenderTypeLabel(l.type);
+    var needsTouch = lenderNeedsTouch(l);
+    var days = daysSince(l.lastContact);
+    var intel = l.intel || {};
+
+    return '<div style="background:var(--bg2);border:1px solid '+(needsTouch?'rgba(248,113,113,0.3)':'var(--border)')+';border-radius:var(--rl);padding:16px;cursor:pointer;" onclick="openLenderDetail(\''+l.id+'\')">'+
+      '<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;">'+
+        '<div style="display:flex;align-items:center;gap:10px;">'+
+          '<div style="width:36px;height:36px;border-radius:50%;background:'+color+'18;border:1px solid '+color+'44;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:13px;color:'+color+';flex-shrink:0;">'+(l.name||'?')[0].toUpperCase()+'</div>'+
+          '<div><div style="font-weight:600;font-size:14px;">'+(l.name||'Unknown')+'</div>'+
+          '<div style="font-size:11px;color:var(--text3);">'+(l.company||'')+'</div></div>'+
+        '</div>'+
+        '<span style="font-size:10px;font-family:monospace;color:'+color+';text-transform:uppercase;padding:2px 7px;border-radius:4px;background:'+color+'18;">'+label+'</span>'+
+      '</div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11px;color:var(--text3);margin-bottom:8px;">'+
+        (intel.feeRate ? '<span>💵 '+intel.feeRate+'</span>' : '')+
+        (intel.maxDeal ? '<span>📊 up to $'+parseInt(intel.maxDeal).toLocaleString()+'</span>' : '')+
+        (intel.closeSpeed ? '<span>⚡ '+intel.closeSpeed+'</span>' : '')+
+        ((l.states||[]).length ? '<span>📍 '+(l.states||[]).join(', ')+'</span>' : '')+
+      '</div>'+
+      '<div style="display:flex;align-items:center;justify-content:space-between;">'+
+        '<div style="font-size:11px;color:'+(needsTouch?'var(--coral)':'var(--text3)')+'">'+
+          (needsTouch?'⚡ Needs touch — ':'')+
+          (l.lastContact ? days+'d since contact' : 'Never contacted')+
+        '</div>'+
+        (l.phone ? '<button onclick="event.stopPropagation();window.location=\'openphone://call?number='+((l.phone||'').replace(/[^0-9+]/g,''))+'\';" class="btn btn-ghost btn-sm" style="font-size:10px;padding:2px 8px;color:var(--accent);">📞 Call</button>' : '')+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+function openAddLenderModal(editId) {
+  var l = editId ? (db.lenders||[]).find(function(x){ return x.id===editId; }) : null;
+  var isEdit = !!l;
+  var ltype = (l && l.type) || 'transactional';
+  var intel = l && l.intel ? l.intel : {};
+
+  var scripts = {
+    transactional: {
+      color: 'var(--accent)',
+      opener: 'Hey [Name], this is William Smith with Coldwater Property Group. We do double closings on vacant land and I\'m building a list of transactional funders to work with. You got two minutes?',
+      questions: [
+        { id:'feeRate',    label:'Q1 — Fee structure',     prompt:'"What\'s your fee on a transactional deal — is it a flat fee or a percentage of the A-B purchase price?"',       ph:'e.g. 1% of purchase price, $500 flat' },
+        { id:'maxDeal',    label:'Q2 — Deal size range',   prompt:'"What\'s your minimum and maximum deal size you\'ll fund?"',                                                      ph:'e.g. $5k–$500k' },
+        { id:'closeSpeed', label:'Q3 — How fast can you wire', prompt:'"If I need funding same-day or 24 hours out, is that doable for you?"',                                      ph:'Same day / 24 hrs / 48 hrs' },
+        { id:'requirements', label:'Q4 — What you need to approve', prompt:'"What do you need from me to approve a deal — just the A-B contract, or do you need the B-C buyer\'s proof of funds too?"', ph:'A-B contract / B-C POF / both' },
+        { id:'process',    label:'Q5 — Submission process', prompt:'"What\'s the best way to submit a deal to you — email the contracts, call you first, or do you have a portal?"',ph:'Email contracts / call first / portal' },
+      ]
+    },
+    'land-funder': {
+      color: 'var(--amber)',
+      opener: 'Hey [Name], William Smith with Coldwater Property Group. We buy vacant land across the mid-south and I\'m looking to build relationships with private lenders who fund land deals. Do you have a couple minutes?',
+      questions: [
+        { id:'feeRate',    label:'Q1 — Rate and points',   prompt:'"What\'s your typical rate and points on a short-term land loan — are we talking 10-12% interest, 2-3 points?"', ph:'e.g. 12% / 2 pts, 10%/3pts' },
+        { id:'maxDeal',    label:'Q2 — Max LTV and loan size', prompt:'"What\'s your max LTV on raw vacant land, and is there a minimum or maximum loan amount you work with?"',    ph:'e.g. 60% LTV, $10k–$300k' },
+        { id:'closeSpeed', label:'Q3 — How fast can you close', prompt:'"If I have a deal under contract, how quickly can you fund it?"',                                           ph:'e.g. 7-10 days, 2 weeks' },
+        { id:'requirements', label:'Q4 — What you need to approve', prompt:'"Do you need a formal appraisal, or do you do your own evaluation? What else goes into your approval process?"', ph:'Own eval / MAI appraisal / both options' },
+        { id:'process',    label:'Q5 — Term and extension policy', prompt:'"What terms do you typically offer — 3 months, 6 months? And if we need an extension, how does that work?"', ph:'e.g. 3-6 months, 1% extension fee' },
+      ]
+    }
+  };
+
+  var script = scripts[ltype] || scripts['transactional'];
+  var statesHtml = (l && l.states ? l.states : []).map(function(s){
+    return '<span style="background:var(--adim);border:1px solid var(--border2);border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer;color:var(--accent);" onclick="this.remove();syncLenderStates()">'+s+' ✕</span>';
+  }).join('');
+
+  openCustomModal(`
+    <div class="modal-header">
+      <div class="modal-title">${isEdit ? 'Edit — '+(l.name||'') : '+ Add Lender / Funder'}</div>
+      <button class="modal-close" onclick="closeModal()">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:10px;color:var(--accent);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">Lender Info</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
+        <div class="form-group" style="grid-column:1/-1">
+          <label class="form-label">Full name *</label>
+          <input class="form-input" id="ln-name" value="${(l&&l.name)||''}" placeholder="John Smith">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Type</label>
+          <select class="form-select" id="ln-type" onchange="updateLenderScript(this.value,'${editId||''}')">
+            <option value="transactional" ${ltype==='transactional'?'selected':''}>Transactional Funder</option>
+            <option value="land-funder" ${ltype==='land-funder'?'selected':''}>Land Funder (30-180 days)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Company</label>
+          <input class="form-input" id="ln-company" value="${(l&&l.company)||''}" placeholder="Smith Capital LLC">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Phone</label>
+          <input class="form-input" id="ln-phone" value="${(l&&l.phone)||''}" placeholder="901-555-0100">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input class="form-input" id="ln-email" value="${(l&&l.email)||''}" placeholder="john@fund.com">
+        </div>
+        <div class="form-group" style="grid-column:1/-1">
+          <label class="form-label">States they lend in <span style="color:var(--text3);font-size:10px;">— click + Add</span></label>
+          <div style="display:flex;gap:6px;margin-bottom:8px;">
+            <select class="form-select" id="ln-state-pick" style="flex:1;">
+              ${['TN','MS','AR','MO','AL','KY','GA','TX','OK','LA'].map(function(s){ return '<option>'+s+'</option>'; }).join('')}
+            </select>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="addLenderState()">+ Add</button>
+          </div>
+          <div id="ln-state-tags" style="display:flex;flex-wrap:wrap;gap:6px;min-height:28px;">${statesHtml}</div>
+          <input type="hidden" id="ln-states-data" value="${l&&l.states?l.states.join(','):''}">
+        </div>
+      </div>
+
+      <!-- DISCOVERY SCRIPT -->
+      <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:14px 16px;margin-bottom:16px;">
+        <div style="font-size:10px;color:var(--amber);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px;">📞 Discovery Call Script</div>
+        <div style="font-size:12px;color:var(--text2);background:var(--bg4);border-left:3px solid ${script.color};padding:8px 12px;border-radius:0 6px 6px 0;margin-bottom:14px;line-height:1.7;" id="ln-script-opener">
+          <strong style="color:var(--text)">Opener:</strong> ${script.opener}
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px;" id="ln-script-questions">
+          ${script.questions.map(function(q){
+            return '<div style="border-bottom:1px solid var(--border);padding-bottom:12px;">'+
+              '<div style="font-size:11px;color:var(--accent);font-family:monospace;margin-bottom:4px;">'+q.label+'</div>'+
+              '<div style="font-size:12px;color:var(--text2);margin-bottom:6px;font-style:italic;">'+q.prompt+'</div>'+
+              '<input class="form-input" id="ln-intel-'+q.id+'" value="'+(intel[q.id]||'')+'" placeholder="'+q.ph+'" style="font-size:11px;">'+
+            '</div>';
+          }).join('')}
+        </div>
+        <div style="font-size:12px;color:var(--text2);background:var(--bg4);border-left:3px solid var(--teal);padding:8px 12px;border-radius:0 6px 6px 0;margin-top:14px;line-height:1.6;">
+          <strong style="color:var(--text)">Close:</strong> "Perfect — this is really helpful. I\\'ll get you something to look at as soon as I have a deal that fits. What\\'s the best way to reach you when that comes up?"
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes</label>
+        <textarea class="form-textarea" id="ln-notes" style="min-height:60px;" placeholder="Anything else worth noting...">${(l&&l.notes&&l.notes.length?l.notes[l.notes.length-1].text:'')}</textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveLender('${editId||''}')">${isEdit?'Save Changes':'Add Lender'}</button>
+    </div>`);
+  setTimeout(function(){ document.getElementById('ln-name')?.focus(); }, 100);
+}
+
+function updateLenderScript(type, editId) {
+  var scripts = {
+    transactional: {
+      color:'var(--accent)',
+      opener:'Hey [Name], this is William Smith with Coldwater Property Group. We do double closings on vacant land and I\'m building a list of transactional funders to work with. You got two minutes?',
+      questions:[
+        {id:'feeRate',     label:'Q1 — Fee structure',        prompt:'"What\'s your fee — flat fee or percentage of the A-B purchase price?"',                                      ph:'e.g. 1% of purchase price, $500 flat'},
+        {id:'maxDeal',     label:'Q2 — Deal size range',      prompt:'"What\'s your minimum and maximum deal size?"',                                                               ph:'e.g. $5k–$500k'},
+        {id:'closeSpeed',  label:'Q3 — How fast can you wire',prompt:'"Same-day or 24-hour funding — is that doable?"',                                                             ph:'Same day / 24 hrs / 48 hrs'},
+        {id:'requirements',label:'Q4 — What you need to approve',prompt:'"A-B contract only, or do you need the B-C proof of funds too?"',                                        ph:'A-B contract / B-C POF / both'},
+        {id:'process',     label:'Q5 — Submission process',   prompt:'"Email contracts, call first, or do you have a portal?"',                                                    ph:'Email / call first / portal'},
+      ]
+    },
+    'land-funder': {
+      color:'var(--amber)',
+      opener:'Hey [Name], William Smith with Coldwater Property Group. We buy vacant land across the mid-south and I\'m looking to build relationships with private lenders who fund land deals. You got a couple minutes?',
+      questions:[
+        {id:'feeRate',     label:'Q1 — Rate and points',      prompt:'"What\'s your typical rate and points on a short-term land loan?"',                                          ph:'e.g. 12% interest / 2 points'},
+        {id:'maxDeal',     label:'Q2 — LTV and loan size',    prompt:'"What\'s your max LTV on raw land, and min/max loan amount?"',                                               ph:'e.g. 60% LTV, $10k–$300k'},
+        {id:'closeSpeed',  label:'Q3 — Close speed',          prompt:'"If I have a deal under contract, how quickly can you fund it?"',                                            ph:'e.g. 7-10 days, 2 weeks'},
+        {id:'requirements',label:'Q4 — Approval process',     prompt:'"Do you need a formal appraisal or do you do your own evaluation?"',                                         ph:'Own eval / MAI appraisal / both'},
+        {id:'process',     label:'Q5 — Term and extensions',  prompt:'"What terms do you offer and how do extensions work?"',                                                      ph:'e.g. 3-6 months, 1% extension fee'},
+      ]
+    }
+  };
+  var script = scripts[type] || scripts['transactional'];
+  var openerEl = document.getElementById('ln-script-opener');
+  var questionsEl = document.getElementById('ln-script-questions');
+  if (openerEl) openerEl.innerHTML = '<strong style="color:var(--text)">Opener:</strong> ' + script.opener;
+  if (questionsEl) {
+    questionsEl.innerHTML = script.questions.map(function(q){
+      var existing = document.getElementById('ln-intel-'+q.id);
+      var val = existing ? existing.value : '';
+      return '<div style="border-bottom:1px solid var(--border);padding-bottom:12px;">' +
+        '<div style="font-size:11px;color:var(--accent);font-family:monospace;margin-bottom:4px;">'+q.label+'</div>' +
+        '<div style="font-size:12px;color:var(--text2);margin-bottom:6px;font-style:italic;">'+q.prompt+'</div>' +
+        '<input class="form-input" id="ln-intel-'+q.id+'" value="'+val+'" placeholder="'+q.ph+'" style="font-size:11px;">' +
+        '</div>';
+    }).join('');
+  }
+}
+
+function addLenderState() {
+  var state = document.getElementById('ln-state-pick')?.value;
+  if (!state) return;
+  var tagsEl = document.getElementById('ln-state-tags');
+  if (!tagsEl) return;
+  var existing = Array.from(tagsEl.querySelectorAll('span')).map(function(s){ return s.textContent.replace(' ✕','').trim(); });
+  if (existing.includes(state)) { toast('Already added','info'); return; }
+  var span = document.createElement('span');
+  span.style.cssText = 'background:var(--adim);border:1px solid var(--border2);border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer;color:var(--accent);';
+  span.textContent = state + ' ✕';
+  span.onclick = function(){ this.remove(); syncLenderStates(); };
+  tagsEl.appendChild(span);
+  syncLenderStates();
+}
+
+function syncLenderStates() {
+  var tagsEl = document.getElementById('ln-state-tags');
+  if (!tagsEl) return;
+  var states = Array.from(tagsEl.querySelectorAll('span')).map(function(s){ return s.textContent.replace(' ✕','').trim(); });
+  var hidden = document.getElementById('ln-states-data');
+  if (hidden) hidden.value = states.join(',');
+}
+
+function saveLender(editId) {
+  var name = document.getElementById('ln-name')?.value?.trim();
+  if (!name) { toast('Name required','error'); return; }
+  var statesRaw = document.getElementById('ln-states-data')?.value || '';
+  var states = statesRaw ? statesRaw.split(',').map(function(s){ return s.trim(); }).filter(Boolean) : [];
+  var intel = {
+    feeRate:      document.getElementById('ln-intel-feeRate')?.value?.trim()||'',
+    maxDeal:      document.getElementById('ln-intel-maxDeal')?.value?.trim()||'',
+    closeSpeed:   document.getElementById('ln-intel-closeSpeed')?.value?.trim()||'',
+    requirements: document.getElementById('ln-intel-requirements')?.value?.trim()||'',
+    process:      document.getElementById('ln-intel-process')?.value?.trim()||'',
+  };
+  var noteText = document.getElementById('ln-notes')?.value?.trim()||'';
+  var intelFilled = intel.feeRate || intel.closeSpeed;
+  var data = {
+    name, states, intel,
+    company:   document.getElementById('ln-company')?.value?.trim()||'',
+    phone:     document.getElementById('ln-phone')?.value?.trim()||'',
+    email:     document.getElementById('ln-email')?.value?.trim()||'',
+    type:      document.getElementById('ln-type')?.value||'transactional',
+    lastContact: intelFilled ? today() : null,
+  };
+  if (!db.lenders) db.lenders = [];
+  if (editId) {
+    var existing = db.lenders.find(function(x){ return x.id===editId; });
+    if (existing) {
+      Object.assign(existing, data);
+      if (noteText) { if(!existing.notes)existing.notes=[]; existing.notes.unshift({date:today(),text:noteText}); }
+    }
+  } else {
+    db.lenders.unshift(Object.assign({id:uid(),created:today(),notes:noteText?[{date:today(),text:noteText}]:[],touches:intelFilled?[{date:today(),channel:'Call',note:'Discovery call'}]:[]}, data));
+  }
+  save(); closeModal(); renderLenders(); renderLenderStats();
+  toast((editId?'Updated — ':'Added — ')+name,'success');
+}
+
+function openLenderDetail(id) {
+  var l = (db.lenders||[]).find(function(x){ return x.id===id; });
+  if (!l) return;
+  var intel = l.intel || {};
+  var color = getLenderTypeColor(l.type);
+  var label = getLenderTypeLabel(l.type);
+  var needsTouch = lenderNeedsTouch(l);
+  var days = daysSince(l.lastContact);
+
+  openCustomModal(`
+    <div class="modal-header">
+      <div class="modal-title">${l.name}</div>
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-ghost btn-sm" onclick="closeModal();openAddLenderModal('${id}')">Edit</button>
+        <button class="modal-close" onclick="closeModal()">&#x2715;</button>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+        ${l.phone ? `<button class="btn btn-primary btn-sm" onclick="window.location='openphone://call?number=${(l.phone||'').replace(/[^0-9+]/g,'')}'" >📞 Call ${l.name.split(' ')[0]}</button>` : ''}
+        ${l.phone ? `<button class="btn btn-ghost btn-sm" onclick="window.location='openphone://conversation?number=${(l.phone||'').replace(/[^0-9+]/g,'')}'" >💬 Text</button>` : ''}
+        ${l.email ? `<button class="btn btn-ghost btn-sm" onclick="openCompose('${l.email}','Deal for review — Coldwater Property Group','Hi ${l.name.split(' ')[0]},')">✉️ Send Deal</button>` : ''}
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;">
+        <div style="background:var(--bg3);border-radius:6px;padding:10px;"><div style="font-size:10px;color:var(--text3);font-family:monospace;margin-bottom:3px">TYPE</div><div style="font-size:13px;font-weight:600;color:${color}">${label}</div></div>
+        <div style="background:var(--bg3);border-radius:6px;padding:10px;"><div style="font-size:10px;color:var(--text3);font-family:monospace;margin-bottom:3px">LAST CONTACT</div><div style="font-size:13px;font-weight:600;color:${needsTouch?'var(--coral)':'var(--text)'}">${l.lastContact?days+'d ago':'Never'}</div></div>
+        <div style="background:var(--bg3);border-radius:6px;padding:10px;"><div style="font-size:10px;color:var(--text3);font-family:monospace;margin-bottom:3px">CLOSE SPEED</div><div style="font-size:13px;font-weight:600">${intel.closeSpeed||'Unknown'}</div></div>
+      </div>
+      ${intel.feeRate||intel.maxDeal||intel.requirements||intel.process ? `
+      <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:12px;margin-bottom:14px;">
+        <div style="font-size:10px;color:${color};font-family:monospace;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Deal Terms & Process</div>
+        <div style="display:flex;flex-direction:column;gap:6px;font-size:12px;">
+          ${intel.feeRate ? '<div><span style="color:var(--text3)">Rate / Fee:</span> '+intel.feeRate+'</div>' : ''}
+          ${intel.maxDeal ? '<div><span style="color:var(--text3)">Deal size / LTV:</span> '+intel.maxDeal+'</div>' : ''}
+          ${intel.requirements ? '<div><span style="color:var(--text3)">Requirements:</span> '+intel.requirements+'</div>' : ''}
+          ${intel.process ? '<div><span style="color:var(--text3)">Process / Terms:</span> '+intel.process+'</div>' : ''}
+        </div>
+        ${(l.states||[]).length ? '<div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:4px;">'+(l.states||[]).map(function(s){ return '<span style="background:var(--adim);border:1px solid var(--border2);border-radius:4px;padding:1px 6px;font-size:10px;color:var(--accent);">'+s+'</span>'; }).join('')+'</div>' : ''}
+      </div>` : ''}
+      <div style="margin-bottom:14px;">
+        <div style="font-size:10px;color:var(--text3);font-family:monospace;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Touch History</div>
+        ${(l.touches||[]).length ? (l.touches).slice().reverse().slice(0,4).map(function(t){ return '<div style="display:flex;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);font-size:11px;"><span style="color:var(--text3);min-width:70px">'+t.date+'</span><span style="color:'+color+';min-width:50px">'+t.channel+'</span><span>'+(t.note||'')+'</span></div>'; }).join('') : '<div style="font-size:11px;color:var(--text3)">No touches yet</div>'}
+      </div>
+      <div class="form-group">
+        <label class="form-label">Log touch / add note</label>
+        <textarea class="form-textarea" id="ln-note-input" style="min-height:60px;" placeholder="What was discussed..."></textarea>
+        <div style="display:flex;gap:6px;margin-top:6px;">
+          <select class="form-select" id="ln-touch-ch" style="flex:1;">
+            <option>Call</option><option>Email</option><option>Text</option><option>Sent a deal</option>
+          </select>
+          <button class="btn btn-ghost btn-sm" onclick="logLenderTouch('${id}')">Log Touch</button>
+        </div>
+      </div>
+    </div>`);
+}
+
+function logLenderTouch(id) {
+  var l = (db.lenders||[]).find(function(x){ return x.id===id; });
+  if (!l) return;
+  var note = document.getElementById('ln-note-input')?.value?.trim()||'';
+  var channel = document.getElementById('ln-touch-ch')?.value||'Call';
+  if (!l.touches) l.touches = [];
+  l.touches.push({date:today(),channel,note});
+  l.lastContact = today();
+  save(); closeModal(); renderLenders(); renderLenderStats();
+  toast('Touch logged for '+l.name,'success');
+}
+
+// ══════════════════════════════════════════════════════
+// REFERRAL PARTNERS
+// ══════════════════════════════════════════════════════
+
+var _referralFilter = 'all';
+const REFERRAL_TYPES = [
+  { value:'bird-dog',   label:'Bird Dog',          color:'var(--teal)'   },
+  { value:'investor',   label:'Investor',           color:'var(--accent)' },
+  { value:'attorney',   label:'Attorney',           color:'var(--purple)' },
+  { value:'accountant', label:'Accountant',         color:'var(--amber)'  },
+  { value:'agent-ref',  label:'RE Agent Referral',  color:'var(--teal)'   },
+  { value:'other',      label:'Other',              color:'var(--text3)'  },
+];
+const REFERRAL_TOUCH_DAYS = 45;
+
+function referralNeedsTouch(r) {
+  return daysSince(r.lastContact) >= REFERRAL_TOUCH_DAYS;
+}
+function getReferralTypeLabel(v) {
+  var t = REFERRAL_TYPES.find(function(x){ return x.value===v; });
+  return t ? t.label : v;
+}
+function getReferralTypeColor(v) {
+  var t = REFERRAL_TYPES.find(function(x){ return x.value===v; });
+  return t ? t.color : 'var(--text3)';
+}
+
+function filterReferrals(f) {
+  _referralFilter = f;
+  document.querySelectorAll('.referral-filter-btn').forEach(function(b){ b.classList.remove('active'); });
+  var id = 'rf-'+(f==='bird-dog'?'bird':f==='investor'?'investor':f==='attorney'?'attorney':f==='accountant'?'accountant':f==='needs-touch'?'touch':f==='other'?'other':'all');
+  var btn = document.getElementById(id);
+  if (btn) btn.classList.add('active');
+  renderReferrals();
+}
+
+function renderReferralStats() {
+  var el = document.getElementById('referral-stats');
+  if (!el) return;
+  var rs = db.referrals || [];
+  var statStyle = 'background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:14px 16px;';
+  el.innerHTML = [
+    ['Total Partners', rs.length, 'var(--text)'],
+    ['Deals Sent In', rs.reduce(function(s,r){ return s+(r.dealsReferred||0); },0), 'var(--teal)'],
+    ['Bird Dogs', rs.filter(function(r){ return r.type==='bird-dog'; }).length, 'var(--teal)'],
+    ['Needs Touch', rs.filter(referralNeedsTouch).length, 'var(--amber)'],
+  ].map(function(s){
+    return '<div style="'+statStyle+'"><div style="font-size:11px;color:var(--text3);font-family:monospace;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">'+s[0]+'</div><div style="font-size:24px;font-weight:700;color:'+s[2]+'">'+s[1]+'</div></div>';
+  }).join('');
+}
+
+function renderReferrals() {
+  var el = document.getElementById('referral-grid');
+  if (!el) return;
+  var rs = db.referrals || [];
+  var stateF = document.getElementById('referral-state-filter')?.value || '';
+
+  var filtered = rs.filter(function(r) {
+    if (_referralFilter === 'needs-touch') return referralNeedsTouch(r);
+    if (_referralFilter !== 'all' && r.type !== _referralFilter) return false;
+    if (stateF && !(r.states||[]).includes(stateF)) return false;
+    return true;
+  });
+
+  filtered.sort(function(a,b){
+    var an=referralNeedsTouch(a),bn=referralNeedsTouch(b);
+    if(an&&!bn)return -1; if(!an&&bn)return 1;
+    return daysSince(a.lastContact)-daysSince(b.lastContact);
+  });
+
+  if (!filtered.length) {
+    el.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--text3);"><div style="font-size:28px;margin-bottom:12px;">🤝</div><div>No referral partners yet — add via Add Contact → Referral Partner</div></div>';
+    return;
+  }
+
+  el.innerHTML = filtered.map(function(r) {
+    var color = getReferralTypeColor(r.type);
+    var label = getReferralTypeLabel(r.type);
+    var needsTouch = referralNeedsTouch(r);
+    var days = daysSince(r.lastContact);
+    var intel = r.intel || {};
+
+    return '<div style="background:var(--bg2);border:1px solid '+(needsTouch?'rgba(251,191,36,0.3)':'var(--border)')+';border-radius:var(--rl);padding:16px;cursor:pointer;" onclick="openReferralDetail(\''+r.id+'\')">'+
+      '<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;">'+
+        '<div style="display:flex;align-items:center;gap:10px;">'+
+          '<div style="width:36px;height:36px;border-radius:50%;background:'+color+'18;border:1px solid '+color+'44;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:13px;color:'+color+';flex-shrink:0;">'+(r.name||'?')[0].toUpperCase()+'</div>'+
+          '<div><div style="font-weight:600;font-size:14px;">'+(r.name||'Unknown')+'</div>'+
+          '<div style="font-size:11px;color:var(--text3);">'+(r.company||r.occupation||'')+'</div></div>'+
+        '</div>'+
+        '<span style="font-size:10px;font-family:monospace;color:'+color+';text-transform:uppercase;padding:2px 7px;border-radius:4px;background:'+color+'18;">'+label+'</span>'+
+      '</div>'+
+      '<div style="display:flex;gap:12px;font-size:11px;color:var(--text3);margin-bottom:8px;flex-wrap:wrap;">'+
+        (r.dealsReferred ? '<span style="color:var(--teal)">🤝 '+r.dealsReferred+' deal'+(r.dealsReferred>1?'s':'')+' sent</span>' : '')+
+        (intel.feeAgreement ? '<span>💵 '+intel.feeAgreement+'</span>' : '')+
+        ((r.states||[]).length ? '<span>📍 '+(r.states||[]).join(', ')+'</span>' : '')+
+      '</div>'+
+      '<div style="display:flex;align-items:center;justify-content:space-between;">'+
+        '<div style="font-size:11px;color:'+(needsTouch?'var(--amber)':'var(--text3)')+'">'+
+          (needsTouch?'⚡ Needs touch — ':'')+
+          (r.lastContact?days+'d since contact':'Never contacted')+
+        '</div>'+
+        (r.phone?'<button onclick="event.stopPropagation();window.location=\'openphone://call?number='+((r.phone||'').replace(/[^0-9+]/g,''))+'\';" class="btn btn-ghost btn-sm" style="font-size:10px;padding:2px 8px;color:var(--teal);">📞 Call</button>':'')+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+function openAddReferralModal(editId) {
+  var r = editId ? (db.referrals||[]).find(function(x){ return x.id===editId; }) : null;
+  var isEdit = !!r;
+  var rtype = (r && r.type) || 'bird-dog';
+  var intel = r && r.intel ? r.intel : {};
+  var statesHtml = (r&&r.states?r.states:[]).map(function(s){
+    return '<span style="background:var(--adim);border:1px solid var(--border2);border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer;color:var(--teal);" onclick="this.remove();syncReferralStates()">'+s+' ✕</span>';
+  }).join('');
+
+  openCustomModal(`
+    <div class="modal-header">
+      <div class="modal-title">${isEdit?'Edit — '+(r.name||''):'+ Add Referral Partner'}</div>
+      <button class="modal-close" onclick="closeModal()">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:10px;color:var(--teal);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">Partner Info</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
+        <div class="form-group" style="grid-column:1/-1">
+          <label class="form-label">Full name *</label>
+          <input class="form-input" id="rf-name" value="${(r&&r.name)||''}" placeholder="Mike Johnson">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Type</label>
+          <select class="form-select" id="rf-type">
+            ${REFERRAL_TYPES.map(function(t){ return '<option value="'+t.value+'"'+(rtype===t.value?' selected':'')+'>'+t.label+'</option>'; }).join('')}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Occupation / company</label>
+          <input class="form-input" id="rf-company" value="${(r&&r.company)||''}" placeholder="Self-employed, ABC Realty...">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Phone</label>
+          <input class="form-input" id="rf-phone" value="${(r&&r.phone)||''}" placeholder="901-555-0100">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input class="form-input" id="rf-email" value="${(r&&r.email)||''}" placeholder="mike@email.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Deals referred so far</label>
+          <input class="form-input" type="number" id="rf-deals" value="${(r&&r.dealsReferred)||0}" min="0">
+        </div>
+        <div class="form-group" style="grid-column:1/-1">
+          <label class="form-label">States they operate in</label>
+          <div style="display:flex;gap:6px;margin-bottom:8px;">
+            <select class="form-select" id="rf-state-pick" style="flex:1;">
+              ${['TN','MS','AR','MO','AL','KY','GA','TX','OK','LA'].map(function(s){ return '<option>'+s+'</option>'; }).join('')}
+            </select>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="addReferralState()">+ Add</button>
+          </div>
+          <div id="rf-state-tags" style="display:flex;flex-wrap:wrap;gap:6px;min-height:28px;">${statesHtml}</div>
+          <input type="hidden" id="rf-states-data" value="${r&&r.states?r.states.join(','):''}">
+        </div>
+      </div>
+
+      <!-- DISCOVERY SCRIPT -->
+      <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:14px 16px;margin-bottom:16px;">
+        <div style="font-size:10px;color:var(--amber);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px;">📞 Discovery Script</div>
+        <div style="font-size:12px;color:var(--text2);background:var(--bg4);border-left:3px solid var(--teal);padding:8px 12px;border-radius:0 6px 6px 0;margin-bottom:14px;line-height:1.7;">
+          <strong style="color:var(--text)">Opener:</strong> "Hey [Name], William Smith here with Coldwater Property Group. We buy vacant land across the mid-south and I heard you might come across deals or landowners from time to time. You got two minutes? I\\'d love to see if there\\'s a way we can help each other."
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <div style="border-bottom:1px solid var(--border);padding-bottom:12px;">
+            <div style="font-size:11px;color:var(--teal);font-family:monospace;margin-bottom:4px;">Q1 — What they come across</div>
+            <div style="font-size:12px;color:var(--text2);margin-bottom:6px;font-style:italic;">"In your work, do you come across landowners who are looking to sell — either through clients, contacts, or just being out in the area?"</div>
+            <input class="form-input" id="rf-intel-dealTypes" value="${intel.dealTypes||''}" placeholder="e.g. Inherited land, estate clients, landlocked parcels" style="font-size:11px;">
+          </div>
+          <div style="border-bottom:1px solid var(--border);padding-bottom:12px;">
+            <div style="font-size:11px;color:var(--teal);font-family:monospace;margin-bottom:4px;">Q2 — Their territory</div>
+            <div style="font-size:12px;color:var(--text2);margin-bottom:6px;font-style:italic;">"What counties or areas do you tend to be most active in?"</div>
+            <input class="form-input" id="rf-intel-territory" value="${intel.territory||''}" placeholder="e.g. Craighead AR, DeSoto MS, all of west TN" style="font-size:11px;">
+          </div>
+          <div style="border-bottom:1px solid var(--border);padding-bottom:12px;">
+            <div style="font-size:11px;color:var(--teal);font-family:monospace;margin-bottom:4px;">Q3 — Referral fee agreement</div>
+            <div style="font-size:12px;color:var(--text2);margin-bottom:6px;font-style:italic;">"If you sent me a lead that turned into a deal, I always take care of the person who brought it to me. Would a referral fee be something that interests you, or do you prefer to just trade deals back and forth?"</div>
+            <input class="form-input" id="rf-intel-feeAgreement" value="${intel.feeAgreement||''}" placeholder="e.g. $500/deal, 1% of purchase, trade deals" style="font-size:11px;">
+          </div>
+          <div style="border-bottom:1px solid var(--border);padding-bottom:12px;">
+            <div style="font-size:11px;color:var(--teal);font-family:monospace;margin-bottom:4px;">Q4 — How they prefer to send deals</div>
+            <div style="font-size:12px;color:var(--text2);margin-bottom:6px;font-style:italic;">"If you came across something, what\\'s the easiest way for you to loop me in — a quick text with the address, call me, or shoot me an email?"</div>
+            <input class="form-input" id="rf-intel-sendMethod" value="${intel.sendMethod||''}" placeholder="e.g. Text address, call first, email details" style="font-size:11px;">
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--teal);font-family:monospace;margin-bottom:4px;">Q5 — Do they need deals themselves</div>
+            <div style="font-size:12px;color:var(--text2);margin-bottom:6px;font-style:italic;">"Are you ever looking to pick up land yourself, or do you just send deals my way?"</div>
+            <input class="form-input" id="rf-intel-buyerToo" value="${intel.buyerToo||''}" placeholder="e.g. Buys too, just refers, depends on deal" style="font-size:11px;">
+          </div>
+        </div>
+        <div style="font-size:12px;color:var(--text2);background:var(--bg4);border-left:3px solid var(--teal);padding:8px 12px;border-radius:0 6px 6px 0;margin-top:14px;line-height:1.6;">
+          <strong style="color:var(--text)">Close:</strong> "Perfect — I really appreciate it. Let me give you my number and if anything comes across your radar, just shoot me a text. And same goes the other way — if I have something that might work for you I\\'ll reach out."
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes</label>
+        <textarea class="form-textarea" id="rf-notes" style="min-height:60px;" placeholder="How you met, context...">${(r&&r.notes&&r.notes.length?r.notes[r.notes.length-1].text:'')}</textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveReferral('${editId||''}')">${isEdit?'Save Changes':'Add Partner'}</button>
+    </div>`);
+  setTimeout(function(){ document.getElementById('rf-name')?.focus(); }, 100);
+}
+
+function addReferralState() {
+  var state = document.getElementById('rf-state-pick')?.value;
+  if (!state) return;
+  var tagsEl = document.getElementById('rf-state-tags');
+  if (!tagsEl) return;
+  var existing = Array.from(tagsEl.querySelectorAll('span')).map(function(s){ return s.textContent.replace(' ✕','').trim(); });
+  if (existing.includes(state)) { toast('Already added','info'); return; }
+  var span = document.createElement('span');
+  span.style.cssText = 'background:var(--adim);border:1px solid var(--border2);border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer;color:var(--teal);';
+  span.textContent = state + ' ✕';
+  span.onclick = function(){ this.remove(); syncReferralStates(); };
+  tagsEl.appendChild(span);
+  syncReferralStates();
+}
+
+function syncReferralStates() {
+  var tagsEl = document.getElementById('rf-state-tags');
+  if (!tagsEl) return;
+  var states = Array.from(tagsEl.querySelectorAll('span')).map(function(s){ return s.textContent.replace(' ✕','').trim(); });
+  var hidden = document.getElementById('rf-states-data');
+  if (hidden) hidden.value = states.join(',');
+}
+
+function saveReferral(editId) {
+  var name = document.getElementById('rf-name')?.value?.trim();
+  if (!name) { toast('Name required','error'); return; }
+  var statesRaw = document.getElementById('rf-states-data')?.value||'';
+  var states = statesRaw ? statesRaw.split(',').map(function(s){ return s.trim(); }).filter(Boolean) : [];
+  var intel = {
+    dealTypes:    document.getElementById('rf-intel-dealTypes')?.value?.trim()||'',
+    territory:    document.getElementById('rf-intel-territory')?.value?.trim()||'',
+    feeAgreement: document.getElementById('rf-intel-feeAgreement')?.value?.trim()||'',
+    sendMethod:   document.getElementById('rf-intel-sendMethod')?.value?.trim()||'',
+    buyerToo:     document.getElementById('rf-intel-buyerToo')?.value?.trim()||'',
+  };
+  var noteText = document.getElementById('rf-notes')?.value?.trim()||'';
+  var intelFilled = intel.dealTypes || intel.feeAgreement;
+  var data = {
+    name, states, intel,
+    company:       document.getElementById('rf-company')?.value?.trim()||'',
+    phone:         document.getElementById('rf-phone')?.value?.trim()||'',
+    email:         document.getElementById('rf-email')?.value?.trim()||'',
+    type:          document.getElementById('rf-type')?.value||'bird-dog',
+    dealsReferred: parseInt(document.getElementById('rf-deals')?.value||0),
+    lastContact:   intelFilled ? today() : null,
+  };
+  if (!db.referrals) db.referrals = [];
+  if (editId) {
+    var existing = db.referrals.find(function(x){ return x.id===editId; });
+    if (existing) {
+      Object.assign(existing, data);
+      if (noteText) { if(!existing.notes)existing.notes=[]; existing.notes.unshift({date:today(),text:noteText}); }
+    }
+  } else {
+    db.referrals.unshift(Object.assign({id:uid(),created:today(),notes:noteText?[{date:today(),text:noteText}]:[],touches:intelFilled?[{date:today(),channel:'Call',note:'Discovery call'}]:[]}, data));
+  }
+  save(); closeModal(); renderReferrals(); renderReferralStats();
+  toast((editId?'Updated — ':'Added — ')+name,'success');
+}
+
+function openReferralDetail(id) {
+  var r = (db.referrals||[]).find(function(x){ return x.id===id; });
+  if (!r) return;
+  var intel = r.intel || {};
+  var color = getReferralTypeColor(r.type);
+  var label = getReferralTypeLabel(r.type);
+  var needsTouch = referralNeedsTouch(r);
+  var days = daysSince(r.lastContact);
+
+  openCustomModal(`
+    <div class="modal-header">
+      <div class="modal-title">${r.name}</div>
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-ghost btn-sm" onclick="closeModal();openAddReferralModal('${id}')">Edit</button>
+        <button class="modal-close" onclick="closeModal()">&#x2715;</button>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+        ${r.phone ? `<button class="btn btn-primary btn-sm" onclick="window.location='openphone://call?number=${(r.phone||'').replace(/[^0-9+]/g,'')}'" >📞 Call ${r.name.split(' ')[0]}</button>` : ''}
+        ${r.phone ? `<button class="btn btn-ghost btn-sm" onclick="window.location='openphone://conversation?number=${(r.phone||'').replace(/[^0-9+]/g,'')}'" >💬 Text</button>` : ''}
+        ${r.email ? `<button class="btn btn-ghost btn-sm" onclick="openCompose('${r.email}','Checking in — Coldwater Property Group','Hi ${r.name.split(' ')[0]},')">✉️ Email</button>` : ''}
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;">
+        <div style="background:var(--bg3);border-radius:6px;padding:10px;"><div style="font-size:10px;color:var(--text3);font-family:monospace;margin-bottom:3px">TYPE</div><div style="font-size:13px;font-weight:600;color:${color}">${label}</div></div>
+        <div style="background:var(--bg3);border-radius:6px;padding:10px;"><div style="font-size:10px;color:var(--text3);font-family:monospace;margin-bottom:3px">DEALS SENT</div><div style="font-size:13px;font-weight:600;color:var(--teal)">${r.dealsReferred||0}</div></div>
+        <div style="background:var(--bg3);border-radius:6px;padding:10px;"><div style="font-size:10px;color:var(--text3);font-family:monospace;margin-bottom:3px">LAST CONTACT</div><div style="font-size:13px;font-weight:600;color:${needsTouch?'var(--amber)':'var(--text)'}">${r.lastContact?days+'d ago':'Never'}</div></div>
+      </div>
+      ${intel.dealTypes||intel.territory||intel.feeAgreement||intel.sendMethod ? `
+      <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:12px;margin-bottom:14px;">
+        <div style="font-size:10px;color:var(--teal);font-family:monospace;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Partner Intel</div>
+        <div style="display:flex;flex-direction:column;gap:6px;font-size:12px;">
+          ${intel.dealTypes ? '<div><span style="color:var(--text3)">Deals they see:</span> '+intel.dealTypes+'</div>' : ''}
+          ${intel.territory ? '<div><span style="color:var(--text3)">Territory:</span> '+intel.territory+'</div>' : ''}
+          ${intel.feeAgreement ? '<div><span style="color:var(--text3)">Fee agreement:</span> '+intel.feeAgreement+'</div>' : ''}
+          ${intel.sendMethod ? '<div><span style="color:var(--text3)">How to send deals:</span> '+intel.sendMethod+'</div>' : ''}
+          ${intel.buyerToo ? '<div><span style="color:var(--text3)">Also buys:</span> '+intel.buyerToo+'</div>' : ''}
+        </div>
+        ${(r.states||[]).length ? '<div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:4px;">'+(r.states||[]).map(function(s){ return '<span style="background:var(--adim);border:1px solid var(--border2);border-radius:4px;padding:1px 6px;font-size:10px;color:var(--teal);">'+s+'</span>'; }).join('')+'</div>' : ''}
+      </div>` : ''}
+      <div class="form-group">
+        <label class="form-label">Log touch</label>
+        <textarea class="form-textarea" id="rf-note-input" style="min-height:60px;" placeholder="What was discussed..."></textarea>
+        <div style="display:flex;gap:6px;margin-top:6px;">
+          <select class="form-select" id="rf-touch-ch" style="flex:1;">
+            <option>Call</option><option>Text</option><option>Email</option><option>Deal received</option>
+          </select>
+          <button class="btn btn-ghost btn-sm" onclick="logReferralTouch('${id}')">Log Touch</button>
+        </div>
+      </div>
+    </div>`);
+}
+
+function logReferralTouch(id) {
+  var r = (db.referrals||[]).find(function(x){ return x.id===id; });
+  if (!r) return;
+  var note = document.getElementById('rf-note-input')?.value?.trim()||'';
+  var channel = document.getElementById('rf-touch-ch')?.value||'Call';
+  if (!r.touches) r.touches = [];
+  r.touches.push({date:today(),channel,note});
+  r.lastContact = today();
+  save(); closeModal(); renderReferrals(); renderReferralStats();
+  toast('Touch logged for '+r.name,'success');
 }
 
 // INIT
