@@ -676,16 +676,31 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
 
     <!-- BUYERS -->
     <div id="view-buyers" class="view">
-      <div class="filter-bar">
-        <input class="search-input" type="text" placeholder="Search buyers..." id="buyer-search" oninput="renderBuyers()">
-        <select class="filter-select" id="buyer-type-filter" onchange="renderBuyers()">
-          <option value="">All types</option>
-          <option value="builder">Builder / developer</option>
-          <option value="land-investor">Land investor</option>
-          <option value="retail">Retail end buyer</option>
-          <option value="farmer">Farmer / recreational</option>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+        <div>
+          <div style="font-size:11px;font-family:'DM Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Buyer Network</div>
+          <div style="font-size:13px;color:var(--text2)">Your cash buyers — match deals to buyers instantly.</div>
+        </div>
+        <select class="form-select" id="buyer-county-filter" onchange="renderBuyers()" style="font-size:12px;padding:6px 10px;min-width:180px;">
+          <option value="">All counties</option>
         </select>
       </div>
+
+      <!-- Buyer stats -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;" id="buyer-stats"></div>
+
+      <!-- Filter tabs -->
+      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center;">
+        <input class="search-input" type="text" placeholder="Search buyers..." id="buyer-search" oninput="renderBuyers()" style="max-width:200px;">
+        <button class="btn btn-ghost btn-sm buyer-type-btn active" onclick="filterBuyerType('')" id="bt-all">All</button>
+        <button class="btn btn-ghost btn-sm buyer-type-btn" onclick="filterBuyerType('land-banker')" id="bt-land-banker">Land Bankers</button>
+        <button class="btn btn-ghost btn-sm buyer-type-btn" onclick="filterBuyerType('builder')" id="bt-builder">Builders</button>
+        <button class="btn btn-ghost btn-sm buyer-type-btn" onclick="filterBuyerType('retail')" id="bt-retail">Retail</button>
+        <button class="btn btn-ghost btn-sm buyer-type-btn" onclick="filterBuyerType('wholesaler')" id="bt-wholesaler">Wholesalers</button>
+        <button class="btn btn-ghost btn-sm buyer-type-btn" onclick="filterBuyerType('recreational')" id="bt-recreational">Recreational</button>
+        <button class="btn btn-ghost btn-sm buyer-type-btn" onclick="filterBuyerType('farmer')" id="bt-farmer">Farmers</button>
+      </div>
+
       <div class="buyer-grid" id="buyer-grid"></div>
     </div>
 
@@ -1025,7 +1040,11 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
           <div style="font-size:11px;font-family:'DM Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">RE Agent Network</div>
           <div style="font-size:13px;color:var(--text2)">Build relationships. Get deal flow.</div>
         </div>
-        <button class="btn btn-primary" onclick="openAddAgent()">+ Add Agent</button>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <select class="form-select" id="agent-county-filter" onchange="filterAgentsByCounty(this.value)" style="font-size:12px;padding:6px 10px;min-width:180px;">
+            <option value="">All counties</option>
+          </select>
+        </div>
       </div>
 
       <!-- Stats bar -->
@@ -1105,7 +1124,11 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
           <div style="font-size:11px;font-family:'DM Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">RE Agent Network</div>
           <div style="font-size:13px;color:var(--text2)">Build relationships. Get deal flow.</div>
         </div>
-        <button class="btn btn-primary" onclick="openAddAgent()">+ Add Agent</button>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <select class="form-select" id="agent-county-filter" onchange="filterAgentsByCounty(this.value)" style="font-size:12px;padding:6px 10px;min-width:180px;">
+            <option value="">All counties</option>
+          </select>
+        </div>
       </div>
 
       <!-- Stats bar -->
@@ -1416,14 +1439,14 @@ function showView(v){
   document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
   currentView=v;
   const _ve=document.getElementById('view-'+v);if(_ve)_ve.classList.add('active');
-  const titles={dashboard:'Dashboard','acq-pipeline':'Acquisitions Pipeline','dis-pipeline':'Dispositions Pipeline','ai-queue':'AI Handoff Queue',sellers:'All Leads',buyers:'Buyer List',calculator:'Offer Calculator',sequences:'SMS Sequences',settings:'Settings','ai-qualified':'AI Qualified Leads',reporting:'Reporting',gmail:'Email',agents:'Agent Network'};
+  const titles={dashboard:'Dashboard','acq-pipeline':'Acquisitions Pipeline','dis-pipeline':'Dispositions Pipeline','ai-queue':'AI Handoff Queue',sellers:'All Leads',buyers:'Buyer Network',calculator:'Offer Calculator',sequences:'SMS Sequences',settings:'Settings','ai-qualified':'AI Qualified Leads',reporting:'Reporting',gmail:'Email',agents:'Agent Network'};
   document.getElementById('page-title').textContent=titles[v]||v;
   if(v==='dashboard')renderDashboard();
   if(v==='acq-pipeline')renderPipeline('acq');
   if(v==='dis-pipeline')renderPipeline('dis');
   if(v==='ai-queue')renderAIQueue();
   if(v==='sellers')renderSellers();
-  if(v==='buyers')renderBuyers();
+  if(v==='buyers'){renderBuyers();renderBuyerStats();}
   if(v==='sequences')renderSequences();
   if(v==='settings')renderSettings();
   if(v==='ai-qualified')loadQualifiedLeads();
@@ -2267,26 +2290,16 @@ function updateAddContactFields(type, editId) {
       '<div class="form-group form-full"><label class="form-label">Notes</label><textarea class="form-textarea" id="f-notes">'+(c&&c.notes&&c.notes[0]?c.notes[0].text:'')+'</textarea></div>' +
       '</div>';
 
+  } else if(type === 'agent') {
+    closeModal();
+    setTimeout(function(){ openAddAgent(editId||''); }, 150);
+    return;
   } else if(type === 'buyer') {
-    h = '<div class="form-section-title">Buyer Info</div>' +
-      '<div class="form-grid" style="margin-bottom:14px">' +
-      '<div class="form-group"><label class="form-label">Full name *</label><input class="form-input" id="f-name" value="'+(c&&c.name||'')+'"></div>' +
-      '<div class="form-group"><label class="form-label">Phone</label><input class="form-input" id="f-phone" value="'+(c&&c.phone||'')+'"></div>' +
-      '<div class="form-group"><label class="form-label">Email</label><input class="form-input" id="f-email" value="'+(c&&c.email||'')+'"></div>' +
-      '<div class="form-group"><label class="form-label">Buyer type</label><select class="form-select" id="f-buyertype">' +
-      ['Builder / developer','Land investor','Retail end buyer','Farmer / recreational'].map(function(t){return '<option '+(c&&c.buyerType===t?'selected':'')+'>'+t+'</option>';}).join('') +
-      '</select></div></div>' +
-      '<div class="form-section-title">Buy Box</div>' +
-      '<div class="form-grid">' +
-      '<div class="form-group"><label class="form-label">States (comma separated)</label><input class="form-input" id="f-states" value="'+(c&&c.states?c.states.join(', '):'')+'" placeholder="TN, MS, AR"></div>' +
-      '<div class="form-group"><label class="form-label">Min acreage</label><input class="form-input" id="f-minacres" type="number" value="'+(c&&c.minAcres||'')+'"></div>' +
-      '<div class="form-group"><label class="form-label">Max acreage</label><input class="form-input" id="f-maxacres" type="number" value="'+(c&&c.maxAcres||'')+'"></div>' +
-      '<div class="form-group"><label class="form-label">Max price ($)</label><input class="form-input" id="f-maxprice" type="number" value="'+(c&&c.maxPrice||'')+'"></div>' +
-      '<div class="form-group form-full"><label class="form-label">Notes</label><textarea class="form-textarea" id="f-notes">'+(c&&c.notes||'')+'</textarea></div>' +
-      '</div>';
-
+    closeModal();
+    setTimeout(function(){ openAddBuyerModal(editId||''); }, 150);
+    return;
   } else {
-    var extraLabel = {lender:'Loan terms / max amount', agent:'Markets / brokerage', referral:'How they send deals', title:'Firm / office'}[type] || 'Details';
+    var extraLabel = {lender:'Loan terms / max amount', referral:'How they send deals', title:'Firm / office'}[type] || 'Details';
     h = '<div class="form-grid">' +
       '<div class="form-group"><label class="form-label">Full name *</label><input class="form-input" id="f-name" value="'+(c&&c.name||'')+'"></div>' +
       '<div class="form-group"><label class="form-label">Company</label><input class="form-input" id="f-company" value="'+(c&&c.company||'')+'"></div>' +
@@ -2594,86 +2607,575 @@ function saveContact(editId){
 // ══════════════════════════════════
 // BUYERS
 // ══════════════════════════════════
-function renderBuyers(){
-  const search=document.getElementById('buyer-search').value.toLowerCase();
-  const typeF=document.getElementById('buyer-type-filter').value;
-  let buyers=db.buyers.filter(b=>{
-    if(typeF&&b.type!==typeF)return false;
-    if(search){const h=(b.name+b.email+b.phone).toLowerCase();if(!h.includes(search))return false;}
-    return true;
-  });
-  const grid=document.getElementById('buyer-grid');
-  if(!buyers.length){grid.innerHTML='<div class="empty" style="grid-column:1/-1"><div class="empty-title">No buyers found</div></div>';return;}
-  grid.innerHTML=buyers.map(b=>`
-    <div class="buyer-card" onclick="openBuyerDetail('${b.id}')">
-      <div class="buyer-name">${b.name}</div>
-      <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px">${b.tags.map(t=>`<span class="tag tag-neutral">${t}</span>`).join('')}</div>
-      <div class="buyer-buybox">${b.minAcres}–${b.maxAcres} acres · up to $${b.maxPrice.toLocaleString()}<br>States: ${b.states.join(', ')}<br>${b.notes.slice(0,60)}...</div>
-    </div>`).join('');
+// ── BUYER TYPE CONFIG ────────────────────────────────────────────────
+var BUYER_TYPES = [
+  { value:'land-banker',   label:'Land Banker',        color:'var(--purple)' },
+  { value:'builder',       label:'Builder / Developer', color:'var(--accent)' },
+  { value:'retail',        label:'Retail End Buyer',    color:'var(--teal)'   },
+  { value:'wholesaler',    label:'Wholesaler',          color:'var(--amber)'  },
+  { value:'recreational',  label:'Recreational / Hunt', color:'var(--green)'  },
+  { value:'farmer',        label:'Farmer / Ag',         color:'var(--coral)'  },
+  { value:'timber',        label:'Timber Investor',     color:'var(--green)'  },
+  { value:'neighbor',      label:'Neighboring Owner',   color:'var(--teal)'   },
+];
+
+var _buyerTypeFilter = '';
+
+function getBuyerTypeLabel(value) {
+  var t = BUYER_TYPES.find(function(x){ return x.value === value; });
+  return t ? t.label : value;
 }
 
-function openBuyerDetail(id){
-  const b=db.buyers.find(x=>x.id===id);if(!b)return;
-  const matching=db.contacts.filter(c=>c.pipeline==='dis'&&c.stage==='Available'&&b.states.includes(c.state)&&parseFloat(c.acreage||0)>=b.minAcres&&parseFloat(c.acreage||0)<=b.maxAcres);
+function getBuyerTypeColor(value) {
+  var t = BUYER_TYPES.find(function(x){ return x.value === value; });
+  return t ? t.color : 'var(--text3)';
+}
+
+function getBuyerCounties(buyer) {
+  if (buyer.counties && buyer.counties.length) return buyer.counties;
+  if (buyer.states) return [];
+  return [];
+}
+
+function filterBuyerType(type) {
+  _buyerTypeFilter = type;
+  document.querySelectorAll('.buyer-type-btn').forEach(function(b){ b.classList.remove('active'); });
+  var id = 'bt-' + (type||'all');
+  var btn = document.getElementById(id);
+  if (btn) btn.classList.add('active');
+  renderBuyers();
+}
+
+function renderBuyerStats() {
+  var el = document.getElementById('buyer-stats');
+  if (!el) return;
+  var buyers = db.buyers || [];
+  var statStyle = 'background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:14px 16px;';
+  el.innerHTML = [
+    ['Total Buyers', buyers.length, 'var(--text)'],
+    ['Land Bankers', buyers.filter(function(b){ return b.type==='land-banker'; }).length, 'var(--purple)'],
+    ['Builders', buyers.filter(function(b){ return b.type==='builder'; }).length, 'var(--accent)'],
+    ['Wholesalers', buyers.filter(function(b){ return b.type==='wholesaler'; }).length, 'var(--amber)'],
+  ].map(function(s){ return '<div style="'+statStyle+'"><div style="font-size:11px;color:var(--text3);font-family:monospace;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">'+s[0]+'</div><div style="font-size:24px;font-weight:700;color:'+s[2]+'">'+s[1]+'</div></div>'; }).join('');
+}
+
+function rebuildBuyerCountyFilter() {
+  var sel = document.getElementById('buyer-county-filter');
+  if (!sel) return;
+  var allCounties = new Set();
+  (db.buyers||[]).forEach(function(b) {
+    (b.counties||[]).forEach(function(c){ allCounties.add(c); });
+  });
+  var current = sel.value;
+  var sorted = Array.from(allCounties).sort();
+  sel.innerHTML = '<option value="">All counties</option>' +
+    sorted.map(function(c){ return '<option value="'+c+'"'+(c===current?' selected':'')+'>'+c+'</option>'; }).join('');
+}
+
+function renderBuyers() {
+  var grid = document.getElementById('buyer-grid');
+  if (!grid) return;
+  rebuildBuyerCountyFilter();
+
+  var search = (document.getElementById('buyer-search')?.value||'').toLowerCase();
+  var countyF = document.getElementById('buyer-county-filter')?.value || '';
+
+  var buyers = (db.buyers||[]).filter(function(b) {
+    if (_buyerTypeFilter && b.type !== _buyerTypeFilter) return false;
+    if (countyF && !(b.counties||[]).includes(countyF)) return false;
+    if (search) {
+      var hay = ((b.name||'') + (b.email||'') + (b.phone||'') + (b.type||'')).toLowerCase();
+      if (!hay.includes(search)) return false;
+    }
+    return true;
+  });
+
+  if (!buyers.length) {
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--text3);"><div style="font-size:28px;margin-bottom:12px;">💰</div><div style="font-size:13px;margin-bottom:16px;">No buyers found — add your first buyer contact</div></div>';
+    return;
+  }
+
+  var typeColor = getBuyerTypeColor;
+  var typeLabel = getBuyerTypeLabel;
+
+  grid.innerHTML = buyers.map(function(b) {
+    var color = typeColor(b.type);
+    var lastDays = b.lastContact ? Math.floor((Date.now() - new Date(b.lastContact).getTime())/86400000) : null;
+    var pof = b.proofOfFunds ? '✓ POF' : '';
+    return '<div class="buyer-card" onclick="openBuyerDetail(\'' + b.id + '\')">'+
+      '<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px;">'+
+        '<div style="display:flex;align-items:center;gap:8px;">'+
+          '<div style="width:34px;height:34px;border-radius:50%;background:'+color+'22;border:1px solid '+color+'44;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:13px;color:'+color+';flex-shrink:0;">'+(b.name||'?')[0].toUpperCase()+'</div>'+
+          '<div><div style="font-weight:600;font-size:14px;">'+(b.name||'Unknown')+'</div>'+
+          '<div style="font-size:11px;color:var(--text3);">'+(b.company||'')+'</div></div>'+
+        '</div>'+
+        '<span style="font-size:10px;font-family:monospace;color:'+color+';text-transform:uppercase;letter-spacing:.05em;padding:2px 7px;border-radius:4px;background:'+color+'18;">'+typeLabel(b.type)+'</span>'+
+      '</div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11px;color:var(--text3);margin-bottom:8px;">'+
+        '<span>📐 '+(b.minAcres||0)+'–'+(b.maxAcres||'any')+' acres</span>'+
+        '<span>💵 up to $'+((b.maxPrice||0).toLocaleString())+'</span>'+
+        (b.closeSpeed ? '<span>⚡ '+b.closeSpeed+'</span>' : '')+
+        (pof ? '<span style="color:var(--teal)">'+pof+'</span>' : '')+
+      '</div>'+
+      ((b.counties||[]).length ? '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;">'+
+        (b.counties||[]).map(function(c){ return '<span style="background:var(--adim);border:1px solid var(--border2);border-radius:4px;padding:1px 6px;font-size:10px;color:var(--accent);">'+c+'</span>'; }).join('')+
+      '</div>' : '')+
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;">'+
+        '<span style="font-size:11px;color:var(--text3);">'+(lastDays!==null ? lastDays+'d since contact' : 'Never contacted')+'</span>'+
+        (b.phone ? '<button onclick="event.stopPropagation();callBuyerFromCard(\'' + b.id + '\')\'" class="btn btn-ghost btn-sm" style="font-size:10px;padding:2px 8px;color:var(--accent);">📞 Call</button>' : '')+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+function openBuyerDetail(id) {
+  var b = db.buyers.find(function(x){ return x.id===id; });
+  if (!b) return;
+  var color = getBuyerTypeColor(b.type);
+  var typeLabel = getBuyerTypeLabel(b.type);
+  var lastDays = b.lastContact ? Math.floor((Date.now()-new Date(b.lastContact).getTime())/86400000) : null;
+
+  // Find matching available parcels
+  var matching = db.contacts.filter(function(c) {
+    if (c.pipeline !== 'dis' || c.stage !== 'Available') return false;
+    if (b.counties && b.counties.length) {
+      var parcelCounty = (c.county||'') + ' ' + (c.state||'');
+      if (!b.counties.some(function(bc){ return bc.toLowerCase() === parcelCounty.toLowerCase(); })) return false;
+    }
+    var ac = parseFloat(c.acreage||0);
+    if (ac < (b.minAcres||0)) return false;
+    if (b.maxAcres && ac > b.maxAcres) return false;
+    return true;
+  });
+
   openCustomModal(`
     <div class="modal-header">
       <div class="modal-title">${b.name}</div>
-      <div style="display:flex;gap:6px"><button class="btn btn-danger btn-sm" onclick="deleteBuyer('${id}')">Delete</button><button class="modal-close" onclick="closeModal()">&#x2715;</button></div>
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-ghost btn-sm" onclick="closeModal();openAddBuyerModal('${id}')">Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteBuyer('${id}')">Delete</button>
+        <button class="modal-close" onclick="closeModal()">&#x2715;</button>
+      </div>
     </div>
     <div class="modal-body">
-      <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:14px">${b.tags.map(t=>`<span class="tag tag-neutral">${t}</span>`).join('')}</div>
-      <div class="form-grid" style="margin-bottom:14px">
-        <div><div class="detail-field-label" style="font-size:12px;font-family:'DM Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px">Phone</div><div style="font-size:12px">${b.phone||'—'}</div></div>
-        <div><div class="detail-field-label" style="font-size:12px;font-family:'DM Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px">Email</div><div style="font-size:12px">${b.email||'—'}</div></div>
-        <div><div class="detail-field-label" style="font-size:12px;font-family:'DM Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px">Type</div><div style="font-size:12px">${b.type}</div></div>
-        <div><div class="detail-field-label" style="font-size:12px;font-family:'DM Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px">States</div><div style="font-size:12px">${b.states.join(', ')}</div></div>
-        <div><div class="detail-field-label" style="font-size:12px;font-family:'DM Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px">Acreage range</div><div style="font-size:12px">${b.minAcres}–${b.maxAcres} acres</div></div>
-        <div><div class="detail-field-label" style="font-size:12px;font-family:'DM Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px">Max price</div><div style="font-size:12px">$${b.maxPrice.toLocaleString()}</div></div>
+      <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+        ${b.phone ? `<button class="btn btn-primary btn-sm" onclick="window.location='openphone://call?number=${(b.phone||'').replace(/[^0-9+]/g,'')}'"  >📞 Call ${b.name.split(' ')[0]}</button>` : ''}
+        ${b.phone ? `<button class="btn btn-ghost btn-sm" onclick="window.location='openphone://conversation?number=${(b.phone||'').replace(/[^0-9+]/g,'')}'">💬 Text</button>` : ''}
+        ${b.email ? `<button class="btn btn-ghost btn-sm" onclick="openCompose('${b.email}','Deal available in your market','Hi ${b.name.split(' ')[0]},')">✉️ Send Deal</button>` : ''}
       </div>
-      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:14px;font-size:12px;color:var(--text2)">${b.notes}</div>
-      <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--accent);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">Matching available parcels (${matching.length})</div>
-      ${matching.length?matching.map(c=>`<div class="today-item" onclick="closeModal();openDetail('${c.id}')"><div class="today-dot green"></div><div><div class="today-label">${c.name} — ${c.acreage} acres, ${c.county} ${c.state}</div><div class="today-sub">${c.stage} · ${c.dealType}</div></div></div>`).join(''):'<p style="font-size:12px;color:var(--text3)">No matching parcels available right now.</p>'}
+
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;">
+        <div style="background:var(--bg3);border-radius:6px;padding:10px;"><div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:3px">TYPE</div><div style="font-size:13px;font-weight:600;color:${color}">${typeLabel}</div></div>
+        <div style="background:var(--bg3);border-radius:6px;padding:10px;"><div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:3px">LAST CONTACT</div><div style="font-size:13px;font-weight:600">${lastDays!==null ? lastDays+'d ago' : 'Never'}</div></div>
+        <div style="background:var(--bg3);border-radius:6px;padding:10px;"><div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:3px">CLOSE SPEED</div><div style="font-size:13px;font-weight:600">${b.closeSpeed||'Unknown'}</div></div>
+      </div>
+
+      <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:12px;margin-bottom:14px;">
+        <div style="font-size:10px;color:var(--accent);font-family:monospace;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Buy Box</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;">
+          <div><span style="color:var(--text3)">Acreage:</span> ${b.minAcres||0}–${b.maxAcres||'any'} acres</div>
+          <div><span style="color:var(--text3)">Max price:</span> $${(b.maxPrice||0).toLocaleString()}</div>
+          ${b.proofOfFunds ? '<div style="color:var(--teal)">✓ Proof of funds on file</div>' : ''}
+          ${b.contactPref ? `<div><span style="color:var(--text3)">Prefers:</span> ${b.contactPref}</div>` : ''}
+        </div>
+        ${(b.counties||[]).length ? `<div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:4px;">${(b.counties||[]).map(c=>'<span style="background:var(--adim);border:1px solid var(--border2);border-radius:4px;padding:1px 6px;font-size:10px;color:var(--accent);">'+c+'</span>').join('')}</div>` : ''}
+      </div>
+
+      ${b.intel && Object.values(b.intel).some(v=>v) ? `
+      <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:12px;margin-bottom:14px;">
+        <div style="font-size:10px;color:var(--amber);font-family:monospace;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">📊 Discovery Intel</div>
+        <div style="display:flex;flex-direction:column;gap:6px;font-size:11px;">
+          ${b.intel.criteria ? `<div><span style="color:var(--text3)">Key criteria:</span> ${b.intel.criteria}</div>` : ''}
+          ${b.intel.dealFlow ? `<div><span style="color:var(--text3)">Deal flow:</span> ${b.intel.dealFlow}</div>` : ''}
+          ${b.intel.financing ? `<div><span style="color:var(--text3)">Financing:</span> ${b.intel.financing}</div>` : ''}
+          ${b.intel.howToSend ? `<div><span style="color:var(--text3)">How to send deals:</span> ${b.intel.howToSend}</div>` : ''}
+          ${b.intel.pastDeals ? `<div><span style="color:var(--text3)">Past deals in market:</span> ${b.intel.pastDeals}</div>` : ''}
+          ${b.intel.extra ? `<div><span style="color:var(--text3)">Notes:</span> ${b.intel.extra}</div>` : ''}
+        </div>
+      </div>` : ''}
+
+      <div style="margin-bottom:14px;">
+        <div style="font-size:10px;color:var(--text3);font-family:monospace;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Matching Parcels Available (${matching.length})</div>
+        ${matching.length ? matching.map(c=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);cursor:pointer;" onclick="closeModal();openDetail('${c.id}')"><div style="width:6px;height:6px;border-radius:50%;background:var(--teal);flex-shrink:0;"></div><div style="font-size:12px;">${c.name} — ${c.acreage} acres, ${c.county} ${c.state}</div></div>`).join('') : '<div style="font-size:12px;color:var(--text3);">No matching parcels right now.</div>'}
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Add note</label>
+        <textarea class="form-textarea" id="buyer-note-input" style="min-height:60px;" placeholder="Notes from conversation..."></textarea>
+        <button class="btn btn-ghost btn-sm" style="margin-top:6px;" onclick="addBuyerNote('${id}')">Save Note</button>
+        ${(b.notes||[]).length ? '<div style="margin-top:10px;">' + (Array.isArray(b.notes) ? b.notes : [{text:b.notes}]).slice(0,3).map(n=>'<div style="font-size:11px;color:var(--text2);padding:4px 0;border-bottom:1px solid var(--border);">'+(n.date?'<span style="color:var(--text3)">'+n.date+' — </span>':'')+n.text+'</div>').join('') + '</div>' : ''}
+      </div>
     </div>`);
 }
 
-function openAddBuyer(){
+function addBuyerNote(id) {
+  var b = db.buyers.find(function(x){ return x.id===id; });
+  if (!b) return;
+  var text = document.getElementById('buyer-note-input')?.value?.trim();
+  if (!text) return;
+  if (!Array.isArray(b.notes)) b.notes = b.notes ? [{text:b.notes}] : [];
+  b.notes.unshift({date:today(), text});
+  b.lastContact = today();
+  save();
+  closeModal();
+  openBuyerDetail(id);
+  toast('Note saved','success');
+}
+
+function openAddBuyerModal(editId) {
+  var b = editId ? db.buyers.find(function(x){ return x.id===editId; }) : null;
+  var isEdit = !!b;
+  var intel = b && b.intel ? b.intel : {};
+  var btype = (b && b.type) || 'land-banker';
+
+  // Build discovery script based on type
+  var scripts = {
+    'land-banker': {
+      opener: "Hey [Name], this is William Smith with Coldwater Property Group — we're a land buying company out of the mid-south. I came across your name and wanted to introduce myself. Do you have just two or three minutes?",
+      questions: [
+        { id:'criteria',    label:'Q1 — Geography & focus',     prompt:'"What geography are you most focused on right now — and is there a minimum acreage you\'re looking at?"',    ph:'States, counties, acreage preference' },
+        { id:'financing',   label:'Q2 — Cash or leverage',      prompt:'"Are you buying all cash or do you use any debt on your acquisitions?"',                                      ph:'All cash / some leverage / depends on deal' },
+        { id:'dealFlow',    label:'Q3 — Deal flow needs',       prompt:'"Are you looking for consistent deal flow from a source, or more opportunistic — deal by deal?"',           ph:'Consistent pipeline / opportunistic' },
+        { id:'howToSend',   label:'Q4 — How to send deals',     prompt:'"If I had something that fits your box, what\'s the best way to get it to you — email, text, a quick call?"', ph:'Text address, email details, etc.' },
+        { id:'pastDeals',   label:'Q5 — Bought in our markets', prompt:'"Have you done deals in AR, MS, or TN before? What\'s been your experience?"',                             ph:'Yes/no, which counties, experience' },
+      ]
+    },
+    'builder': {
+      opener: "Hey [Name], William Smith with Coldwater Property Group — we acquire vacant land across the mid-south and I wanted to connect. Do you have a couple minutes?",
+      questions: [
+        { id:'criteria',    label:'Q1 — Project type',          prompt:'"What kind of projects are you building — residential subdivision, spec homes, commercial, or mixed use?"',   ph:'Residential lots, spec homes, commercial' },
+        { id:'financing',   label:'Q2 — Utilities & zoning',    prompt:'"Do you need utilities already at the road, or are you okay bringing them in? Any specific zoning requirements?"', ph:'Must have utilities / can bring in / zoning needs' },
+        { id:'dealFlow',    label:'Q3 — Active markets',        prompt:'"What markets are you actively developing in right now?"',                                                     ph:'Counties, cities they\'re building in' },
+        { id:'howToSend',   label:'Q4 — How to send deals',     prompt:'"If I had a lot or parcel that could work for a project, how do you like to see it — address and info by text, or an email with details?"', ph:'Text / email / call first' },
+        { id:'pastDeals',   label:'Q5 — Timeline',              prompt:'"Once you\'re under contract, how long does it typically take you to break ground?"',                        ph:'30 days, 6 months, depends on permits' },
+      ]
+    },
+    'retail': {
+      opener: "Hey [Name], this is William Smith with Coldwater Property Group — we buy and sell vacant land across the mid-south. I wanted to reach out because it sounds like you might be looking for some land. Do you have a few minutes to chat?",
+      questions: [
+        { id:'criteria',    label:'Q1 — Intended use',          prompt:'"What are you looking to use the land for — building a home, hunting and recreation, camping, or just holding it as an investment?"', ph:'Build, hunt, camp, hold, investment' },
+        { id:'financing',   label:'Q2 — Cash or financing',     prompt:'"Are you planning to pay cash or would you need financing? We work with buyers in both situations."',        ph:'Cash / needs financing / not sure' },
+        { id:'dealFlow',    label:'Q3 — Must-haves',            prompt:'"What\'s most important to you on the property — road access, privacy, timber, water, or something else?"', ph:'Road access, privacy, trees, creek, etc.' },
+        { id:'howToSend',   label:'Q4 — How to reach you',      prompt:'"If I found something that could really work for you, what\'s the best way to send it — text, email, or give you a call?"', ph:'Text, email, call' },
+        { id:'pastDeals',   label:'Q5 — County preference',     prompt:'"Is there a specific county or area you\'re focused on, or are you open to looking around?"',              ph:'Specific counties or open to options' },
+      ]
+    },
+    'wholesaler': {
+      opener: "Hey [Name], William Smith here — I\'m a land investor out of the mid-south. Wanted to reach out and see if there\'s a way we can help each other. You got two minutes?",
+      questions: [
+        { id:'criteria',    label:'Q1 — Their buy box',         prompt:'"What\'s your buy box right now — what counties, acreage range, and price per acre are you targeting?"',   ph:'Counties, acres, price per acre range' },
+        { id:'financing',   label:'Q2 — Assign or double close', prompt:'"Do you typically assign your contracts or do you double close?"',                                           ph:'Assign / double close / both' },
+        { id:'dealFlow',    label:'Q3 — Deals they\'re moving', prompt:'"Are you sitting on any deals right now that don\'t fit your box? I might be able to take them off your hands."', ph:'Yes/no, what they have' },
+        { id:'howToSend',   label:'Q4 — Two-way pipeline',      prompt:'"Would you be open to a standing arrangement — you send me what doesn\'t fit your box, I\'ll do the same for you?"', ph:'Yes/no/sometimes' },
+        { id:'pastDeals',   label:'Q5 — Markets overlap',       prompt:'"What markets are you most active in right now?"',                                                             ph:'Their active counties and states' },
+      ]
+    },
+    'recreational': {
+      opener: "Hey [Name], William Smith with Coldwater Property Group — we sell vacant land across the mid-south and wanted to reach out. You got a couple minutes?",
+      questions: [
+        { id:'criteria',    label:'Q1 — Intended use',          prompt:'"Are you looking primarily for hunting land, timber investment, recreational, or a mix?"',                    ph:'Hunting, timber, recreational, camping' },
+        { id:'financing',   label:'Q2 — Timber & water',        prompt:'"How important are timber and water features to you — creek, pond, hardwoods?"',                             ph:'Critical / nice to have / not important' },
+        { id:'dealFlow',    label:'Q3 — Acreage range',         prompt:'"What size are you looking at — are you thinking 20 acres, 50, 100 or bigger?"',                            ph:'20-50ac / 50-100ac / 100+ acres' },
+        { id:'howToSend',   label:'Q4 — How to reach you',      prompt:'"If something comes up that fits, text or call?"',                                                           ph:'Text / call / email' },
+        { id:'pastDeals',   label:'Q5 — Counties',              prompt:'"Any specific counties you\'re targeting?"',                                                                 ph:'Specific counties or open' },
+      ]
+    },
+  };
+
+  var script = scripts[btype] || scripts['retail'];
+
+  var countyTagsHtml = (b && b.counties ? b.counties : []).map(function(c){
+    return '<span style="background:var(--adim);border:1px solid var(--border2);border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer;color:var(--accent);" onclick="this.remove();syncBuyerCounties()">'+c+' ✕</span>';
+  }).join('');
+
   openCustomModal(`
-    <div class="modal-header"><div class="modal-title">Add buyer</div><button class="modal-close" onclick="closeModal()">&#x2715;</button></div>
+    <div class="modal-header">
+      <div class="modal-title">${isEdit ? 'Edit Buyer — '+(b.name||'') : '+ Add Buyer'}</div>
+      <button class="modal-close" onclick="closeModal()">&#x2715;</button>
+    </div>
     <div class="modal-body">
-      <div class="form-grid">
-        <div class="form-group"><label class="form-label">Full name *</label><input class="form-input" id="b-name"></div>
-        <div class="form-group"><label class="form-label">Phone</label><input class="form-input" id="b-phone"></div>
-        <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="b-email"></div>
-        <div class="form-group"><label class="form-label">Buyer type</label>
-          <select class="form-select" id="b-type"><option value="builder">Builder / developer</option><option value="land-investor">Land investor</option><option value="retail">Retail end buyer</option><option value="farmer">Farmer / recreational</option></select>
+
+      <div style="font-size:10px;color:var(--accent);font-family:monospace;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">Buyer Info</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
+        <div class="form-group" style="grid-column:1/-1">
+          <label class="form-label">Full name *</label>
+          <input class="form-input" id="b-name" value="${(b&&b.name)||''}" placeholder="John Smith">
         </div>
-        <div class="form-group"><label class="form-label">States (comma separated)</label><input class="form-input" id="b-states" placeholder="TN, MS, AR"></div>
-        <div class="form-group"><label class="form-label">Min acreage</label><input class="form-input" id="b-minacres" type="number" placeholder="1"></div>
-        <div class="form-group"><label class="form-label">Max acreage</label><input class="form-input" id="b-maxacres" type="number" placeholder="50"></div>
-        <div class="form-group"><label class="form-label">Max price ($)</label><input class="form-input" id="b-maxprice" type="number" placeholder="100000"></div>
-        <div class="form-group form-full"><label class="form-label">Buy box notes</label><textarea class="form-textarea" id="b-notes"></textarea></div>
-        <div class="form-group form-full"><label class="form-label">Tags (comma separated)</label><input class="form-input" id="b-tags" placeholder="builder, subdivision-lot"></div>
+        <div class="form-group">
+          <label class="form-label">Buyer type</label>
+          <select class="form-select" id="b-type" onchange="updateBuyerScript(this.value,'${editId||''}')">
+            ${BUYER_TYPES.map(t => '<option value="'+t.value+'"'+(btype===t.value?' selected':'')+'>'+t.label+'</option>').join('')}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Company</label>
+          <input class="form-input" id="b-company" value="${(b&&b.company)||''}" placeholder="Smith Development LLC">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Phone</label>
+          <input class="form-input" id="b-phone" value="${(b&&b.phone)||''}" placeholder="901-555-0100">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input class="form-input" id="b-email" value="${(b&&b.email)||''}" placeholder="john@email.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Min acreage</label>
+          <input class="form-input" type="number" id="b-minacres" value="${(b&&b.minAcres)||''}" placeholder="1">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Max acreage</label>
+          <input class="form-input" type="number" id="b-maxacres" value="${(b&&b.maxAcres)||''}" placeholder="100">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Max price ($)</label>
+          <input class="form-input" type="number" id="b-maxprice" value="${(b&&b.maxPrice)||''}" placeholder="150000">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Close speed</label>
+          <select class="form-select" id="b-closespeed">
+            <option value="" ${(!b||!b.closeSpeed)?'selected':''}>Unknown</option>
+            <option value="7-14 days" ${b&&b.closeSpeed==='7-14 days'?'selected':''}>7-14 days</option>
+            <option value="2-3 weeks" ${b&&b.closeSpeed==='2-3 weeks'?'selected':''}>2-3 weeks</option>
+            <option value="30-45 days" ${b&&b.closeSpeed==='30-45 days'?'selected':''}>30-45 days</option>
+            <option value="60+ days" ${b&&b.closeSpeed==='60+ days'?'selected':''}>60+ days</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Preferred contact</label>
+          <select class="form-select" id="b-contactpref">
+            <option value="">Not asked</option>
+            <option value="Call" ${b&&b.contactPref==='Call'?'selected':''}>Call</option>
+            <option value="Text" ${b&&b.contactPref==='Text'?'selected':''}>Text</option>
+            <option value="Email" ${b&&b.contactPref==='Email'?'selected':''}>Email</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Proof of funds</label>
+          <select class="form-select" id="b-pof">
+            <option value="" ${(!b||!b.proofOfFunds)?'selected':''}>Not confirmed</option>
+            <option value="yes" ${b&&b.proofOfFunds==='yes'?'selected':''}>✓ On file</option>
+            <option value="verbal" ${b&&b.proofOfFunds==='verbal'?'selected':''}>Verbal only</option>
+          </select>
+        </div>
+        <div class="form-group" style="grid-column:1/-1">
+          <label class="form-label">Counties they buy in <span style="color:var(--text3);font-size:10px;">— type + state, click Add</span></label>
+          <div style="display:flex;gap:6px;margin-bottom:8px;">
+            <input class="form-input" id="b-county-input" placeholder="County name" style="flex:1;" onkeydown="if(event.key==='Enter'){event.preventDefault();addBuyerCounty();}">
+            <select class="form-select" id="b-county-state" style="width:80px;">
+              ${['TN','MS','AR','MO','AL','KY','GA','TX','OK','LA'].map(function(s){ return '<option>'+s+'</option>'; }).join('')}
+            </select>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="addBuyerCounty()">+ Add</button>
+          </div>
+          <div id="b-county-tags" style="display:flex;flex-wrap:wrap;gap:6px;min-height:28px;">${countyTagsHtml}</div>
+          <input type="hidden" id="b-counties-data" value="${(b&&b.counties)?b.counties.join(','):''}">
+        </div>
       </div>
+
+      <!-- DISCOVERY SCRIPT -->
+      <div id="buyer-script-section" style="background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:14px 16px;margin-bottom:16px;">
+        <div style="font-size:10px;color:var(--amber);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px;">📞 Discovery Call Script — fill as you talk</div>
+        <div style="font-size:12px;color:var(--text2);background:var(--bg4);border-left:3px solid var(--accent);padding:8px 12px;border-radius:0 6px 6px 0;margin-bottom:14px;line-height:1.7;" id="b-script-opener">
+          <strong style="color:var(--text)">Opener:</strong> ${script.opener}
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px;" id="b-script-questions">
+          ${script.questions.map(function(q){
+            return '<div style="border-bottom:1px solid var(--border);padding-bottom:12px;">'+
+              '<div style="font-size:11px;color:var(--accent);font-family:monospace;margin-bottom:4px;">'+q.label+'</div>'+
+              '<div style="font-size:12px;color:var(--text2);margin-bottom:6px;font-style:italic;">'+q.prompt+'</div>'+
+              '<input class="form-input" id="b-intel-'+q.id+'" value="'+(intel[q.id]||'')+'" placeholder="'+q.ph+'" style="font-size:11px;">'+
+            '</div>';
+          }).join('')}
+        </div>
+        <div style="font-size:12px;color:var(--text2);background:var(--bg4);border-left:3px solid var(--teal);padding:8px 12px;border-radius:0 6px 6px 0;margin-top:14px;line-height:1.6;">
+          <strong style="color:var(--text)">Close:</strong> "This is really helpful — I appreciate you taking a few minutes. I\'ll keep you in mind when I have something that fits. What\'s the best way to send you a deal when I have one?"
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Additional notes</label>
+        <textarea class="form-textarea" id="b-notes" style="min-height:60px;" placeholder="Anything else worth remembering...">${Array.isArray(b?.notes) ? (b.notes[0]?.text||'') : (b?.notes||'')}</textarea>
+      </div>
+
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
-      <button class="btn btn-primary" onclick="saveBuyer('')">Add buyer</button>
+      <button class="btn btn-primary" onclick="saveBuyer('${editId||''}')">${isEdit ? 'Save Changes' : 'Add Buyer'}</button>
     </div>`);
+  setTimeout(function(){ document.getElementById('b-name')?.focus(); }, 100);
 }
 
-function saveBuyer(editId){
-  const name=document.getElementById('b-name').value.trim();
-  if(!name){toast('Name required');return;}
-  const data={name,phone:document.getElementById('b-phone').value.trim(),email:document.getElementById('b-email').value.trim(),type:document.getElementById('b-type').value,states:document.getElementById('b-states').value.split(',').map(s=>s.trim()).filter(Boolean),minAcres:parseFloat(document.getElementById('b-minacres').value)||0,maxAcres:parseFloat(document.getElementById('b-maxacres').value)||999,maxPrice:parseFloat(document.getElementById('b-maxprice').value)||0,notes:document.getElementById('b-notes').value.trim(),tags:document.getElementById('b-tags').value.split(',').map(t=>t.trim()).filter(Boolean)};
-  if(editId){Object.assign(db.buyers.find(x=>x.id===editId),data);}
-  else{db.buyers.unshift({id:uid(),created:today(),...data});}
-  save();closeModal();toast('Buyer saved','success');if(currentView==='buyers')renderBuyers();
+function updateBuyerScript(type, editId) {
+  // Update the script section in place without closing the modal
+  var scripts = {
+    'land-banker': {
+      opener: "Hey [Name], this is William Smith with Coldwater Property Group — we're a land buying company out of the mid-south. I came across your name and wanted to introduce myself. Do you have just two or three minutes?",
+      questions: [
+        { id:'criteria',    label:'Q1 — Geography & focus',     prompt:'"What geography are you most focused on right now — and is there a minimum acreage you\'re looking at?"',    ph:'States, counties, acreage preference' },
+        { id:'financing',   label:'Q2 — Cash or leverage',      prompt:'"Are you buying all cash or do you use any debt on your acquisitions?"',                                      ph:'All cash / some leverage / depends on deal' },
+        { id:'dealFlow',    label:'Q3 — Deal flow needs',       prompt:'"Are you looking for consistent deal flow from a source, or more opportunistic — deal by deal?"',           ph:'Consistent pipeline / opportunistic' },
+        { id:'howToSend',   label:'Q4 — How to send deals',     prompt:'"If I had something that fits your box, what\'s the best way to get it to you — email, text, a quick call?"', ph:'Text address, email details, etc.' },
+        { id:'pastDeals',   label:'Q5 — Bought in our markets', prompt:'"Have you done deals in AR, MS, or TN before? What\'s been your experience?"',                             ph:'Yes/no, which counties, experience' },
+      ]
+    },
+    'builder': {
+      opener: "Hey [Name], William Smith with Coldwater Property Group — we acquire vacant land across the mid-south and I wanted to connect. Do you have a couple minutes?",
+      questions: [
+        { id:'criteria',    label:'Q1 — Project type',          prompt:'"What kind of projects are you building — residential subdivision, spec homes, commercial, or mixed use?"',   ph:'Residential lots, spec homes, commercial' },
+        { id:'financing',   label:'Q2 — Utilities & zoning',    prompt:'"Do you need utilities already at the road, or are you okay bringing them in? Any specific zoning requirements?"', ph:'Must have utilities / can bring in / zoning needs' },
+        { id:'dealFlow',    label:'Q3 — Active markets',        prompt:'"What markets are you actively developing in right now?"',                                                     ph:'Counties, cities building in' },
+        { id:'howToSend',   label:'Q4 — How to send deals',     prompt:'"If I had a lot or parcel that could work, how do you like to see it — address by text, or email with details?"', ph:'Text / email / call first' },
+        { id:'pastDeals',   label:'Q5 — Timeline',              prompt:'"Once you\'re under contract, how long does it typically take you to break ground?"',                        ph:'30 days, 6 months, depends on permits' },
+      ]
+    },
+    'retail': {
+      opener: "Hey [Name], this is William Smith with Coldwater Property Group — we buy and sell vacant land across the mid-south. It sounds like you might be looking for some land — do you have a few minutes to chat?",
+      questions: [
+        { id:'criteria',    label:'Q1 — Intended use',          prompt:'"What are you looking to use the land for — building a home, hunting, camping, or holding as an investment?"', ph:'Build, hunt, camp, hold, investment' },
+        { id:'financing',   label:'Q2 — Cash or financing',     prompt:'"Are you planning to pay cash or would you need financing? We work with both."',                             ph:'Cash / needs financing / not sure' },
+        { id:'dealFlow',    label:'Q3 — Must-haves',            prompt:'"What\'s most important — road access, privacy, timber, water, or something else?"',                        ph:'Road access, privacy, trees, creek, etc.' },
+        { id:'howToSend',   label:'Q4 — How to reach you',      prompt:'"If I found something that could really work, what\'s the best way to send it — text, email, or call?"',   ph:'Text, email, call' },
+        { id:'pastDeals',   label:'Q5 — County preference',     prompt:'"Is there a specific county you\'re focused on, or are you open to looking around?"',                       ph:'Specific counties or open to options' },
+      ]
+    },
+    'wholesaler': {
+      opener: "Hey [Name], William Smith here — I\'m a land investor out of the mid-south. Wanted to reach out and see if there\'s a way we can help each other. You got two minutes?",
+      questions: [
+        { id:'criteria',    label:'Q1 — Their buy box',         prompt:'"What\'s your buy box — counties, acreage range, and price per acre you\'re targeting?"',                  ph:'Counties, acres, price per acre range' },
+        { id:'financing',   label:'Q2 — Assign or double close', prompt:'"Do you typically assign your contracts or double close?"',                                                  ph:'Assign / double close / both' },
+        { id:'dealFlow',    label:'Q3 — Deals to move',         prompt:'"Are you sitting on any deals right now that don\'t fit your box? I might be able to take them."',          ph:'Yes/no, what they have available' },
+        { id:'howToSend',   label:'Q4 — Two-way pipeline',      prompt:'"Would you be open to a standing arrangement — you send me what doesn\'t fit your box, I\'ll do the same?"', ph:'Yes / no / sometimes' },
+        { id:'pastDeals',   label:'Q5 — Active markets',        prompt:'"What markets are you most active in right now?"',                                                             ph:'Counties and states' },
+      ]
+    },
+    'recreational': {
+      opener: "Hey [Name], William Smith with Coldwater Property Group — we sell vacant land across the mid-south. Wanted to reach out — you got a couple minutes?",
+      questions: [
+        { id:'criteria',    label:'Q1 — Intended use',          prompt:'"Are you looking primarily for hunting land, timber, recreational, or a mix?"',                               ph:'Hunting, timber, recreational, camping' },
+        { id:'financing',   label:'Q2 — Timber & water',        prompt:'"How important are timber and water features — creek, pond, hardwoods?"',                                    ph:'Critical / nice to have / not important' },
+        { id:'dealFlow',    label:'Q3 — Acreage range',         prompt:'"What size are you thinking — 20 acres, 50, 100 or bigger?"',                                                ph:'20-50ac / 50-100ac / 100+ acres' },
+        { id:'howToSend',   label:'Q4 — How to reach you',      prompt:'"If something comes up that fits, text or call?"',                                                           ph:'Text / call / email' },
+        { id:'pastDeals',   label:'Q5 — Counties',              prompt:'"Any specific counties you\'re targeting?"',                                                                 ph:'Specific counties or open' },
+      ]
+    },
+  };
+
+  var script = scripts[type] || scripts['retail'];
+  var openerEl = document.getElementById('b-script-opener');
+  var questionsEl = document.getElementById('b-script-questions');
+  if (!openerEl || !questionsEl) return;
+
+  openerEl.innerHTML = '<strong style="color:var(--text)">Opener:</strong> ' + script.opener;
+  questionsEl.innerHTML = script.questions.map(function(q) {
+    var existing = document.getElementById('b-intel-' + q.id);
+    var val = existing ? existing.value : '';
+    return '<div style="border-bottom:1px solid var(--border);padding-bottom:12px;">' +
+      '<div style="font-size:11px;color:var(--accent);font-family:monospace;margin-bottom:4px;">' + q.label + '</div>' +
+      '<div style="font-size:12px;color:var(--text2);margin-bottom:6px;font-style:italic;">' + q.prompt + '</div>' +
+      '<input class="form-input" id="b-intel-' + q.id + '" value="' + val + '" placeholder="' + q.ph + '" style="font-size:11px;">' +
+      '</div>';
+  }).join('');
 }
 
-function deleteBuyer(id){
-  if(!confirm('Delete buyer?'))return;
-  db.buyers=db.buyers.filter(b=>b.id!==id);
-  save();closeModal();if(currentView==='buyers')renderBuyers();toast('Buyer deleted');
+function addBuyerCounty() {
+  var county = document.getElementById('b-county-input')?.value?.trim();
+  var state = document.getElementById('b-county-state')?.value || 'TN';
+  if (!county) return;
+  var tag = county + ' ' + state;
+  var tagsEl = document.getElementById('b-county-tags');
+  if (!tagsEl) return;
+  var existing = Array.from(tagsEl.querySelectorAll('span')).map(function(s){ return s.textContent.replace(' ✕','').trim(); });
+  if (existing.includes(tag)) { toast('Already added','info'); return; }
+  var span = document.createElement('span');
+  span.style.cssText = 'background:var(--adim);border:1px solid var(--border2);border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer;color:var(--accent);';
+  span.textContent = tag + ' ✕';
+  span.onclick = function(){ this.remove(); syncBuyerCounties(); };
+  tagsEl.appendChild(span);
+  document.getElementById('b-county-input').value = '';
+  document.getElementById('b-county-input').focus();
+  syncBuyerCounties();
+}
+
+function syncBuyerCounties() {
+  var tagsEl = document.getElementById('b-county-tags');
+  if (!tagsEl) return;
+  var counties = Array.from(tagsEl.querySelectorAll('span')).map(function(s){ return s.textContent.replace(' ✕','').trim(); });
+  var hidden = document.getElementById('b-counties-data');
+  if (hidden) hidden.value = counties.join(',');
+}
+
+function saveBuyer(editId) {
+  var name = document.getElementById('b-name')?.value?.trim();
+  if (!name) { toast('Name required','error'); return; }
+
+  var countiesRaw = document.getElementById('b-counties-data')?.value || '';
+  var counties = countiesRaw ? countiesRaw.split(',').map(function(c){ return c.trim(); }).filter(Boolean) : [];
+
+  var intel = {
+    criteria:  document.getElementById('b-intel-criteria')?.value?.trim() || '',
+    financing: document.getElementById('b-intel-financing')?.value?.trim() || '',
+    dealFlow:  document.getElementById('b-intel-dealFlow')?.value?.trim() || '',
+    howToSend: document.getElementById('b-intel-howToSend')?.value?.trim() || '',
+    pastDeals: document.getElementById('b-intel-pastDeals')?.value?.trim() || '',
+    extra:     document.getElementById('b-intel-extra')?.value?.trim() || '',
+  };
+
+  var noteText = document.getElementById('b-notes')?.value?.trim() || '';
+  var intelFilled = intel.criteria || intel.dealFlow || intel.howToSend;
+
+  var data = {
+    name,
+    company:      document.getElementById('b-company')?.value?.trim() || '',
+    phone:        document.getElementById('b-phone')?.value?.trim() || '',
+    email:        document.getElementById('b-email')?.value?.trim() || '',
+    type:         document.getElementById('b-type')?.value || 'retail',
+    minAcres:     parseFloat(document.getElementById('b-minacres')?.value) || 0,
+    maxAcres:     parseFloat(document.getElementById('b-maxacres')?.value) || 999,
+    maxPrice:     parseFloat(document.getElementById('b-maxprice')?.value) || 0,
+    closeSpeed:   document.getElementById('b-closespeed')?.value || '',
+    contactPref:  document.getElementById('b-contactpref')?.value || '',
+    proofOfFunds: document.getElementById('b-pof')?.value || '',
+    counties,
+    states:       [...new Set(counties.map(function(c){ return c.split(' ').pop(); }))],
+    intel,
+    lastContact:  intelFilled ? today() : null,
+    tags: [],
+  };
+
+  var notes = noteText ? [{date:today(), text:noteText}] : [];
+
+  if (editId) {
+    var b = db.buyers.find(function(x){ return x.id===editId; });
+    if (b) {
+      Object.assign(b, data);
+      if (noteText) { if (!Array.isArray(b.notes)) b.notes=[]; b.notes.unshift({date:today(),text:noteText}); }
+    }
+  } else {
+    db.buyers.unshift(Object.assign({ id:uid(), created:today(), notes }, data));
+  }
+
+  save();
+  closeModal();
+  renderBuyers();
+  renderBuyerStats();
+  toast((editId?'Buyer updated — ':'Buyer added — ') + name, 'success');
+}
+
+function callBuyerFromCard(id) {
+  var b = db.buyers.find(function(x){ return x.id===id; });
+  if (!b || !b.phone) return;
+  var phone = (b.phone||'').replace(/[^0-9+]/g,'');
+  window.location = 'openphone://call?number=' + phone;
+}
+
+function deleteBuyer(id) {
+  if (!confirm('Delete this buyer?')) return;
+  db.buyers = db.buyers.filter(function(b){ return b.id!==id; });
+  save();
+  closeModal();
+  renderBuyers();
+  renderBuyerStats();
+  toast('Buyer deleted','success');
 }
 
 // ══════════════════════════════════
@@ -5433,11 +5935,12 @@ function renderAgents() {
   var el = document.getElementById('agent-grid');
   if (!el) return;
   var agents = db.agents || [];
+  rebuildCountyFilter();
 
   var filtered = agents.filter(a => {
-    if (_agentFilter === 'all') return true;
-    if (_agentFilter === 'needs-touch') return agentNeedsTouch(a);
-    return a.stage === _agentFilter;
+    var stageOk = _agentFilter === 'all' ? true : _agentFilter === 'needs-touch' ? agentNeedsTouch(a) : a.stage === _agentFilter;
+    var countyOk = !_agentCountyFilter || getAgentCounties(a).some(c => c === _agentCountyFilter);
+    return stageOk && countyOk;
   });
 
   // Sort: needs touch first, then by last contact
@@ -5481,8 +5984,13 @@ function renderAgents() {
       </div>
       <div style="display:flex;gap:14px;font-size:11px;color:var(--text3);margin-bottom:10px;flex-wrap:wrap;">
         ${agent.phone ? `<span>📞 ${agent.phone}</span>` : ''}
-        ${agent.markets ? `<span>📍 ${agent.markets}</span>` : ''}
         ${agent.dealsReferred ? `<span style="color:var(--teal)">🤝 ${agent.dealsReferred} deal${agent.dealsReferred>1?'s':''}</span>` : ''}
+      </div>
+      ${getAgentCounties(agent).length ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;">
+        ${getAgentCounties(agent).map(c => '<span style="background:var(--adim);border:1px solid var(--border2);border-radius:4px;padding:1px 6px;font-size:10px;color:var(--accent);">'+c+'</span>').join('')}
+      </div>` : ''}
+      <div style="display:flex;gap:14px;font-size:11px;color:var(--text3);margin-bottom:10px;flex-wrap:wrap;">
+        <span style="display:none"></span>
       </div>
       <div style="display:flex;align-items:center;justify-content:space-between;">
         <div style="font-size:11px;color:${needsTouch ? 'var(--amber)' : 'var(--text3)'}">
@@ -5501,50 +6009,133 @@ function renderAgents() {
 function openAddAgent(id) {
   var agent = id ? db.agents.find(a => a.id === id) : null;
   var isEdit = !!agent;
+  var intel = agent && agent.intel ? agent.intel : {};
+
   openCustomModal(`
     <div class="modal-header">
-      <div class="modal-title">${isEdit ? 'Edit Agent' : '+ Add RE Agent'}</div>
+      <div class="modal-title">${isEdit ? 'Edit Agent — ' + (agent.name||'') : '+ Add RE Agent'}</div>
       <button class="modal-close" onclick="closeModal()">&#x2715;</button>
     </div>
-    <div class="modal-body" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-      <div class="form-group" style="grid-column:1/-1">
-        <label class="form-label">Full name</label>
-        <input class="form-input" id="ag-name" value="${agent?.name||''}" placeholder="Jane Smith">
+    <div class="modal-body">
+
+      <!-- BASIC INFO -->
+      <div style="font-size:10px;color:var(--accent);font-family:monospace;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">Agent Info — from Zillow / online</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
+        <div class="form-group" style="grid-column:1/-1">
+          <label class="form-label">Full name *</label>
+          <input class="form-input" id="ag-name" value="${agent?.name||''}" placeholder="Jane Smith">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Phone</label>
+          <input class="form-input" id="ag-phone" value="${agent?.phone||''}" placeholder="901-555-0100">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input class="form-input" id="ag-email" value="${agent?.email||''}" placeholder="jane@realty.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Brokerage</label>
+          <input class="form-input" id="ag-brokerage" value="${agent?.brokerage||''}" placeholder="Coldwell Banker">
+        </div>
+        <div class="form-group" style="grid-column:1/-1">
+          <label class="form-label">Counties covered <span style="color:var(--text3);font-size:10px;font-weight:400">— click to add, click tag to remove</span></label>
+          <div style="display:flex;gap:6px;margin-bottom:8px;">
+            <input class="form-input" id="ag-county-input" placeholder="County name" style="flex:1;" onkeydown="if(event.key==='Enter'){event.preventDefault();addAgentCounty();}">
+            <select class="form-select" id="ag-county-state" style="width:80px;">
+              ${['TN','MS','AR','MO','AL','KY','GA','TX','OK','LA'].map(s => '<option>'+s+'</option>').join('')}
+            </select>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="addAgentCounty()">+ Add</button>
+          </div>
+          <div id="ag-county-tags" style="display:flex;flex-wrap:wrap;gap:6px;min-height:28px;">
+            ${(agent && agent.counties ? agent.counties : []).map(c => '<span style="background:var(--adim);border:1px solid var(--border2);border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer;color:var(--accent);" onclick="this.remove();syncAgentCounties()">' + c + ' ✕</span>').join('')}
+          </div>
+          <input type="hidden" id="ag-markets" value="${agent?.markets||''}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Stage</label>
+          <select class="form-input" id="ag-stage">
+            ${AGENT_STAGES.map(s => '<option value="'+s+'" '+(((agent&&agent.stage)||'Identified')===s?'selected':'')+'>'+s+'</option>').join('')}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Preferred contact</label>
+          <select class="form-input" id="ag-contact-pref">
+            <option value="" ${!intel.contactPref?'selected':''}>Not asked yet</option>
+            <option value="Call" ${intel.contactPref==='Call'?'selected':''}>Call</option>
+            <option value="Text" ${intel.contactPref==='Text'?'selected':''}>Text</option>
+            <option value="Email" ${intel.contactPref==='Email'?'selected':''}>Email</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Deals referred</label>
+          <input class="form-input" type="number" id="ag-deals" value="${agent?.dealsReferred||0}" min="0">
+        </div>
       </div>
+
+      <!-- DISCOVERY SCRIPT -->
+      <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:14px 16px;margin-bottom:16px;">
+        <div style="font-size:10px;color:var(--amber);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px;">📞 Discovery Call Script — use on first call, fill as you go</div>
+
+        <div style="font-size:12px;color:var(--text2);background:var(--bg4);border-left:3px solid var(--accent);padding:8px 12px;border-radius:0 6px 6px 0;margin-bottom:14px;line-height:1.6;">
+          <strong style="color:var(--text)">Opener:</strong> "Hey ${agent?.name?.split(' ')[0]||'[Name]'}, this is William Smith with Coldwater Property Group. I buy vacant land across the mid-south and I came across your name — looks like you do some work out in [their market]. Do you have just two or three minutes? I'd love to introduce myself and honestly just pick your brain a little."
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:12px;">
+
+          <div style="border-bottom:1px solid var(--border);padding-bottom:12px;">
+            <div style="font-size:11px;color:var(--accent);font-family:monospace;margin-bottom:4px;">Q1 — What's selling</div>
+            <div style="font-size:12px;color:var(--text2);margin-bottom:6px;font-style:italic;">"What type of vacant land seems to be moving best in your market right now — are you seeing more demand for recreational stuff, residential lots, rural acreage?"</div>
+            <input class="form-input" id="ag-intel-selling" value="${intel.whatsSelling||''}" placeholder="Their answer — recreational, lots, pasture, etc." style="font-size:11px;">
+          </div>
+
+          <div style="border-bottom:1px solid var(--border);padding-bottom:12px;">
+            <div style="font-size:11px;color:var(--accent);font-family:monospace;margin-bottom:4px;">Q2 — Price range sweet spot</div>
+            <div style="font-size:12px;color:var(--text2);margin-bottom:6px;font-style:italic;">"What price range are buyers actually showing up for out there? Like where does it start feeling slow?"</div>
+            <input class="form-input" id="ag-intel-price" value="${intel.priceRange||''}" placeholder="e.g. Under $50k moves fast, $100k+ sits" style="font-size:11px;">
+          </div>
+
+          <div style="border-bottom:1px solid var(--border);padding-bottom:12px;">
+            <div style="font-size:11px;color:var(--accent);font-family:monospace;margin-bottom:4px;">Q3 — Seller pain points</div>
+            <div style="font-size:12px;color:var(--text2);margin-bottom:6px;font-style:italic;">"What's the biggest headache your land sellers run into — is it pricing, sitting on the market, title stuff?"</div>
+            <input class="form-input" id="ag-intel-pain" value="${intel.sellerPain||''}" placeholder="e.g. Unrealistic pricing, long days on market" style="font-size:11px;">
+          </div>
+
+          <div style="border-bottom:1px solid var(--border);padding-bottom:12px;">
+            <div style="font-size:11px;color:var(--accent);font-family:monospace;margin-bottom:4px;">Q4 — Cash buyer relationship</div>
+            <div style="font-size:12px;color:var(--text2);margin-bottom:6px;font-style:italic;">"Do you currently have a cash buyer you work with for land that just needs to move quick?"</div>
+            <select class="form-input" id="ag-intel-cashbuyer" style="font-size:11px;">
+              <option value="" ${!intel.hasCashBuyer?'selected':''}>Not asked yet</option>
+              <option value="no" ${intel.hasCashBuyer==='no'?'selected':''}>No — opening for us</option>
+              <option value="yes" ${intel.hasCashBuyer==='yes'?'selected':''}>Yes — has someone already</option>
+              <option value="sometimes" ${intel.hasCashBuyer==='sometimes'?'selected':''}>Sometimes — not consistent</option>
+            </select>
+          </div>
+
+          <div style="border-bottom:1px solid var(--border);padding-bottom:12px;">
+            <div style="font-size:11px;color:var(--accent);font-family:monospace;margin-bottom:4px;">Q5 — Days on market</div>
+            <div style="font-size:12px;color:var(--text2);margin-bottom:6px;font-style:italic;">"Roughly how long is land sitting before it moves out there right now?"</div>
+            <input class="form-input" id="ag-intel-dom" value="${intel.daysOnMarket||''}" placeholder="e.g. 60-90 days, 6+ months for larger parcels" style="font-size:11px;">
+          </div>
+
+          <div>
+            <div style="font-size:11px;color:var(--accent);font-family:monospace;margin-bottom:4px;">Q6 — How they prefer referrals</div>
+            <div style="font-size:12px;color:var(--text2);margin-bottom:6px;font-style:italic;">"If you ever came across a seller who just needed to move their land quickly and didn't want to go the MLS route — what's the best way to loop me in?"</div>
+            <input class="form-input" id="ag-intel-referral" value="${intel.referralProcess||''}" placeholder="e.g. Text me the address, email details, call first" style="font-size:11px;">
+          </div>
+
+        </div>
+
+        <div style="font-size:12px;color:var(--text2);background:var(--bg4);border-left:3px solid var(--teal);padding:8px 12px;border-radius:0 6px 6px 0;margin-top:14px;line-height:1.6;">
+          <strong style="color:var(--text)">Close:</strong> "This has been really helpful — I appreciate you taking a few minutes. We close in 2-3 weeks, all cash, cover all closing costs, no contingencies. If you ever have a seller who just needs it gone, I'd love to be your first call. I'll shoot you a quick email so you have my info."
+        </div>
+      </div>
+
+      <!-- NOTES -->
       <div class="form-group">
-        <label class="form-label">Phone</label>
-        <input class="form-input" id="ag-phone" value="${agent?.phone||''}" placeholder="901-555-0100">
+        <label class="form-label">Additional notes</label>
+        <textarea class="form-textarea" id="ag-note" style="min-height:60px;" placeholder="Anything else worth remembering...">${agent?.notes?.length ? agent.notes[agent.notes.length-1].text : ''}</textarea>
       </div>
-      <div class="form-group">
-        <label class="form-label">Email</label>
-        <input class="form-input" id="ag-email" value="${agent?.email||''}" placeholder="jane@realty.com">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Brokerage</label>
-        <input class="form-input" id="ag-brokerage" value="${agent?.brokerage||''}" placeholder="Coldwell Banker, etc">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Markets (counties/states)</label>
-        <input class="form-input" id="ag-markets" value="${agent?.markets||''}" placeholder="Craighead AR, DeSoto MS">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Stage</label>
-        <select class="form-input" id="ag-stage">
-          ${AGENT_STAGES.map(s => `<option value="${s}" ${(agent?.stage||'Identified')===s?'selected':''}>${s}</option>`).join('')}
-        </select>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Speciality</label>
-        <input class="form-input" id="ag-specialty" value="${agent?.specialty||''}" placeholder="Vacant land, rural, farms">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Deals referred</label>
-        <input class="form-input" type="number" id="ag-deals" value="${agent?.dealsReferred||0}" min="0">
-      </div>
-      <div class="form-group" style="grid-column:1/-1">
-        <label class="form-label">How we met / notes</label>
-        <textarea class="form-textarea" id="ag-note" style="min-height:70px;" placeholder="Met at land investing meetup, referred by X, found on Zillow...">${agent?.notes?.length ? agent.notes[agent.notes.length-1].text : ''}</textarea>
-      </div>
+
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
@@ -5553,10 +6144,75 @@ function openAddAgent(id) {
   setTimeout(() => document.getElementById('ag-name')?.focus(), 100);
 }
 
+function addAgentCounty() {
+  var county = document.getElementById('ag-county-input')?.value?.trim();
+  var state = document.getElementById('ag-county-state')?.value || 'TN';
+  if (!county) return;
+  var tag = county + ' ' + state;
+  var tagsEl = document.getElementById('ag-county-tags');
+  if (!tagsEl) return;
+  // Check for duplicate
+  var existing = Array.from(tagsEl.querySelectorAll('span')).map(s => s.textContent.replace(' ✕','').trim());
+  if (existing.includes(tag)) { toast('Already added', 'info'); return; }
+  var span = document.createElement('span');
+  span.style.cssText = 'background:var(--adim);border:1px solid var(--border2);border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer;color:var(--accent);';
+  span.textContent = tag + ' ✕';
+  span.onclick = function(){ this.remove(); syncAgentCounties(); };
+  tagsEl.appendChild(span);
+  document.getElementById('ag-county-input').value = '';
+  document.getElementById('ag-county-input').focus();
+  syncAgentCounties();
+}
+
+function syncAgentCounties() {
+  var tagsEl = document.getElementById('ag-county-tags');
+  if (!tagsEl) return;
+  var counties = Array.from(tagsEl.querySelectorAll('span')).map(s => s.textContent.replace(' ✕','').trim());
+  var hidden = document.getElementById('ag-markets');
+  if (hidden) hidden.value = counties.join(', ');
+}
+
+function getAgentCounties(agent) {
+  if (agent.counties && agent.counties.length) return agent.counties;
+  if (agent.markets) return agent.markets.split(',').map(m => m.trim()).filter(Boolean);
+  return [];
+}
+
+var _agentCountyFilter = '';
+
+function filterAgentsByCounty(county) {
+  _agentCountyFilter = county;
+  renderAgents();
+}
+
+function rebuildCountyFilter() {
+  var sel = document.getElementById('agent-county-filter');
+  if (!sel) return;
+  var allCounties = new Set();
+  (db.agents||[]).forEach(function(a) {
+    getAgentCounties(a).forEach(function(c) { allCounties.add(c); });
+  });
+  var sorted = Array.from(allCounties).sort();
+  sel.innerHTML = '<option value="">All counties</option>' +
+    sorted.map(c => '<option value="'+c+'"'+(c===_agentCountyFilter?' selected':'')+'>'+c+'</option>').join('');
+}
+
 function saveAgent(id) {
   var name = document.getElementById('ag-name')?.value?.trim();
   if (!name) { toast('Name required', 'error'); return; }
   var noteText = document.getElementById('ag-note')?.value?.trim();
+
+  // Capture discovery intel
+  var intel = {
+    whatsSelling: document.getElementById('ag-intel-selling')?.value?.trim() || '',
+    priceRange: document.getElementById('ag-intel-price')?.value?.trim() || '',
+    sellerPain: document.getElementById('ag-intel-pain')?.value?.trim() || '',
+    hasCashBuyer: document.getElementById('ag-intel-cashbuyer')?.value || '',
+    daysOnMarket: document.getElementById('ag-intel-dom')?.value?.trim() || '',
+    referralProcess: document.getElementById('ag-intel-referral')?.value?.trim() || '',
+    contactPref: document.getElementById('ag-contact-pref')?.value || '',
+  };
+
   if (id) {
     var agent = db.agents.find(a => a.id === id);
     if (!agent) return;
@@ -5566,24 +6222,34 @@ function saveAgent(id) {
     agent.brokerage = document.getElementById('ag-brokerage')?.value?.trim() || '';
     agent.markets = document.getElementById('ag-markets')?.value?.trim() || '';
     agent.stage = document.getElementById('ag-stage')?.value || 'Identified';
-    agent.specialty = document.getElementById('ag-specialty')?.value?.trim() || '';
     agent.dealsReferred = parseInt(document.getElementById('ag-deals')?.value||0);
+    agent.intel = intel;
+    // Capture counties from tag picker
+    var countiesRaw = document.getElementById('ag-markets')?.value?.trim() || '';
+    agent.counties = countiesRaw ? countiesRaw.split(',').map(c => c.trim()).filter(Boolean) : [];
+    agent.markets = agent.counties.join(', ');
     if (noteText) { if(!agent.notes)agent.notes=[]; agent.notes.unshift({date:today(),text:noteText}); }
+    var intelFilled = intel.whatsSelling || intel.priceRange || intel.hasCashBuyer;
+    if (intelFilled && agent.stage === 'Identified') agent.stage = 'Contacted';
   } else {
+    var intelFilled = intel.whatsSelling || intel.priceRange || intel.hasCashBuyer;
+    var countiesRaw = document.getElementById('ag-markets')?.value?.trim() || '';
+    var counties = countiesRaw ? countiesRaw.split(',').map(c => c.trim()).filter(Boolean) : [];
     var newAgent = {
       id: uid(),
       name,
       phone: document.getElementById('ag-phone')?.value?.trim() || '',
       email: document.getElementById('ag-email')?.value?.trim() || '',
       brokerage: document.getElementById('ag-brokerage')?.value?.trim() || '',
-      markets: document.getElementById('ag-markets')?.value?.trim() || '',
-      stage: document.getElementById('ag-stage')?.value || 'Identified',
-      specialty: document.getElementById('ag-specialty')?.value?.trim() || '',
+      markets: counties.join(', '),
+      counties,
+      stage: intelFilled ? 'Contacted' : 'Identified',
       dealsReferred: parseInt(document.getElementById('ag-deals')?.value||0),
-      lastContact: null,
+      intel,
+      lastContact: intelFilled ? today() : null,
       created: today(),
       notes: noteText ? [{date:today(), text:noteText}] : [],
-      touches: [],
+      touches: intelFilled ? [{date:today(), channel:'Call', note:'Discovery call — intel captured'}] : [],
     };
     db.agents.unshift(newAgent);
   }
@@ -5591,7 +6257,7 @@ function saveAgent(id) {
   closeModal();
   renderAgents();
   renderAgentStats();
-  toast((id ? 'Agent updated' : 'Agent added — ') + name, 'success');
+  toast((id ? 'Agent updated — ' : 'Agent added — ') + name, 'success');
 }
 
 function openAgentDetail(id) {
@@ -5632,6 +6298,31 @@ function openAgentDetail(id) {
         </div>
       </div>
 
+      ${agent.intel && (agent.intel.whatsSelling || agent.intel.priceRange || agent.intel.sellerPain || agent.intel.hasCashBuyer) ? `
+      <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:12px 14px;margin-bottom:14px;">
+        <div style="font-size:10px;color:var(--amber);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">📊 Market Intel — from discovery call</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:11px;">
+          ${agent.intel.whatsSelling ? '<div><span style="color:var(--text3)">What\'s selling:</span><br><span style="color:var(--text2)">' + agent.intel.whatsSelling + '</span></div>' : ''}
+          ${agent.intel.priceRange ? '<div><span style="color:var(--text3)">Price sweet spot:</span><br><span style="color:var(--text2)">' + agent.intel.priceRange + '</span></div>' : ''}
+          ${agent.intel.sellerPain ? '<div><span style="color:var(--text3)">Seller pain:</span><br><span style="color:var(--text2)">' + agent.intel.sellerPain + '</span></div>' : ''}
+          ${agent.intel.daysOnMarket ? '<div><span style="color:var(--text3)">Days on market:</span><br><span style="color:var(--text2)">' + agent.intel.daysOnMarket + '</span></div>' : ''}
+          ${agent.intel.hasCashBuyer ? '<div><span style="color:var(--text3)">Cash buyer:</span><br><span style="color:' + (agent.intel.hasCashBuyer==='no'?'var(--teal)':'var(--amber)') + '">' + (agent.intel.hasCashBuyer==='no'?'No — we have an opening':agent.intel.hasCashBuyer==='yes'?'Yes — has someone':'Sometimes — not consistent') + '</span></div>' : ''}
+          ${agent.intel.referralProcess ? '<div><span style="color:var(--text3)">Referral pref:</span><br><span style="color:var(--text2)">' + agent.intel.referralProcess + '</span></div>' : ''}
+        </div>
+      </div>` : ''}
+
+      <!-- Email Templates -->
+      <div style="margin-bottom:14px;">
+        <div style="font-size:10px;color:var(--text3);font-family:monospace;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">✉️ Email Templates</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="btn btn-ghost btn-sm" onclick="sendAgentEmail('${id}','intro')" style="font-size:11px;">Introduction</button>
+          <button class="btn btn-ghost btn-sm" onclick="sendAgentEmail('${id}','followup')" style="font-size:11px;">Follow-up</button>
+          <button class="btn btn-ghost btn-sm" onclick="sendAgentEmail('${id}','dealAlert')" style="font-size:11px;">Deal Alert</button>
+          <button class="btn btn-ghost btn-sm" onclick="sendAgentEmail('${id}','quarterly')" style="font-size:11px;">Quarterly Check-in</button>
+          <button class="btn btn-ghost btn-sm" onclick="sendAgentEmail('${id}','holiday')" style="font-size:11px;">Holiday Touch</button>
+        </div>
+      </div>
+
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;font-size:12px;">
         ${agent.brokerage ? `<div><span style="color:var(--text3)">Brokerage:</span> ${agent.brokerage}</div>` : ''}
         ${agent.markets ? `<div><span style="color:var(--text3)">Markets:</span> ${agent.markets}</div>` : ''}
@@ -5641,7 +6332,7 @@ function openAgentDetail(id) {
 
       <!-- Stage progression -->
       <div style="margin-bottom:14px;">
-        <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Move Stage</div>
+        <div style="font-size:10px;color:var(--text3);font-family:monospace;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Move Stage</div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;">
           ${AGENT_STAGES.map(s => `<button class="btn btn-ghost btn-sm" onclick="moveAgentStage('${id}','${s}')" style="${s===agent.stage?'border-color:var(--accent);color:var(--accent);':''}font-size:11px;">${s}</button>`).join('')}
         </div>
@@ -5649,7 +6340,7 @@ function openAgentDetail(id) {
 
       <!-- Touch history -->
       <div style="margin-bottom:14px;">
-        <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Touch History</div>
+        <div style="font-size:10px;color:var(--text3);font-family:monospace;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Touch History</div>
         ${(agent.touches||[]).length ? (agent.touches).slice().reverse().slice(0,5).map(t => `
           <div style="display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:11px;">
             <span style="color:var(--text3);min-width:70px">${t.date}</span>
@@ -5660,7 +6351,7 @@ function openAgentDetail(id) {
 
       <!-- Notes -->
       <div>
-        <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Notes</div>
+        <div style="font-size:10px;color:var(--text3);font-family:monospace;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Notes</div>
         <textarea class="form-textarea" id="agent-note-input" style="min-height:60px;margin-bottom:8px;" placeholder="Add a note..."></textarea>
         <button class="btn btn-ghost btn-sm" onclick="addAgentNote('${id}')">Save Note</button>
         <div style="margin-top:10px;">
@@ -5745,6 +6436,59 @@ function sendAgentDealAlert(id) {
   var subject = 'Just closed a deal in your market — Coldwater Property Group';
   var body = `Hi ${agent.name.split(' ')[0]},\n\nJust wanted to reach out — we recently closed on a vacant land deal in your market and are actively looking for more opportunities.\n\nIf you come across any sellers who need a quick, hassle-free solution for their land, we close in 2-3 weeks, all cash, no contingencies, and cover all closing costs.\n\nWould love to be a resource for you and your clients.\n\nBest,\nWilliam Smith\nColdwater Property Group`;
   openCompose(agent.email, subject, body);
+}
+
+function sendAgentEmail(id, templateType) {
+  var agent = db.agents.find(a => a.id === id);
+  if (!agent) return;
+  if (!agent.email) { toast('Add an email address for ' + agent.name + ' first', 'error'); return; }
+
+  var first = agent.name ? agent.name.split(' ')[0] : 'there';
+  var market = agent.markets || 'your market';
+  var intel = agent.intel || {};
+
+  var templates = {
+
+    intro: {
+      subject: 'Coldwater Property Group — Quick Introduction',
+      body: 'Hi ' + first + ',\n\nGreat speaking with you earlier. Just wanted to follow up as promised with my contact info.\n\nI\'m William Smith with Coldwater Property Group. We buy vacant land across the mid-south — all cash, 2-3 week close, we cover all closing costs and there are no contingencies.\n\nFor sellers who need a quick, hassle-free solution and don\'t want to go the traditional listing route, we\'re usually a great fit.\n\nIf you ever come across someone in ' + market + ' who just needs their land gone — I\'d love to be your first call. No pressure at all, just wanted to make sure you had my number.\n\nThanks again for your time,\nWilliam Smith\nColdwater Property Group\n(901) 899-6698'
+    },
+
+    followup: {
+      subject: 'Following up — Coldwater Property Group',
+      body: 'Hi ' + first + ',\n\nHope things are going well out in ' + market + '. Just checking in to stay on your radar.\n\nWe\'re still actively buying vacant land in your area — all cash, quick close, no agent fees to your sellers.\n\nIf anything comes across your desk where a seller just needs to move it fast, I\'m always available.\n\nThanks,\nWilliam Smith\nColdwater Property Group\n(901) 899-6698'
+    },
+
+    dealAlert: {
+      subject: 'Just closed in ' + market + ' — Coldwater Property Group',
+      body: 'Hi ' + first + ',\n\nQuick update — we just closed on a vacant land deal in ' + market + ' and we\'re actively looking for more.\n\nWe move fast and we\'re serious buyers. If any of your clients are sitting on land and just want a quick, clean exit — that\'s exactly what we do.\n\nNo MLS, no contingencies, no waiting. Just a straightforward cash offer and a fast close.\n\nWould love to work together if the opportunity comes up.\n\nBest,\nWilliam Smith\nColdwater Property Group\n(901) 899-6698'
+    },
+
+    quarterly: {
+      subject: 'Checking in — Q' + Math.ceil((new Date().getMonth()+1)/3) + ' ' + new Date().getFullYear(),
+      body: 'Hi ' + first + ',\n\nJust a quick check-in — hope business is going well.\n\nWe\'ve been staying busy buying land across ' + market + ' and the surrounding area. Still closing fast, all cash, no contingencies.\n\nAnything interesting coming across your desk lately? Always happy to take a look if you have a seller who needs a different kind of solution.\n\nHope to hear from you,\nWilliam Smith\nColdwater Property Group\n(901) 899-6698'
+    },
+
+    holiday: {
+      subject: 'Happy Holidays from Coldwater Property Group',
+      body: 'Hi ' + first + ',\n\nJust wanted to reach out and wish you a great holiday season.\n\nThank you for being on my radar this year — I hope we get the chance to work together in ' + (new Date().getFullYear()+1) + '.\n\nAs always, if you ever have a land seller who needs a fast, simple solution — I\'m just a call away.\n\nHappy holidays,\nWilliam Smith\nColdwater Property Group\n(901) 899-6698'
+    }
+  };
+
+  var tmpl = templates[templateType];
+  if (!tmpl) return;
+
+  // Log a touch when sending an email template
+  if (!agent.touches) agent.touches = [];
+  agent.touches.push({ date: today(), channel: 'Email', note: 'Sent ' + templateType + ' template' });
+  agent.lastContact = today();
+  if (agent.stage === 'Identified') agent.stage = 'Contacted';
+  save();
+  renderAgents();
+  renderAgentStats();
+
+  closeModal();
+  openCompose(agent.email, tmpl.subject, tmpl.body);
 }
 
 function openContactEmailDirect(email, name) {
