@@ -506,6 +506,16 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
         Agents
         <span class="nb" id="nb-agents" style="display:none;background:var(--purple)">0</span>
       </button>
+      <button class="nav-item" onclick="showView('tasks')" id="nav-tasks">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="1.5"/><path d="M5 8l2 2 4-4"/></svg>
+        Tasks
+        <span class="nb red" id="nb-tasks" style="display:none">0</span>
+      </button>
+      <button class="nav-item" onclick="showView('title')" id="nav-title">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="1.5"/><path d="M5 6h6M5 8.5h4M5 11h3"/></svg>
+        Title & Closing
+        <span class="nb" id="nb-title" style="display:none;background:var(--teal)">0</span>
+      </button>
       <button class="nav-item" onclick="showView('gmail')" id="nav-gmail">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12v9a1 1 0 01-1 1H3a1 1 0 01-1-1V4z"/><path d="M2 4l6 5 6-5"/></svg>
         Email
@@ -575,6 +585,18 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
           </div>
           <div style="font-size:11px;color:var(--text3);padding:0 14px 8px;">AI qualified or flagged — review before calling</div>
           <div class="card-body" id="lane-ai-review" style="padding-top:0;max-height:420px;overflow-y:auto;"></div>
+        </div>
+
+        <!-- Task Lane -->
+        <div class="card" style="border-top:2px solid var(--amber);">
+          <div class="card-header" style="padding-bottom:8px;">
+            <span style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--amber);">
+              <span style="font-size:16px;">✅</span> Today's Tasks
+            </span>
+            <span id="task-cockpit-count" style="font-size:11px;background:var(--amber);color:#000;border-radius:20px;padding:2px 8px;font-weight:700;">0</span>
+          </div>
+          <div style="font-size:11px;color:var(--text3);padding:0 14px 8px;">Overdue and due today</div>
+          <div class="card-body" id="lane-tasks" style="padding-top:0;max-height:420px;overflow-y:auto;"></div>
         </div>
 
         <!-- Agent Touches Lane -->
@@ -1064,6 +1086,70 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
       <div id="agent-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;"></div>
     </div>
 
+    <!-- TASKS -->
+    <div id="view-tasks" class="view">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+        <div>
+          <div style="font-size:11px;font-family:'DM Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Task Intelligence</div>
+          <div style="font-size:13px;color:var(--text2)">Your daily operating list — show up and execute.</div>
+        </div>
+        <button class="btn btn-primary" onclick="openAddTask()">+ Add Task</button>
+      </div>
+
+      <!-- Smart input -->
+      <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:var(--rl);padding:14px 16px;margin-bottom:20px;">
+        <div style="font-size:10px;color:var(--accent);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">⚡ Quick Add — type naturally</div>
+        <div style="display:flex;gap:8px;">
+          <input class="form-input" id="task-quick-input" placeholder="e.g. Call Patricia Downs about offer Friday · Follow up with Marcus Bell tomorrow · Send contract to Jane Smith" style="flex:1;font-size:12px;" onkeydown="if(event.key==='Enter')quickAddTask()">
+          <button class="btn btn-primary btn-sm" onclick="quickAddTask()">Parse & Add</button>
+        </div>
+        <div style="font-size:10px;color:var(--text3);margin-top:6px;">Mention a contact name and a day — the system will link it and set the due date automatically.</div>
+      </div>
+
+      <!-- Task stats -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;" id="task-stats"></div>
+
+      <!-- Filter tabs -->
+      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+        <button class="btn btn-ghost btn-sm task-filter-btn active" onclick="filterTasks('all')" id="tkf-all">All</button>
+        <button class="btn btn-ghost btn-sm task-filter-btn" onclick="filterTasks('today')" id="tkf-today" style="border-color:rgba(251,191,36,0.4);color:var(--amber)">Today</button>
+        <button class="btn btn-ghost btn-sm task-filter-btn" onclick="filterTasks('overdue')" id="tkf-overdue" style="border-color:rgba(248,113,113,0.4);color:var(--coral)">Overdue</button>
+        <button class="btn btn-ghost btn-sm task-filter-btn" onclick="filterTasks('week')" id="tkf-week">This Week</button>
+        <button class="btn btn-ghost btn-sm task-filter-btn" onclick="filterTasks('system')" id="tkf-system">System Generated</button>
+        <button class="btn btn-ghost btn-sm task-filter-btn" onclick="filterTasks('done')" id="tkf-done">Completed</button>
+      </div>
+
+      <div id="task-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+    </div>
+
+    <!-- TITLE & CLOSING -->
+    <div id="view-title" class="view">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+        <div>
+          <div style="font-size:11px;font-family:'DM Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Title & Closing Network</div>
+          <div style="font-size:13px;color:var(--text2)">Build relationships with closers — they know who's buying.</div>
+        </div>
+        <select class="form-select" id="title-state-filter" onchange="renderTitleCos()" style="font-size:12px;padding:6px 10px;min-width:140px;">
+          <option value="">All states</option>
+          ${['TN','MS','AR','MO','AL','KY','GA','TX','OK','LA'].map(s => '<option>'+s+'</option>').join('')}
+        </select>
+      </div>
+
+      <!-- Stats -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;" id="title-stats"></div>
+
+      <!-- Filter tabs -->
+      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+        <button class="btn btn-ghost btn-sm title-filter-btn active" onclick="filterTitleCos('all')" id="tf-all">All</button>
+        <button class="btn btn-ghost btn-sm title-filter-btn" onclick="filterTitleCos('Identified')" id="tf-identified">Identified</button>
+        <button class="btn btn-ghost btn-sm title-filter-btn" onclick="filterTitleCos('Contacted')" id="tf-contacted">Contacted</button>
+        <button class="btn btn-ghost btn-sm title-filter-btn" onclick="filterTitleCos('Active')" id="tf-active">Active</button>
+        <button class="btn btn-ghost btn-sm title-filter-btn" onclick="filterTitleCos('needs-touch')" id="tf-touch" style="border-color:rgba(251,191,36,0.4);color:var(--amber)">⚡ Needs Touch</button>
+      </div>
+
+      <div id="title-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;"></div>
+    </div>
+
     <!-- GMAIL -->
     <div id="view-gmail" class="view">
       <div style="display:grid;grid-template-columns:280px 1fr;gap:0;height:calc(100vh - 100px);background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden;">
@@ -1146,6 +1232,70 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
 
       <!-- Agent cards grid -->
       <div id="agent-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;"></div>
+    </div>
+
+    <!-- TASKS -->
+    <div id="view-tasks" class="view">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+        <div>
+          <div style="font-size:11px;font-family:'DM Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Task Intelligence</div>
+          <div style="font-size:13px;color:var(--text2)">Your daily operating list — show up and execute.</div>
+        </div>
+        <button class="btn btn-primary" onclick="openAddTask()">+ Add Task</button>
+      </div>
+
+      <!-- Smart input -->
+      <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:var(--rl);padding:14px 16px;margin-bottom:20px;">
+        <div style="font-size:10px;color:var(--accent);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">⚡ Quick Add — type naturally</div>
+        <div style="display:flex;gap:8px;">
+          <input class="form-input" id="task-quick-input" placeholder="e.g. Call Patricia Downs about offer Friday · Follow up with Marcus Bell tomorrow · Send contract to Jane Smith" style="flex:1;font-size:12px;" onkeydown="if(event.key==='Enter')quickAddTask()">
+          <button class="btn btn-primary btn-sm" onclick="quickAddTask()">Parse & Add</button>
+        </div>
+        <div style="font-size:10px;color:var(--text3);margin-top:6px;">Mention a contact name and a day — the system will link it and set the due date automatically.</div>
+      </div>
+
+      <!-- Task stats -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;" id="task-stats"></div>
+
+      <!-- Filter tabs -->
+      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+        <button class="btn btn-ghost btn-sm task-filter-btn active" onclick="filterTasks('all')" id="tkf-all">All</button>
+        <button class="btn btn-ghost btn-sm task-filter-btn" onclick="filterTasks('today')" id="tkf-today" style="border-color:rgba(251,191,36,0.4);color:var(--amber)">Today</button>
+        <button class="btn btn-ghost btn-sm task-filter-btn" onclick="filterTasks('overdue')" id="tkf-overdue" style="border-color:rgba(248,113,113,0.4);color:var(--coral)">Overdue</button>
+        <button class="btn btn-ghost btn-sm task-filter-btn" onclick="filterTasks('week')" id="tkf-week">This Week</button>
+        <button class="btn btn-ghost btn-sm task-filter-btn" onclick="filterTasks('system')" id="tkf-system">System Generated</button>
+        <button class="btn btn-ghost btn-sm task-filter-btn" onclick="filterTasks('done')" id="tkf-done">Completed</button>
+      </div>
+
+      <div id="task-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+    </div>
+
+    <!-- TITLE & CLOSING -->
+    <div id="view-title" class="view">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+        <div>
+          <div style="font-size:11px;font-family:'DM Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Title & Closing Network</div>
+          <div style="font-size:13px;color:var(--text2)">Build relationships with closers — they know who's buying.</div>
+        </div>
+        <select class="form-select" id="title-state-filter" onchange="renderTitleCos()" style="font-size:12px;padding:6px 10px;min-width:140px;">
+          <option value="">All states</option>
+          ${['TN','MS','AR','MO','AL','KY','GA','TX','OK','LA'].map(s => '<option>'+s+'</option>').join('')}
+        </select>
+      </div>
+
+      <!-- Stats -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;" id="title-stats"></div>
+
+      <!-- Filter tabs -->
+      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+        <button class="btn btn-ghost btn-sm title-filter-btn active" onclick="filterTitleCos('all')" id="tf-all">All</button>
+        <button class="btn btn-ghost btn-sm title-filter-btn" onclick="filterTitleCos('Identified')" id="tf-identified">Identified</button>
+        <button class="btn btn-ghost btn-sm title-filter-btn" onclick="filterTitleCos('Contacted')" id="tf-contacted">Contacted</button>
+        <button class="btn btn-ghost btn-sm title-filter-btn" onclick="filterTitleCos('Active')" id="tf-active">Active</button>
+        <button class="btn btn-ghost btn-sm title-filter-btn" onclick="filterTitleCos('needs-touch')" id="tf-touch" style="border-color:rgba(251,191,36,0.4);color:var(--amber)">⚡ Needs Touch</button>
+      </div>
+
+      <div id="title-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;"></div>
     </div>
 
     <!-- GMAIL -->
@@ -1350,7 +1500,7 @@ const HANDOFF_STATES = ['AI handling','Needs human review','Human active'];
 // DATA
 // ══════════════════════════════════
 const KEY = 'landcrm_v2';
-function load(){try{const r=localStorage.getItem(KEY);const d=r?JSON.parse(r):{contacts:[],buyers:[],agents:[]};if(!d.agents)d.agents=[];return d;}catch(e){return{contacts:[],buyers:[],agents:[]};}}
+function load(){try{const r=localStorage.getItem(KEY);const d=r?JSON.parse(r):{contacts:[],buyers:[],agents:[],titleCos:[],tasks:[]};if(!d.agents)d.agents=[];if(!d.titleCos)d.titleCos=[];if(!d.tasks)d.tasks=[];return d;}catch(e){return{contacts:[],buyers:[],agents:[],titleCos:[],tasks:[]};}
 function save(){
   localStorage.setItem(KEY,JSON.stringify(db));
   // Auto-sync to JSONbin in background on every save — no manual clicks needed
@@ -1439,7 +1589,7 @@ function showView(v){
   document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
   currentView=v;
   const _ve=document.getElementById('view-'+v);if(_ve)_ve.classList.add('active');
-  const titles={dashboard:'Dashboard','acq-pipeline':'Acquisitions Pipeline','dis-pipeline':'Dispositions Pipeline','ai-queue':'AI Handoff Queue',sellers:'All Leads',buyers:'Buyer Network',calculator:'Offer Calculator',sequences:'SMS Sequences',settings:'Settings','ai-qualified':'AI Qualified Leads',reporting:'Reporting',gmail:'Email',agents:'Agent Network'};
+  const titles={dashboard:'Dashboard','acq-pipeline':'Acquisitions Pipeline','dis-pipeline':'Dispositions Pipeline','ai-queue':'AI Handoff Queue',sellers:'All Leads',buyers:'Buyer Network',calculator:'Offer Calculator',sequences:'SMS Sequences',settings:'Settings','ai-qualified':'AI Qualified Leads',reporting:'Reporting',gmail:'Email',agents:'Agent Network',title:'Title & Closing',tasks:'Tasks'};
   document.getElementById('page-title').textContent=titles[v]||v;
   if(v==='dashboard')renderDashboard();
   if(v==='acq-pipeline')renderPipeline('acq');
@@ -1552,6 +1702,11 @@ function renderCockpit(){
     }).join('');
   }
 }
+
+  // Task cockpit lane
+  generateSystemTasks();
+  renderTaskCockpitLane();
+  updateTaskBadge();
 
   // Agent touch lane
   var agentsDue = (db.agents||[]).filter(agentNeedsTouch);
@@ -2297,6 +2452,10 @@ function updateAddContactFields(type, editId) {
   } else if(type === 'buyer') {
     closeModal();
     setTimeout(function(){ openAddBuyerModal(editId||''); }, 150);
+    return;
+  } else if(type === 'title') {
+    closeModal();
+    setTimeout(function(){ openAddTitleModal(editId||''); }, 150);
     return;
   } else {
     var extraLabel = {lender:'Loan terms / max amount', referral:'How they send deals', title:'Firm / office'}[type] || 'Details';
@@ -6494,6 +6653,1012 @@ function sendAgentEmail(id, templateType) {
 function openContactEmailDirect(email, name) {
   var first = name ? name.split(' ')[0] : '';
   openCompose(email, 'Following up — Coldwater Property Group', 'Hi ' + first + ',');
+}
+
+
+// ══════════════════════════════════════════════════════
+// TITLE & CLOSING COMPANIES
+// ══════════════════════════════════════════════════════
+
+var _titleFilter = 'all';
+const TITLE_STAGES = ['Identified','Contacted','Active','Preferred'];
+const TITLE_TOUCH_DAYS = { 'Identified':14, 'Contacted':30, 'Active':45, 'Preferred':60 };
+
+function titleNeedsTouch(tc) {
+  var threshold = TITLE_TOUCH_DAYS[tc.stage] || 30;
+  return daysSince(tc.lastContact) >= threshold;
+}
+
+function renderTitleStats() {
+  var el = document.getElementById('title-stats');
+  if (!el) return;
+  var tcs = db.titleCos || [];
+  var statStyle = 'background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:14px 16px;';
+  el.innerHTML = [
+    ['Total Contacts', tcs.length, 'var(--text)'],
+    ['Active Partners', tcs.filter(function(t){ return t.stage==='Active'||t.stage==='Preferred'; }).length, 'var(--teal)'],
+    ['Does Double Close', tcs.filter(function(t){ return t.intel&&t.intel.doubleClose==='yes'; }).length, 'var(--accent)'],
+    ['Buyer Leads Shared', tcs.reduce(function(sum,t){ return sum+(t.buyerLeads||[]).length; },0), 'var(--amber)'],
+  ].map(function(s){
+    return '<div style="'+statStyle+'"><div style="font-size:11px;color:var(--text3);font-family:monospace;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">'+s[0]+'</div><div style="font-size:24px;font-weight:700;color:'+s[2]+'">'+s[1]+'</div></div>';
+  }).join('');
+}
+
+function filterTitleCos(filter) {
+  _titleFilter = filter;
+  document.querySelectorAll('.title-filter-btn').forEach(function(b){ b.classList.remove('active'); });
+  var id = 'tf-' + (filter==='needs-touch'?'touch':filter==='Active'?'active':filter==='Contacted'?'contacted':filter==='Identified'?'identified':'all');
+  var btn = document.getElementById(id);
+  if (btn) btn.classList.add('active');
+  renderTitleCos();
+}
+
+function renderTitleCos() {
+  var el = document.getElementById('title-grid');
+  if (!el) return;
+  var tcs = db.titleCos || [];
+  var stateF = document.getElementById('title-state-filter')?.value || '';
+
+  var filtered = tcs.filter(function(tc) {
+    if (_titleFilter === 'needs-touch') return titleNeedsTouch(tc);
+    if (_titleFilter !== 'all' && tc.stage !== _titleFilter) return false;
+    if (stateF && tc.state !== stateF) return false;
+    return true;
+  });
+
+  filtered.sort(function(a,b){
+    var an = titleNeedsTouch(a), bn = titleNeedsTouch(b);
+    if (an && !bn) return -1;
+    if (!an && bn) return 1;
+    return daysSince(a.lastContact) - daysSince(b.lastContact);
+  });
+
+  if (!filtered.length) {
+    el.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--text3);"><div style="font-size:28px;margin-bottom:12px;">🏛</div><div style="font-size:13px;margin-bottom:16px;">No title companies yet — add your first via Add Contact → Title & Closing</div></div>';
+    return;
+  }
+
+  var stageColor = { 'Identified':'var(--text3)', 'Contacted':'var(--accent)', 'Active':'var(--teal)', 'Preferred':'var(--amber)' };
+
+  el.innerHTML = filtered.map(function(tc) {
+    var needsTouch = titleNeedsTouch(tc);
+    var days = daysSince(tc.lastContact);
+    var color = stageColor[tc.stage] || 'var(--text3)';
+    var buyerLeads = (tc.buyerLeads||[]).length;
+    var dbl = tc.intel && tc.intel.doubleClose === 'yes';
+
+    return '<div style="background:var(--bg2);border:1px solid '+(needsTouch?'rgba(251,191,36,0.35)':'var(--border)')+';border-radius:var(--rl);padding:16px;cursor:pointer;transition:border-color 0.15s;" onclick="openTitleDetail(\'' + tc.id + '\')">'+
+      '<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;">'+
+        '<div style="display:flex;align-items:center;gap:10px;">'+
+          '<div style="width:36px;height:36px;border-radius:50%;background:var(--tdim,rgba(20,184,166,0.12));border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:13px;color:var(--teal);flex-shrink:0;">'+(tc.name||'?')[0].toUpperCase()+'</div>'+
+          '<div>'+
+            '<div style="font-weight:600;font-size:14px;">'+(tc.name||'Unknown')+'</div>'+
+            '<div style="font-size:11px;color:var(--text3);">'+(tc.company||'Independent')+(tc.state?' · '+tc.state:'')+'</div>'+
+          '</div>'+
+        '</div>'+
+        '<span style="font-size:10px;font-family:monospace;color:'+color+';text-transform:uppercase;letter-spacing:.05em;padding:2px 7px;border-radius:4px;background:'+color+'18;">'+(tc.stage||'Identified')+'</span>'+
+      '</div>'+
+      '<div style="display:flex;gap:12px;font-size:11px;color:var(--text3);margin-bottom:10px;flex-wrap:wrap;">'+
+        (tc.phone ? '<span>📞 '+tc.phone+'</span>' : '')+
+        (dbl ? '<span style="color:var(--teal)">✓ Double close</span>' : '')+
+        (buyerLeads ? '<span style="color:var(--amber)">🔑 '+buyerLeads+' buyer lead'+(buyerLeads>1?'s':'')+'</span>' : '')+
+      '</div>'+
+      '<div style="display:flex;align-items:center;justify-content:space-between;">'+
+        '<div style="font-size:11px;color:'+(needsTouch?'var(--amber)':'var(--text3)')+'">'+
+          (needsTouch?'⚡ Needs touch — ':'')+
+          (tc.lastContact ? days+'d since last contact' : 'Never contacted')+
+        '</div>'+
+        '<div style="display:flex;gap:6px;">'+
+          '<button onclick="event.stopPropagation();logTitleTouch(\'' + tc.id + '\')\'" class="btn btn-ghost btn-sm" style="font-size:10px;padding:2px 8px;">Log touch</button>'+
+          (tc.phone ? '<button onclick="event.stopPropagation();callTitleCo(\'' + tc.id + '\')\'" class="btn btn-ghost btn-sm" style="font-size:10px;padding:2px 8px;color:var(--teal);">📞 Call</button>' : '')+
+        '</div>'+
+      '</div>'+
+      (tc.intel&&tc.intel.closeTimeline ? '<div style="margin-top:8px;font-size:11px;color:var(--text3);border-top:1px solid var(--border);padding-top:8px;">Closes in: '+tc.intel.closeTimeline+'</div>' : '')+
+    '</div>';
+  }).join('');
+}
+
+function callTitleCo(id) {
+  var tc = (db.titleCos||[]).find(function(x){ return x.id===id; });
+  if (!tc || !tc.phone) return;
+  window.location = 'openphone://call?number=' + (tc.phone||'').replace(/[^0-9+]/g,'');
+}
+
+function callBuyerFromCard(id) {
+  var b = db.buyers.find(function(x){ return x.id===id; });
+  if (!b || !b.phone) return;
+  window.location = 'openphone://call?number=' + (b.phone||'').replace(/[^0-9+]/g,'');
+}
+
+function openAddTitleModal(editId) {
+  var tc = editId ? (db.titleCos||[]).find(function(x){ return x.id===editId; }) : null;
+  var isEdit = !!tc;
+  var intel = tc && tc.intel ? tc.intel : {};
+
+  openCustomModal(`
+    <div class="modal-header">
+      <div class="modal-title">${isEdit ? 'Edit — '+(tc.name||'') : '+ Add Title Company'}</div>
+      <button class="modal-close" onclick="closeModal()">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+
+      <div style="font-size:10px;color:var(--teal);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">Contact Info</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
+        <div class="form-group" style="grid-column:1/-1">
+          <label class="form-label">Contact name *</label>
+          <input class="form-input" id="tc-name" value="${(tc&&tc.name)||''}" placeholder="Sarah Johnson">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Company / firm</label>
+          <input class="form-input" id="tc-company" value="${(tc&&tc.company)||''}" placeholder="First American Title">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Role / title</label>
+          <input class="form-input" id="tc-role" value="${(tc&&tc.role)||''}" placeholder="Closer, Escrow Officer, Owner">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Phone</label>
+          <input class="form-input" id="tc-phone" value="${(tc&&tc.phone)||''}" placeholder="901-555-0100">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input class="form-input" id="tc-email" value="${(tc&&tc.email)||''}" placeholder="sarah@firstam.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">State</label>
+          <select class="form-select" id="tc-state">
+            ${['TN','MS','AR','MO','AL','KY','GA','TX','OK','LA'].map(function(s){ return '<option '+(tc&&tc.state===s?'selected':'')+'>'+s+'</option>'; }).join('')}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Stage</label>
+          <select class="form-select" id="tc-stage">
+            ${TITLE_STAGES.map(function(s){ return '<option value="'+s+'" '+((tc&&tc.stage||'Identified')===s?'selected':'')+'>'+s+'</option>'; }).join('')}
+          </select>
+        </div>
+      </div>
+
+      <!-- DISCOVERY SCRIPT -->
+      <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:14px 16px;margin-bottom:16px;">
+        <div style="font-size:10px;color:var(--amber);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px;">📞 Discovery Call Script — fill as you go</div>
+
+        <div style="font-size:12px;color:var(--text2);background:var(--bg4);border-left:3px solid var(--teal);padding:8px 12px;border-radius:0 6px 6px 0;margin-bottom:14px;line-height:1.7;">
+          <strong style="color:var(--text)">Opener:</strong> "Hi ${(tc&&tc.name&&tc.name.split(' ')[0])||'[Name]'}, this is William Smith with Coldwater Property Group — we buy vacant land across the mid-south. I wanted to reach out and introduce myself because we close deals regularly and I\'m always looking for a great title company to work with. Do you have just a couple of minutes?"
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:12px;">
+
+          <div style="border-bottom:1px solid var(--border);padding-bottom:12px;">
+            <div style="font-size:11px;color:var(--teal);font-family:'DM Mono',monospace;margin-bottom:4px;">Q1 — Vacant land experience</div>
+            <div style="font-size:12px;color:var(--text2);margin-bottom:6px;font-style:italic;">"Do you work with vacant land transactions regularly — or is that something your office tends to avoid?"</div>
+            <select class="form-select" id="tc-intel-landexp" style="font-size:11px;">
+              <option value="" ${!intel.landExperience?'selected':''}>Not asked yet</option>
+              <option value="yes-frequent" ${intel.landExperience==='yes-frequent'?'selected':''}>Yes — does it frequently</option>
+              <option value="yes-occasional" ${intel.landExperience==='yes-occasional'?'selected':''}>Yes — occasionally</option>
+              <option value="no" ${intel.landExperience==='no'?'selected':''}>No — avoids land</option>
+            </select>
+          </div>
+
+          <div style="border-bottom:1px solid var(--border);padding-bottom:12px;">
+            <div style="font-size:11px;color:var(--teal);font-family:'DM Mono',monospace;margin-bottom:4px;">Q2 — Close timeline</div>
+            <div style="font-size:12px;color:var(--text2);margin-bottom:6px;font-style:italic;">"Once we have a signed contract and clear title, how quickly can you get us to the closing table?"</div>
+            <input class="form-input" id="tc-intel-timeline" value="${intel.closeTimeline||''}" placeholder="e.g. 7-10 days, 2 weeks, depends on title search" style="font-size:11px;">
+          </div>
+
+          <div style="border-bottom:1px solid var(--border);padding-bottom:12px;">
+            <div style="font-size:11px;color:var(--teal);font-family:'DM Mono',monospace;margin-bottom:4px;">Q3 — Double / simultaneous close</div>
+            <div style="font-size:12px;color:var(--text2);margin-bottom:6px;font-style:italic;">"We sometimes do simultaneous closings — buying and selling the same parcel same day. Is that something your office handles?"</div>
+            <select class="form-select" id="tc-intel-dblclose" style="font-size:11px;">
+              <option value="" ${!intel.doubleClose?'selected':''}>Not asked yet</option>
+              <option value="yes" ${intel.doubleClose==='yes'?'selected':''}>Yes — does double closes</option>
+              <option value="yes-transactional" ${intel.doubleClose==='yes-transactional'?'selected':''}>Yes — with transactional funding</option>
+              <option value="no" ${intel.doubleClose==='no'?'selected':''}>No — not comfortable with it</option>
+            </select>
+          </div>
+
+          <div style="border-bottom:1px solid var(--border);padding-bottom:12px;">
+            <div style="font-size:11px;color:var(--teal);font-family:'DM Mono',monospace;margin-bottom:4px;">Q4 — Fee structure</div>
+            <div style="font-size:12px;color:var(--text2);margin-bottom:6px;font-style:italic;">"What does a typical closing fee look like for a vacant land deal in the $30-$100k range?"</div>
+            <input class="form-input" id="tc-intel-fees" value="${intel.feeStructure||''}" placeholder="e.g. $500-800 flat, 1% of purchase price" style="font-size:11px;">
+          </div>
+
+          <div style="border-bottom:1px solid var(--border);padding-bottom:12px;">
+            <div style="font-size:11px;color:var(--teal);font-family:'DM Mono',monospace;margin-bottom:4px;">Q5 — Common title issues on land</div>
+            <div style="font-size:12px;color:var(--text2);margin-bottom:6px;font-style:italic;">"What are the most common title issues you run into on vacant land deals out here — easements, boundary disputes, heir property?"</div>
+            <input class="form-input" id="tc-intel-issues" value="${intel.commonIssues||''}" placeholder="e.g. Heir property, old liens, easement disputes" style="font-size:11px;">
+          </div>
+
+          <div style="border-bottom:1px solid var(--border);padding-bottom:12px;">
+            <div style="font-size:11px;color:var(--amber);font-family:'DM Mono',monospace;margin-bottom:4px;">Q6 — 🔑 Active land buyers they work with</div>
+            <div style="font-size:12px;color:var(--text2);margin-bottom:6px;font-style:italic;">"I know you can\'t share confidential details — but are there any active land buyers you work with regularly who might be open to connecting with another deal source? I\'m always growing my buyer network."</div>
+            <textarea class="form-textarea" id="tc-intel-buyers" style="min-height:70px;font-size:11px;" placeholder="Names, companies, or buyer types they mentioned...">${intel.activeBuyers||''}</textarea>
+          </div>
+
+          <div>
+            <div style="font-size:11px;color:var(--teal);font-family:'DM Mono',monospace;margin-bottom:4px;">Q7 — Best way to send them a deal</div>
+            <div style="font-size:12px;color:var(--text2);margin-bottom:6px;font-style:italic;">"When we have a deal ready to close, what\'s the best way to get it to you — email the contract, call you first, or is there a submission process?"</div>
+            <input class="form-input" id="tc-intel-process" value="${intel.dealProcess||''}" placeholder="e.g. Email contract to closer@firm.com, call first" style="font-size:11px;">
+          </div>
+
+        </div>
+
+        <div style="font-size:12px;color:var(--text2);background:var(--bg4);border-left:3px solid var(--teal);padding:8px 12px;border-radius:0 6px 6px 0;margin-top:14px;line-height:1.6;">
+          <strong style="color:var(--text)">Close:</strong> "This has been really helpful. We close 2-3 deals a month and I\'d love to send our next one your way. I\'ll shoot you a quick email so you have my contact info — and if you do connect me with any of those buyers, I really appreciate it."
+        </div>
+      </div>
+
+      <!-- Buyer leads captured -->
+      <div style="background:var(--bg3);border:1px solid rgba(251,191,36,0.25);border-radius:8px;padding:12px 14px;margin-bottom:16px;">
+        <div style="font-size:10px;color:var(--amber);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">🔑 Buyer Leads From This Contact</div>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:8px;">Names or companies mentioned — add them to your buyer network later</div>
+        <div id="tc-buyer-leads-list" style="display:flex;flex-direction:column;gap:4px;margin-bottom:8px;">
+          ${(tc&&tc.buyerLeads||[]).map(function(bl){ return '<div style="display:flex;align-items:center;gap:8px;font-size:11px;"><span style="color:var(--teal)">→</span><span>'+bl.name+(bl.type?' ('+bl.type+')':'')+'</span>'+(bl.added?'<span style="color:var(--text3);font-size:10px;">added to buyers</span>':'<button onclick="addTitleBuyerLead(\''+bl.name+'\')" class="btn btn-ghost btn-sm" style="font-size:10px;padding:1px 6px;">Add to buyers</button>')+'</div>'; }).join('')}
+        </div>
+        <div style="display:flex;gap:6px;">
+          <input class="form-input" id="tc-new-lead" placeholder="Buyer name or company" style="flex:1;font-size:11px;">
+          <button class="btn btn-ghost btn-sm" onclick="addBuyerLeadToList()">+ Add</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Additional notes</label>
+        <textarea class="form-textarea" id="tc-notes" style="min-height:60px;" placeholder="Anything else worth remembering...">${(tc&&tc.notes&&tc.notes.length?tc.notes[tc.notes.length-1].text:'')}</textarea>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveTitleCo('${editId||''}')">${isEdit ? 'Save Changes' : 'Add Title Contact'}</button>
+    </div>`);
+  setTimeout(function(){ document.getElementById('tc-name')?.focus(); }, 100);
+}
+
+function addBuyerLeadToList() {
+  var name = document.getElementById('tc-new-lead')?.value?.trim();
+  if (!name) return;
+  var list = document.getElementById('tc-buyer-leads-list');
+  if (!list) return;
+  var div = document.createElement('div');
+  div.style.cssText = 'display:flex;align-items:center;gap:8px;font-size:11px;';
+  div.innerHTML = '<span style="color:var(--teal)">→</span><span>'+name+'</span><button onclick="addTitleBuyerLead(this.dataset.name)" data-name="'+name+'" class="btn btn-ghost btn-sm" style="font-size:10px;padding:1px 6px;">Add to buyers</button>';
+  list.appendChild(div);
+  document.getElementById('tc-new-lead').value = '';
+  document.getElementById('tc-new-lead').focus();
+}
+
+function addTitleBuyerLead(nameOrEl) {
+  var name = typeof nameOrEl === 'string' ? nameOrEl : (nameOrEl && nameOrEl.dataset ? nameOrEl.dataset.name : '');
+  if (!name) return;
+  // Open add buyer modal pre-filled with this name
+  closeModal();
+  setTimeout(function(){
+    openAddBuyerModal('');
+    setTimeout(function(){
+      var nameEl = document.getElementById('b-name');
+      if (nameEl) { nameEl.value = name; nameEl.focus(); }
+      toast('Pre-filled from title contact — fill in their buy box', 'info');
+    }, 200);
+  }, 200);
+}
+
+function saveTitleCo(editId) {
+  var name = document.getElementById('tc-name')?.value?.trim();
+  if (!name) { toast('Name required', 'error'); return; }
+
+  var intel = {
+    landExperience: document.getElementById('tc-intel-landexp')?.value || '',
+    closeTimeline:  document.getElementById('tc-intel-timeline')?.value?.trim() || '',
+    doubleClose:    document.getElementById('tc-intel-dblclose')?.value || '',
+    feeStructure:   document.getElementById('tc-intel-fees')?.value?.trim() || '',
+    commonIssues:   document.getElementById('tc-intel-issues')?.value?.trim() || '',
+    activeBuyers:   document.getElementById('tc-intel-buyers')?.value?.trim() || '',
+    dealProcess:    document.getElementById('tc-intel-process')?.value?.trim() || '',
+  };
+
+  // Capture buyer leads from the list
+  var buyerLeadEls = document.querySelectorAll('#tc-buyer-leads-list div span:nth-child(2)');
+  var buyerLeads = Array.from(buyerLeadEls).map(function(el){ return { name: el.textContent, added: false }; });
+
+  var noteText = document.getElementById('tc-notes')?.value?.trim() || '';
+  var intelFilled = intel.landExperience || intel.closeTimeline || intel.doubleClose;
+
+  var data = {
+    name,
+    company:    document.getElementById('tc-company')?.value?.trim() || '',
+    role:       document.getElementById('tc-role')?.value?.trim() || '',
+    phone:      document.getElementById('tc-phone')?.value?.trim() || '',
+    email:      document.getElementById('tc-email')?.value?.trim() || '',
+    state:      document.getElementById('tc-state')?.value || 'TN',
+    stage:      document.getElementById('tc-stage')?.value || 'Identified',
+    intel,
+    buyerLeads,
+    lastContact: intelFilled ? today() : null,
+  };
+
+  if (!db.titleCos) db.titleCos = [];
+
+  if (editId) {
+    var tc = db.titleCos.find(function(x){ return x.id===editId; });
+    if (tc) {
+      Object.assign(tc, data);
+      if (noteText) { if(!tc.notes)tc.notes=[]; tc.notes.unshift({date:today(),text:noteText}); }
+      if (intelFilled && tc.stage === 'Identified') tc.stage = 'Contacted';
+    }
+  } else {
+    var newTc = Object.assign({ id:uid(), created:today(), notes: noteText?[{date:today(),text:noteText}]:[], touches:intelFilled?[{date:today(),channel:'Call',note:'Discovery call'}]:[] }, data);
+    if (intelFilled && newTc.stage === 'Identified') newTc.stage = 'Contacted';
+    db.titleCos.unshift(newTc);
+  }
+
+  save();
+  closeModal();
+  renderTitleCos();
+  renderTitleStats();
+  toast((editId?'Updated — ':'Added — ') + name, 'success');
+}
+
+function openTitleDetail(id) {
+  var tc = (db.titleCos||[]).find(function(x){ return x.id===id; });
+  if (!tc) return;
+  var needsTouch = titleNeedsTouch(tc);
+  var days = daysSince(tc.lastContact);
+  var intel = tc.intel || {};
+  var stageColor = { 'Identified':'var(--text3)', 'Contacted':'var(--accent)', 'Active':'var(--teal)', 'Preferred':'var(--amber)' };
+
+  openCustomModal(`
+    <div class="modal-header">
+      <div class="modal-title">${tc.name}</div>
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-ghost btn-sm" onclick="closeModal();openAddTitleModal('${id}')">Edit</button>
+        <button class="modal-close" onclick="closeModal()">&#x2715;</button>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+        ${tc.phone ? `<button class="btn btn-primary btn-sm" onclick="window.location='openphone://call?number=${(tc.phone||'').replace(/[^0-9+]/g,'')}'" >📞 Call ${tc.name.split(' ')[0]}</button>` : ''}
+        ${tc.phone ? `<button class="btn btn-ghost btn-sm" onclick="window.location='openphone://conversation?number=${(tc.phone||'').replace(/[^0-9+]/g,'')}'" >💬 Text</button>` : ''}
+        ${tc.email ? `<button class="btn btn-ghost btn-sm" onclick="openCompose('${tc.email}','Sending a deal your way — Coldwater Property Group','Hi ${tc.name.split(' ')[0]},')">✉️ Send Deal</button>` : ''}
+        <button class="btn btn-ghost btn-sm" onclick="logTitleTouch('${id}')">✓ Log Touch</button>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;">
+        <div style="background:var(--bg3);border-radius:6px;padding:10px;"><div style="font-size:10px;color:var(--text3);font-family:monospace;margin-bottom:3px">STAGE</div><div style="font-size:13px;font-weight:600;color:${stageColor[tc.stage]||'var(--text)'}">${tc.stage}</div></div>
+        <div style="background:var(--bg3);border-radius:6px;padding:10px;"><div style="font-size:10px;color:var(--text3);font-family:monospace;margin-bottom:3px">LAST CONTACT</div><div style="font-size:13px;font-weight:600;color:${needsTouch?'var(--amber)':'var(--text)'}">${tc.lastContact ? days+'d ago' : 'Never'}</div></div>
+        <div style="background:var(--bg3);border-radius:6px;padding:10px;"><div style="font-size:10px;color:var(--text3);font-family:monospace;margin-bottom:3px">DOUBLE CLOSE</div><div style="font-size:13px;font-weight:600;color:${intel.doubleClose==='yes'||intel.doubleClose==='yes-transactional'?'var(--teal)':'var(--text3)'}">${intel.doubleClose==='yes'?'✓ Yes':intel.doubleClose==='yes-transactional'?'✓ w/ funding':intel.doubleClose==='no'?'✗ No':'Unknown'}</div></div>
+      </div>
+
+      ${intel.landExperience || intel.closeTimeline || intel.feeStructure || intel.commonIssues || intel.dealProcess ? `
+      <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:12px;margin-bottom:14px;">
+        <div style="font-size:10px;color:var(--teal);font-family:monospace;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Discovery Intel</div>
+        <div style="display:flex;flex-direction:column;gap:6px;font-size:11px;">
+          ${intel.landExperience ? '<div><span style="color:var(--text3)">Land experience:</span> '+(intel.landExperience==='yes-frequent'?'✓ Frequent':'yes-occasional'===intel.landExperience?'✓ Occasional':'✗ Avoids land')+'</div>' : ''}
+          ${intel.closeTimeline ? '<div><span style="color:var(--text3)">Close timeline:</span> '+intel.closeTimeline+'</div>' : ''}
+          ${intel.feeStructure ? '<div><span style="color:var(--text3)">Fee structure:</span> '+intel.feeStructure+'</div>' : ''}
+          ${intel.commonIssues ? '<div><span style="color:var(--text3)">Common issues:</span> '+intel.commonIssues+'</div>' : ''}
+          ${intel.dealProcess ? '<div><span style="color:var(--text3)">Send deals via:</span> '+intel.dealProcess+'</div>' : ''}
+        </div>
+      </div>` : ''}
+
+      ${(tc.buyerLeads||[]).length ? `
+      <div style="background:var(--bg3);border:1px solid rgba(251,191,36,0.25);border-radius:8px;padding:12px;margin-bottom:14px;">
+        <div style="font-size:10px;color:var(--amber);font-family:monospace;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">🔑 Buyer Leads From This Contact</div>
+        ${(tc.buyerLeads||[]).map(function(bl){ return '<div style="display:flex;align-items:center;gap:8px;font-size:12px;padding:4px 0;border-bottom:1px solid var(--border);"><span style="color:var(--teal)">→</span><span style="flex:1">'+bl.name+'</span>'+(bl.added?'<span style="color:var(--text3);font-size:10px;">added</span>':'<button onclick="addTitleBuyerLeadDirect(this)" data-tcid="${id}" data-name="'+bl.name+'" class="btn btn-ghost btn-sm" style="font-size:10px;padding:1px 6px;">Add to buyers</button>')+'</div>'; }).join('')}
+        ${intel.activeBuyers ? '<div style="margin-top:8px;font-size:11px;color:var(--text2);font-style:italic;">Notes: '+intel.activeBuyers+'</div>' : ''}
+      </div>` : intel.activeBuyers ? `
+      <div style="background:var(--bg3);border:1px solid rgba(251,191,36,0.25);border-radius:8px;padding:12px;margin-bottom:14px;">
+        <div style="font-size:10px;color:var(--amber);font-family:monospace;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">🔑 Buyer Intel From Discovery Call</div>
+        <div style="font-size:12px;color:var(--text2);">${intel.activeBuyers}</div>
+      </div>` : ''}
+
+      <!-- Stage progression -->
+      <div style="margin-bottom:14px;">
+        <div style="font-size:10px;color:var(--text3);font-family:monospace;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Move Stage</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          ${TITLE_STAGES.map(function(s){ return '<button class="btn btn-ghost btn-sm" onclick="moveTitleStage(\"${id}\",\"'+s+'\")" style="'+(s===tc.stage?'border-color:var(--teal);color:var(--teal);':'')+'font-size:11px;">'+s+'</button>'; }).join('')}
+        </div>
+      </div>
+
+      <!-- Touch history -->
+      <div style="margin-bottom:14px;">
+        <div style="font-size:10px;color:var(--text3);font-family:monospace;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Touch History</div>
+        ${(tc.touches||[]).length ? (tc.touches).slice().reverse().slice(0,4).map(t => '<div style="display:flex;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);font-size:11px;"><span style="color:var(--text3);min-width:70px">'+t.date+'</span><span style="color:var(--teal);min-width:50px">'+t.channel+'</span><span>'+( t.note||'')+'</span></div>').join('') : '<div style="font-size:11px;color:var(--text3)">No touches logged</div>'}
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Add note</label>
+        <textarea class="form-textarea" id="tc-note-input" style="min-height:60px;" placeholder="Notes..."></textarea>
+        <button class="btn btn-ghost btn-sm" style="margin-top:6px;" onclick="addTitleNote('${id}')">Save Note</button>
+      </div>
+    </div>`);
+}
+
+function addTitleBuyerLeadDirect(el) {
+  var tcId = el.dataset.tcid;
+  var name = el.dataset.name;
+  var tc = (db.titleCos||[]).find(function(x){ return x.id===tcId; });
+  if (tc) {
+    (tc.buyerLeads||[]).forEach(function(bl){ if(bl.name===name) bl.added=true; });
+    save();
+  }
+  addTitleBuyerLead(name);
+}
+
+function moveTitleStage(id, stage) {
+  var tc = (db.titleCos||[]).find(function(x){ return x.id===id; });
+  if (!tc) return;
+  tc.stage = stage;
+  save();
+  closeModal();
+  openTitleDetail(id);
+  renderTitleCos();
+  renderTitleStats();
+  toast(tc.name + ' → ' + stage, 'success');
+}
+
+function logTitleTouch(id) {
+  var tc = (db.titleCos||[]).find(function(x){ return x.id===id; });
+  if (!tc) return;
+  openCustomModal(`
+    <div class="modal-header">
+      <div class="modal-title">Log touch — ${tc.name}</div>
+      <button class="modal-close" onclick="closeModal()">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group" style="margin-bottom:10px">
+        <label class="form-label">Channel</label>
+        <select class="form-input" id="tc-touch-channel">
+          <option>Call</option><option>Email</option><option>Text</option><option>Sent a deal</option><option>In person</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes</label>
+        <textarea class="form-textarea" id="tc-touch-note" style="min-height:70px;" placeholder="What was discussed..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveTitleTouch('${id}')">Log Touch</button>
+    </div>`);
+}
+
+function saveTitleTouch(id) {
+  var tc = (db.titleCos||[]).find(function(x){ return x.id===id; });
+  if (!tc) return;
+  var channel = document.getElementById('tc-touch-channel')?.value || 'Call';
+  var note = document.getElementById('tc-touch-note')?.value?.trim() || '';
+  if (!tc.touches) tc.touches = [];
+  tc.touches.push({ date:today(), channel, note });
+  tc.lastContact = today();
+  if (tc.stage === 'Identified') tc.stage = 'Contacted';
+  save();
+  closeModal();
+  renderTitleCos();
+  renderTitleStats();
+  toast('Touch logged for ' + tc.name, 'success');
+}
+
+function addTitleNote(id) {
+  var tc = (db.titleCos||[]).find(function(x){ return x.id===id; });
+  if (!tc) return;
+  var text = document.getElementById('tc-note-input')?.value?.trim();
+  if (!text) return;
+  if (!tc.notes) tc.notes = [];
+  tc.notes.unshift({ date:today(), text });
+  save();
+  closeModal();
+  openTitleDetail(id);
+  toast('Note saved', 'success');
+}
+
+
+// ══════════════════════════════════════════════════════
+// TASK INTELLIGENCE
+// ══════════════════════════════════════════════════════
+
+var _taskFilter = 'all';
+
+const TASK_PRIORITIES = ['urgent','today','this-week','someday'];
+
+function taskIsOverdue(task) {
+  if (task.done) return false;
+  if (!task.dueDate) return false;
+  return task.dueDate < today();
+}
+
+function taskIsDueToday(task) {
+  if (task.done) return false;
+  return task.dueDate === today();
+}
+
+function taskIsDueThisWeek(task) {
+  if (task.done) return false;
+  var now = new Date();
+  var end = new Date();
+  end.setDate(now.getDate() + (7 - now.getDay()));
+  var due = new Date(task.dueDate);
+  return due >= now && due <= end;
+}
+
+function nextWeekday(dayName) {
+  var days = { sunday:0, sun:0, monday:1, mon:1, tuesday:2, tue:2, wednesday:3, wed:3, thursday:4, thu:4, friday:5, fri:5, saturday:6, sat:6 };
+  var target = days[dayName.toLowerCase()];
+  if (target === undefined) return null;
+  var now = new Date();
+  var diff = (target - now.getDay() + 7) % 7 || 7;
+  var result = new Date(now);
+  result.setDate(now.getDate() + diff);
+  return result.toISOString().slice(0,10);
+}
+
+function parseDueDate(text) {
+  var lower = text.toLowerCase();
+  if (lower.includes('today')) return today();
+  if (lower.includes('tomorrow')) {
+    var t = new Date(); t.setDate(t.getDate()+1);
+    return t.toISOString().slice(0,10);
+  }
+  if (lower.includes('next week')) {
+    var t = new Date(); t.setDate(t.getDate()+7);
+    return t.toISOString().slice(0,10);
+  }
+  var dayNames = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday','mon','tue','wed','thu','fri','sat','sun'];
+  for (var i=0; i<dayNames.length; i++) {
+    if (lower.includes(dayNames[i])) {
+      var d = nextWeekday(dayNames[i]);
+      if (d) return d;
+    }
+  }
+  // Try to find a date like "April 15" or "4/15"
+  var dateMatch = text.match(/(\d{1,2})[\/\-](\d{1,2})/);
+  if (dateMatch) {
+    var month = parseInt(dateMatch[1])-1;
+    var day = parseInt(dateMatch[2]);
+    var yr = new Date().getFullYear();
+    var d = new Date(yr, month, day);
+    return d.toISOString().slice(0,10);
+  }
+  return today(); // default to today
+}
+
+function findContactInText(text) {
+  var contacts = db.contacts || [];
+  var agents = db.agents || [];
+  var buyers = db.buyers || [];
+  var titleCos = db.titleCos || [];
+  var all = [].concat(
+    contacts.map(function(c){ return {id:c.id, name:c.name, type:'contact'}; }),
+    agents.map(function(a){ return {id:a.id, name:a.name, type:'agent'}; }),
+    buyers.map(function(b){ return {id:b.id, name:b.name, type:'buyer'}; }),
+    titleCos.map(function(t){ return {id:t.id, name:t.name, type:'title'}; })
+  );
+  var lower = text.toLowerCase();
+  var found = null;
+  var bestScore = 0;
+  all.forEach(function(c) {
+    if (!c.name) return;
+    var nameLower = c.name.toLowerCase();
+    var parts = nameLower.split(' ');
+    var score = 0;
+    if (lower.includes(nameLower)) score = 10;
+    else parts.forEach(function(p){ if (p.length > 2 && lower.includes(p)) score += 3; });
+    if (score > bestScore) { bestScore = score; found = c; }
+  });
+  return bestScore >= 3 ? found : null;
+}
+
+function quickAddTask() {
+  var input = document.getElementById('task-quick-input');
+  if (!input || !input.value.trim()) return;
+  var text = input.value.trim();
+
+  // Parse contact
+  var contact = findContactInText(text);
+
+  // Parse due date
+  var dueDate = parseDueDate(text);
+
+  // Parse priority
+  var priority = 'today';
+  if (text.toLowerCase().includes('urgent') || text.toLowerCase().includes('asap')) priority = 'urgent';
+  else if (text.toLowerCase().includes('week') || text.toLowerCase().includes('sometime')) priority = 'this-week';
+
+  // Clean up title — remove day references for cleaner display
+  var title = text.replace(/(today|tomorrow|monday|tuesday|wednesday|thursday|friday|saturday|sunday|mon|tue|wed|thu|fri|sat|sun|next week|this week|urgent|asap)/gi,'').replace(/\s+/g,' ').trim();
+
+  var task = {
+    id: uid(),
+    title: title || text,
+    rawInput: text,
+    dueDate,
+    priority,
+    done: false,
+    source: 'manual',
+    contactId: contact ? contact.id : null,
+    contactName: contact ? contact.name : null,
+    contactType: contact ? contact.type : null,
+    created: today(),
+    createdAt: new Date().toISOString(),
+  };
+
+  if (!db.tasks) db.tasks = [];
+  db.tasks.unshift(task);
+  save();
+  input.value = '';
+  renderTasks();
+  renderTaskStats();
+  updateTaskBadge();
+
+  var msg = 'Task added';
+  if (contact) msg += ' — linked to ' + contact.name;
+  if (dueDate === today()) msg += ' — due today';
+  else msg += ' — due ' + dueDate;
+  toast(msg, 'success');
+}
+
+function openAddTask(prefill) {
+  openCustomModal(`
+    <div class="modal-header">
+      <div class="modal-title">+ Add Task</div>
+      <button class="modal-close" onclick="closeModal()">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group" style="margin-bottom:10px;">
+        <label class="form-label">Task *</label>
+        <input class="form-input" id="tk-title" value="${prefill||''}" placeholder="Call Marcus Bell about Crittenden County parcel">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+        <div class="form-group">
+          <label class="form-label">Due date</label>
+          <input class="form-input" type="date" id="tk-due" value="${today()}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Priority</label>
+          <select class="form-select" id="tk-priority">
+            <option value="urgent">🔴 Urgent</option>
+            <option value="today" selected>🟡 Today</option>
+            <option value="this-week">🔵 This week</option>
+            <option value="someday">⚪ Someday</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:10px;">
+        <label class="form-label">Link to contact (optional)</label>
+        <input class="form-input" id="tk-contact-search" placeholder="Type a name to search..." oninput="searchTaskContact(this.value)">
+        <div id="tk-contact-results" style="margin-top:4px;"></div>
+        <input type="hidden" id="tk-contact-id">
+        <input type="hidden" id="tk-contact-name">
+        <input type="hidden" id="tk-contact-type">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes</label>
+        <textarea class="form-textarea" id="tk-notes" style="min-height:60px;" placeholder="Any context..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveTask('')">Add Task</button>
+    </div>`);
+  setTimeout(function(){ document.getElementById('tk-title')?.focus(); }, 100);
+}
+
+function searchTaskContact(query) {
+  var el = document.getElementById('tk-contact-results');
+  if (!el || query.length < 2) { if(el) el.innerHTML=''; return; }
+  var lower = query.toLowerCase();
+  var all = [].concat(
+    (db.contacts||[]).map(function(c){ return {id:c.id,name:c.name,type:'contact',sub:c.county+' '+c.state}; }),
+    (db.agents||[]).map(function(a){ return {id:a.id,name:a.name,type:'agent',sub:a.brokerage||'Agent'}; }),
+    (db.buyers||[]).map(function(b){ return {id:b.id,name:b.name,type:'buyer',sub:getBuyerTypeLabel(b.type)}; }),
+    (db.titleCos||[]).map(function(t){ return {id:t.id,name:t.name,type:'title',sub:t.company||'Title Co'}; })
+  ).filter(function(c){ return c.name && c.name.toLowerCase().includes(lower); }).slice(0,5);
+
+  el.innerHTML = all.map(function(c){
+    return '<div data-id="'+c.id+'" data-name="'+c.name+'" data-type="'+c.type+'" style="padding:6px 10px;cursor:pointer;border-radius:4px;font-size:12px;display:flex;gap:8px;align-items:center;" onclick="selectTaskContact(this.dataset.id,this.dataset.name,this.dataset.type)">'+
+      '<span style="font-size:10px;color:var(--text3);min-width:40px;">'+c.type+'</span>'+
+      '<span>'+c.name+'</span>'+
+      '<span style="font-size:10px;color:var(--text3);">'+c.sub+'</span>'+
+    '</div>';
+  }).join('');
+}
+
+function selectTaskContact(id, name, type) {
+  document.getElementById('tk-contact-id').value = id;
+  document.getElementById('tk-contact-name').value = name;
+  document.getElementById('tk-contact-type').value = type;
+  document.getElementById('tk-contact-search').value = name;
+  document.getElementById('tk-contact-results').innerHTML = '';
+}
+
+function saveTask(editId) {
+  var title = document.getElementById('tk-title')?.value?.trim();
+  if (!title) { toast('Task title required','error'); return; }
+  var task = {
+    title,
+    dueDate: document.getElementById('tk-due')?.value || today(),
+    priority: document.getElementById('tk-priority')?.value || 'today',
+    contactId: document.getElementById('tk-contact-id')?.value || null,
+    contactName: document.getElementById('tk-contact-name')?.value || null,
+    contactType: document.getElementById('tk-contact-type')?.value || null,
+    notes: document.getElementById('tk-notes')?.value?.trim() || '',
+    done: false,
+    source: 'manual',
+  };
+  if (editId) {
+    var existing = db.tasks.find(function(t){ return t.id===editId; });
+    if (existing) Object.assign(existing, task);
+  } else {
+    if (!db.tasks) db.tasks = [];
+    db.tasks.unshift(Object.assign({ id:uid(), created:today(), createdAt:new Date().toISOString() }, task));
+  }
+  save();
+  closeModal();
+  renderTasks();
+  renderTaskStats();
+  updateTaskBadge();
+  toast('Task saved','success');
+}
+
+function completeTask(id) {
+  var task = (db.tasks||[]).find(function(t){ return t.id===id; });
+  if (!task) return;
+  task.done = true;
+  task.completedAt = new Date().toISOString();
+  save();
+  renderTasks();
+  renderTaskStats();
+  updateTaskBadge();
+  toast('Task completed ✓','success');
+}
+
+function deleteTask(id) {
+  if (!confirm('Delete this task?')) return;
+  db.tasks = (db.tasks||[]).filter(function(t){ return t.id!==id; });
+  save();
+  renderTasks();
+  renderTaskStats();
+  updateTaskBadge();
+}
+
+function reopenTask(id) {
+  var task = (db.tasks||[]).find(function(t){ return t.id===id; });
+  if (!task) return;
+  task.done = false;
+  task.completedAt = null;
+  save();
+  renderTasks();
+  renderTaskStats();
+  updateTaskBadge();
+}
+
+function filterTasks(filter) {
+  _taskFilter = filter;
+  document.querySelectorAll('.task-filter-btn').forEach(function(b){ b.classList.remove('active'); });
+  var btn = document.getElementById('tkf-'+filter);
+  if (btn) btn.classList.add('active');
+  renderTasks();
+}
+
+function renderTaskStats() {
+  var el = document.getElementById('task-stats');
+  if (!el) return;
+  var tasks = db.tasks || [];
+  var overdue = tasks.filter(function(t){ return !t.done && taskIsOverdue(t); }).length;
+  var dueToday = tasks.filter(function(t){ return !t.done && taskIsDueToday(t); }).length;
+  var pending = tasks.filter(function(t){ return !t.done; }).length;
+  var done = tasks.filter(function(t){ return t.done; }).length;
+  var statStyle = 'background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:14px 16px;';
+  el.innerHTML = [
+    ['Overdue', overdue, overdue>0?'var(--coral)':'var(--text)'],
+    ['Due Today', dueToday, dueToday>0?'var(--amber)':'var(--text)'],
+    ['Total Pending', pending, 'var(--text)'],
+    ['Completed', done, 'var(--teal)'],
+  ].map(function(s){
+    return '<div style="'+statStyle+'"><div style="font-size:11px;color:var(--text3);font-family:monospace;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">'+s[0]+'</div><div style="font-size:24px;font-weight:700;color:'+s[2]+'">'+s[1]+'</div></div>';
+  }).join('');
+}
+
+function updateTaskBadge() {
+  var badge = document.getElementById('nb-tasks');
+  if (!badge) return;
+  var overdue = (db.tasks||[]).filter(function(t){ return !t.done && (taskIsOverdue(t) || taskIsDueToday(t)); }).length;
+  badge.textContent = overdue;
+  badge.style.display = overdue > 0 ? 'inline' : 'none';
+}
+
+function renderTasks() {
+  var el = document.getElementById('task-list');
+  if (!el) return;
+  var tasks = db.tasks || [];
+
+  var filtered = tasks.filter(function(t) {
+    if (_taskFilter === 'done') return t.done;
+    if (t.done) return false;
+    if (_taskFilter === 'all') return true;
+    if (_taskFilter === 'overdue') return taskIsOverdue(t);
+    if (_taskFilter === 'today') return taskIsDueToday(t) || taskIsOverdue(t);
+    if (_taskFilter === 'week') return taskIsDueThisWeek(t);
+    if (_taskFilter === 'system') return t.source === 'system';
+    return true;
+  });
+
+  // Sort: overdue first, then by due date, then priority
+  var priorityOrder = { urgent:0, today:1, 'this-week':2, someday:3 };
+  filtered.sort(function(a, b) {
+    if (taskIsOverdue(a) && !taskIsOverdue(b)) return -1;
+    if (!taskIsOverdue(a) && taskIsOverdue(b)) return 1;
+    if (a.dueDate !== b.dueDate) return a.dueDate < b.dueDate ? -1 : 1;
+    return (priorityOrder[a.priority]||2) - (priorityOrder[b.priority]||2);
+  });
+
+  if (!filtered.length) {
+    el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3);"><div style="font-size:24px;margin-bottom:8px;">✅</div><div style="font-size:13px;">'+(
+      _taskFilter==='done' ? 'No completed tasks yet' :
+      _taskFilter==='overdue' ? 'No overdue tasks — you\'re on top of it' :
+      _taskFilter==='today' ? 'Nothing due today' :
+      'No tasks found'
+    )+'</div></div>';
+    return;
+  }
+
+  var priorityDot = { urgent:'var(--coral)', today:'var(--amber)', 'this-week':'var(--accent)', someday:'var(--text3)' };
+  var priorityLabel = { urgent:'🔴 Urgent', today:'🟡 Today', 'this-week':'🔵 This week', someday:'⚪ Someday' };
+
+  el.innerHTML = filtered.map(function(task) {
+    var overdue = taskIsOverdue(task);
+    var isToday = taskIsDueToday(task);
+    var dot = priorityDot[task.priority] || 'var(--text3)';
+    var dateColor = overdue ? 'var(--coral)' : isToday ? 'var(--amber)' : 'var(--text3)';
+    var dateLabel = overdue ? '⚠ Overdue — '+task.dueDate : isToday ? 'Due today' : 'Due '+task.dueDate;
+
+    return '<div style="background:var(--bg2);border:1px solid '+(overdue?'rgba(248,113,113,0.3)':isToday?'rgba(251,191,36,0.25)':'var(--border)')+';border-radius:var(--rl);padding:14px 16px;display:flex;gap:12px;align-items:flex-start;">'+
+      '<div style="padding-top:2px;">'+
+        (task.done ?
+          '<button onclick="reopenTask(\'' + task.id + '\')" style="width:20px;height:20px;border-radius:50%;background:var(--teal);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;color:white;flex-shrink:0;">✓</button>' :
+          '<button onclick="completeTask(\'' + task.id + '\')" style="width:20px;height:20px;border-radius:50%;background:none;border:2px solid var(--border2);cursor:pointer;flex-shrink:0;" title="Mark complete"></button>'
+        )+
+      '</div>'+
+      '<div style="flex:1;min-width:0;">'+
+        '<div style="font-size:13px;font-weight:500;margin-bottom:4px;'+(task.done?'text-decoration:line-through;color:var(--text3);':'')+'">'+task.title+'</div>'+
+        '<div style="display:flex;gap:10px;font-size:11px;flex-wrap:wrap;align-items:center;">'+
+          '<span style="color:'+dateColor+'">'+dateLabel+'</span>'+
+          '<span style="color:'+dot+'">'+( priorityLabel[task.priority]||'')+'</span>'+
+          (task.source==='system' ? '<span style="color:var(--text3);font-size:10px;background:var(--bg3);border-radius:3px;padding:1px 5px;">auto</span>' : '')+
+          (task.contactName ? '<span style="color:var(--accent);cursor:pointer;" onclick="openTaskContact(this)" data-id="'+task.contactId+'" data-type="'+task.contactType+'">→ '+task.contactName+'</span>' : '')+
+        '</div>'+
+        (task.notes ? '<div style="margin-top:6px;font-size:11px;color:var(--text3);">'+task.notes+'</div>' : '')+
+      '</div>'+
+      '<div style="display:flex;gap:6px;flex-shrink:0;">'+
+        (task.contactId ? '<button onclick="openTaskContactById(\'' + task.contactId + '\', \'' + (task.contactType||'contact') + '\')" class="btn btn-ghost btn-sm" style="font-size:10px;padding:2px 8px;">Open</button>' : '')+
+        '<button onclick="deleteTask(\'' + task.id + '\')" class="btn btn-ghost btn-sm" style="font-size:10px;padding:2px 8px;color:var(--text3);">✕</button>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+// Add task cockpit lane HTML is already in the dashboard
+// Render tasks in cockpit
+function openTaskContactById(id, type) {
+  if (type === 'agent') openAgentDetail(id);
+  else if (type === 'buyer') openBuyerDetail(id);
+  else if (type === 'title') openTitleDetail(id);
+  else openDetail(id);
+}
+
+function openTaskContact(el) {
+  var id = el.dataset.id;
+  var type = el.dataset.type;
+  if (!id) return;
+  if (type === 'agent') openAgentDetail(id);
+  else if (type === 'buyer') openBuyerDetail(id);
+  else if (type === 'title') openTitleDetail(id);
+  else openDetail(id);
+}
+
+function renderTaskCockpitLane() {
+  var el = document.getElementById('lane-tasks');
+  if (!el) return;
+  var tasks = (db.tasks||[]).filter(function(t){
+    return !t.done && (taskIsOverdue(t) || taskIsDueToday(t));
+  });
+  tasks.sort(function(a,b){
+    if (taskIsOverdue(a) && !taskIsOverdue(b)) return -1;
+    if (!taskIsOverdue(a) && taskIsOverdue(b)) return 1;
+    var po = {urgent:0,today:1,'this-week':2,someday:3};
+    return (po[a.priority]||2)-(po[b.priority]||2);
+  });
+
+  var countEl = document.getElementById('task-cockpit-count');
+  if (countEl) countEl.textContent = tasks.length;
+
+  if (!tasks.length) {
+    el.innerHTML = '<div style="font-size:13px;color:var(--text3);padding:4px 0;">Nothing due today — you\'re clear</div>';
+    return;
+  }
+
+  el.innerHTML = tasks.map(function(task) {
+    var overdue = taskIsOverdue(task);
+    return '<div class="cockpit-card" style="border-left:3px solid '+(overdue?'var(--coral)':'var(--amber)')+';">'+
+      '<div class="cockpit-name">'+task.title+'</div>'+
+      (task.contactName ? '<div class="cockpit-sub" style="color:var(--accent);">→ '+task.contactName+'</div>' : '')+
+      '<div class="cockpit-sub" style="color:'+(overdue?'var(--coral)':'var(--amber)')+';">'+(overdue?'⚠ Overdue':'Due today')+(task.priority==='urgent'?' · 🔴 Urgent':'')+'</div>'+
+      '<div class="cockpit-actions">'+
+        '<button class="btn btn-primary btn-sm" onclick="completeTask(\'' + task.id + '\')">✓ Done</button>'+
+        (task.contactId ? '<button onclick="openTaskContactById(\'' + task.contactId + '\', \'' + (task.contactType||'contact') + '\')" class="btn btn-ghost btn-sm" style="font-size:10px;padding:2px 8px;">Open</button>' : '')+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+// System-generated tasks — called on dashboard load
+function generateSystemTasks() {
+  var existing = (db.tasks||[]).filter(function(t){ return t.source==='system' && !t.done; });
+  var existingKeys = existing.map(function(t){ return t.systemKey||''; });
+  var newTasks = [];
+
+  // Agents overdue for touch
+  (db.agents||[]).forEach(function(agent) {
+    if (!agentNeedsTouch(agent)) return;
+    var key = 'agent-touch-'+agent.id;
+    if (existingKeys.includes(key)) return;
+    newTasks.push({
+      id: uid(), title: 'Touch base with '+agent.name, source:'system', systemKey:key,
+      dueDate:today(), priority:'today', done:false,
+      contactId:agent.id, contactName:agent.name, contactType:'agent',
+      notes:'Agent needs a touch — '+daysSince(agent.lastContact)+' days since last contact',
+      created:today(), createdAt:new Date().toISOString(),
+    });
+  });
+
+  // Title cos overdue
+  (db.titleCos||[]).forEach(function(tc) {
+    if (!titleNeedsTouch(tc)) return;
+    var key = 'title-touch-'+tc.id;
+    if (existingKeys.includes(key)) return;
+    newTasks.push({
+      id:uid(), title:'Check in with '+tc.name+' at '+( tc.company||'title co'), source:'system', systemKey:key,
+      dueDate:today(), priority:'this-week', done:false,
+      contactId:tc.id, contactName:tc.name, contactType:'title',
+      notes:'Title company needs a touch — '+daysSince(tc.lastContact)+' days since last contact',
+      created:today(), createdAt:new Date().toISOString(),
+    });
+  });
+
+  // Deals stalling in Negotiating > 7 days
+  (db.contacts||[]).forEach(function(c) {
+    if (c.stage !== 'Negotiating') return;
+    if (daysSince(c.lastContact) < 7) return;
+    var key = 'stall-'+c.id;
+    if (existingKeys.includes(key)) return;
+    newTasks.push({
+      id:uid(), title:'Follow up — '+c.name+' negotiation stalling', source:'system', systemKey:key,
+      dueDate:today(), priority:'urgent', done:false,
+      contactId:c.id, contactName:c.name, contactType:'contact',
+      notes:'In Negotiating stage for '+daysSince(c.lastContact)+' days with no contact',
+      created:today(), createdAt:new Date().toISOString(),
+    });
+  });
+
+  // Offer Made > 5 days with no response
+  (db.contacts||[]).forEach(function(c) {
+    if (c.stage !== 'Offer Made') return;
+    if (daysSince(c.lastContact) < 5) return;
+    var key = 'offer-followup-'+c.id;
+    if (existingKeys.includes(key)) return;
+    newTasks.push({
+      id:uid(), title:'Follow up on offer — '+c.name, source:'system', systemKey:key,
+      dueDate:today(), priority:'today', done:false,
+      contactId:c.id, contactName:c.name, contactType:'contact',
+      notes:'Offer made '+daysSince(c.lastContact)+' days ago with no update',
+      created:today(), createdAt:new Date().toISOString(),
+    });
+  });
+
+  if (newTasks.length) {
+    if (!db.tasks) db.tasks = [];
+    db.tasks = db.tasks.concat(newTasks);
+    save();
+  }
+  return newTasks.length;
 }
 
 // INIT
