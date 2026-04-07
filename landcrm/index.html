@@ -473,14 +473,17 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
       <button class="nav-item" onclick="showView('buyers')">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="7" width="12" height="8" rx="1.5"/><path d="M5 7V5a3 3 0 016 0v2"/></svg>
         Buyers
+        <span class="nb" id="nb-buyers" style="display:none;background:var(--accent)">0</span>
       </button>
-      <button class="nav-item" onclick="showComingSoon('Title and Closing')">
-        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2h8a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z"/><path d="M6 6h4M6 9h4"/></svg>
-        Title & Closing
-      </button>
-      <button class="nav-item" onclick="showComingSoon('RE Agents')">
-        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1l2 4 5 .7-3.5 3.4.8 5L8 12l-4.3 2.1.8-5L1 5.7 6 5z"/></svg>
+      <button class="nav-item" onclick="showView('agents')" id="nav-agents">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="5" r="2.5"/><path d="M1 13c0-2.76 2.24-5 5-5s5 2.24 5 5"/><path d="M11 7l1.5 1.5L15 6"/></svg>
         RE Agents
+        <span class="nb" id="nb-agents" style="display:none;background:var(--purple)">0</span>
+      </button>
+      <button class="nav-item" onclick="showView('title')" id="nav-title">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="1.5"/><path d="M5 6h6M5 8.5h4M5 11h3"/></svg>
+        Title & Closing
+        <span class="nb" id="nb-title" style="display:none;background:var(--teal)">0</span>
       </button>
       <button class="nav-item" onclick="showComingSoon('Referral Partners')">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="6" r="3"/><path d="M2 14s-1 0-1-1 1-4 7-4 7 3 7 4-1 1-1 1H2z"/></svg>
@@ -501,20 +504,10 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h8M2 12h5"/></svg>
         SMS Sequences
       </button>
-      <button class="nav-item" onclick="showView('agents')" id="nav-agents">
-        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="5" r="2.5"/><path d="M1 13c0-2.76 2.24-5 5-5s5 2.24 5 5"/><path d="M11 7l1.5 1.5L15 6"/></svg>
-        Agents
-        <span class="nb" id="nb-agents" style="display:none;background:var(--purple)">0</span>
-      </button>
       <button class="nav-item" onclick="showView('tasks')" id="nav-tasks">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="1.5"/><path d="M5 8l2 2 4-4"/></svg>
         Tasks
         <span class="nb red" id="nb-tasks" style="display:none">0</span>
-      </button>
-      <button class="nav-item" onclick="showView('title')" id="nav-title">
-        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="1.5"/><path d="M5 6h6M5 8.5h4M5 11h3"/></svg>
-        Title & Closing
-        <span class="nb" id="nb-title" style="display:none;background:var(--teal)">0</span>
       </button>
       <button class="nav-item" onclick="showView('gmail')" id="nav-gmail">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12v9a1 1 0 01-1 1H3a1 1 0 01-1-1V4z"/><path d="M2 4l6 5 6-5"/></svg>
