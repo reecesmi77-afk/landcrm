@@ -2045,6 +2045,7 @@ function openDetail(id){
           <button class="btn btn-ghost" style="flex:1" onclick="openQuoText('${c.phone}','${c.name.split(' ')[0]}')">💬 Text</button>
           <button class="btn btn-ghost" style="flex:1" onclick="openContactEmail('${c.id}')">✉️ Email</button>
           <button class="btn btn-ghost" style="flex:1;border-color:rgba(92,184,255,0.3);color:var(--blue)" onclick="openCalcForContact('${id}')">⚡ Offer Math</button>
+          <button class="btn btn-ghost" style="flex:1;border-color:rgba(52,211,153,0.4);color:var(--teal);font-weight:600" onclick="openSendOfferModal('${id}')">📄 Send Offer</button>
         </div>
 
         <!-- TEMP + HANDOFF -->
@@ -8483,6 +8484,224 @@ function logReferralTouch(id) {
   r.lastContact = today();
   save(); closeModal(); renderReferrals(); renderReferralStats();
   toast('Touch logged for '+r.name,'success');
+}
+
+
+// ══════════════════════════════════════════════════════
+// SIGNWELL — SEND OFFER INTEGRATION
+// ══════════════════════════════════════════════════════
+
+var SIGNWELL_TEMPLATE_ID = '88958b6d-bf7d-44fb-b6fc-8c4d77261e31';
+var SIGNWELL_API_KEY = 'YWNjZXNzOmYyOWE0ZTEyYjc4NzYwZDMwMDNjZmIxMzM3ZmMxYzQ0';
+
+function openSendOfferModal(contactId) {
+  var c = db.contacts.find(function(x){ return x.id===contactId; });
+  if (!c) return;
+
+  // Calculate dates
+  var now = new Date();
+  var agreementDate = now.toLocaleDateString('en-US', { month:'2-digit', day:'2-digit', year:'numeric' });
+
+  // Acceptance deadline: 7 days from now
+  var deadlineDate = new Date(now);
+  deadlineDate.setDate(now.getDate() + 7);
+  var deadline = deadlineDate.toLocaleDateString('en-US', { month:'2-digit', day:'2-digit', year:'numeric' });
+
+  // Pre-fill offer price from our offer field or blank
+  var offerPrice = c.ourOffer ? parseInt(c.ourOffer).toLocaleString() : '';
+
+  openCustomModal(`
+    <div class="modal-header">
+      <div class="modal-title">📄 Send Offer — ${c.name}</div>
+      <button class="modal-close" onclick="closeModal()">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+
+      <div style="background:var(--bg3);border:1px solid rgba(52,211,153,0.2);border-radius:8px;padding:12px 14px;margin-bottom:16px;">
+        <div style="font-size:10px;color:var(--teal);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">SignWell Purchase Agreement</div>
+        <div style="font-size:12px;color:var(--text2);">Pre-filled from contact record. Review and adjust before sending.</div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+        <div class="form-group" style="grid-column:1/-1">
+          <label class="form-label">Seller name (as it appears on deed) *</label>
+          <input class="form-input" id="sw-seller-name" value="${c.name||''}" placeholder="Full legal name">
+        </div>
+        <div class="form-group" style="grid-column:1/-1">
+          <label class="form-label">Seller email * <span style="color:var(--text3);font-size:10px">— SignWell sends the agreement here</span></label>
+          <input class="form-input" id="sw-seller-email" value="${c.email||''}" placeholder="seller@email.com" type="email">
+        </div>
+        <div class="form-group">
+          <label class="form-label">APN / Parcel Number</label>
+          <input class="form-input" id="sw-apn" value="${c.apn||c.parcelId||''}" placeholder="000-000-000">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Acreage</label>
+          <input class="form-input" id="sw-acreage" value="${c.acreage||''}" placeholder="12.5">
+        </div>
+        <div class="form-group">
+          <label class="form-label">County</label>
+          <input class="form-input" id="sw-county" value="${c.county||''}" placeholder="Craighead">
+        </div>
+        <div class="form-group">
+          <label class="form-label">State</label>
+          <input class="form-input" id="sw-state" value="${c.state||''}" placeholder="AR">
+        </div>
+        <div class="form-group" style="grid-column:1/-1">
+          <label class="form-label">Purchase Price ($) *</label>
+          <input class="form-input" id="sw-price" value="${offerPrice}" placeholder="25000" type="number">
+          ${c.ourOffer ? '<div style="font-size:10px;color:var(--teal);margin-top:3px;">Pre-filled from your offer: $'+parseInt(c.ourOffer).toLocaleString()+'</div>' : '<div style="font-size:10px;color:var(--amber);margin-top:3px;">⚠ No offer calculated yet — enter manually or run Offer Math first</div>'}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Agreement date</label>
+          <input class="form-input" id="sw-date" value="${agreementDate}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Acceptance deadline</label>
+          <input class="form-input" id="sw-deadline" value="${deadline}">
+        </div>
+      </div>
+
+      <div id="sw-status" style="display:none;padding:10px 14px;border-radius:6px;font-size:12px;margin-bottom:10px;"></div>
+
+    </div>
+    <div class="modal-footer" style="justify-content:space-between;">
+      <div style="font-size:11px;color:var(--text3);">Sent via SignWell · Legally binding e-signature</div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-primary" id="sw-send-btn" onclick="sendSignWellOffer('${contactId}')">
+          📄 Send Agreement
+        </button>
+      </div>
+    </div>`);
+}
+
+function sendSignWellOffer(contactId) {
+  var c = db.contacts.find(function(x){ return x.id===contactId; });
+  if (!c) return;
+
+  var sellerName  = document.getElementById('sw-seller-name')?.value?.trim();
+  var sellerEmail = document.getElementById('sw-seller-email')?.value?.trim();
+  var price       = document.getElementById('sw-price')?.value?.trim();
+  var apn         = document.getElementById('sw-apn')?.value?.trim();
+  var acreage     = document.getElementById('sw-acreage')?.value?.trim();
+  var county      = document.getElementById('sw-county')?.value?.trim();
+  var state       = document.getElementById('sw-state')?.value?.trim();
+  var agreeDate   = document.getElementById('sw-date')?.value?.trim();
+  var deadline    = document.getElementById('sw-deadline')?.value?.trim();
+
+  if (!sellerName)  { toast('Seller name required','error'); return; }
+  if (!sellerEmail) { toast('Seller email required','error'); return; }
+  if (!price)       { toast('Purchase price required','error'); return; }
+
+  var btn = document.getElementById('sw-send-btn');
+  var statusEl = document.getElementById('sw-status');
+
+  if (btn) { btn.disabled = true; btn.textContent = 'Sending...'; }
+  if (statusEl) {
+    statusEl.style.display = 'block';
+    statusEl.style.background = 'var(--bg3)';
+    statusEl.style.border = '1px solid var(--border)';
+    statusEl.style.color = 'var(--text2)';
+    statusEl.textContent = 'Creating agreement in SignWell...';
+  }
+
+  var formattedPrice = '$' + parseFloat(price).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  var payload = {
+    test_mode: false,
+    template_id: SIGNWELL_TEMPLATE_ID,
+    subject: 'Purchase Agreement — Coldwater Property Group',
+    message: 'Hi ' + sellerName.split(' ')[0] + ',\n\nPlease review and sign the attached Purchase Agreement for your property. You can sign directly from your phone or computer — no account needed.\n\nThe process takes less than two minutes. If you have any questions, feel free to call or text me directly.\n\nWilliam Smith\nColdwater Property Group, LLC',
+    recipients: [
+      {
+        id: 'seller',
+        name: sellerName,
+        email: sellerEmail,
+        placeholder_name: 'Seller',
+      }
+    ],
+    fields: {
+      seller: [
+        { api_id: 'seller_name',     value: sellerName      },
+        { api_id: 'seller_name_top', value: sellerName      },
+        { api_id: 'seller_email',    value: sellerEmail     },
+        { api_id: 'apn',             value: apn             },
+        { api_id: 'acreage',         value: acreage         },
+        { api_id: 'county',          value: county          },
+        { api_id: 'state',           value: state           },
+        { api_id: 'purchase_price',  value: formattedPrice  },
+        { api_id: 'agreement_date',  value: agreeDate       },
+        { api_id: 'acceptance_deadline', value: deadline    },
+      ]
+    }
+  };
+
+  fetch('https://api.signwell.com/v1/document_templates/documents/', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Api-Key': SIGNWELL_API_KEY,
+    },
+    body: JSON.stringify(payload)
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (data.id) {
+      // Success — log to contact record
+      if (!c.offers) c.offers = [];
+      c.offers.unshift({
+        date: today(),
+        price: price,
+        signwellId: data.id,
+        status: 'sent',
+        sellerEmail: sellerEmail,
+      });
+      c.stage = 'Offer Made';
+      c.lastContact = today();
+      if (!c.touches) c.touches = [];
+      c.touches.push({ date: today(), channel: 'Offer', note: 'Purchase agreement sent via SignWell — $' + parseFloat(price).toLocaleString() });
+      save();
+
+      if (statusEl) {
+        statusEl.style.background = 'rgba(52,211,153,0.1)';
+        statusEl.style.border = '1px solid rgba(52,211,153,0.3)';
+        statusEl.style.color = 'var(--teal)';
+        statusEl.textContent = '✓ Agreement sent to ' + sellerEmail + ' — stage updated to Offer Made';
+      }
+      if (btn) { btn.textContent = '✓ Sent'; btn.style.background = 'var(--teal)'; }
+
+      toast('Offer sent to ' + sellerName + ' — check SignWell for status', 'success');
+
+      // Auto-create follow-up task
+      if (!db.tasks) db.tasks = [];
+      var followDate = new Date();
+      followDate.setDate(followDate.getDate() + 3);
+      db.tasks.unshift({
+        id: uid(), title: 'Follow up on offer — ' + c.name,
+        dueDate: followDate.toISOString().slice(0,10),
+        priority: 'today', done: false, source: 'manual',
+        contactId: c.id, contactName: c.name, contactType: 'contact',
+        notes: 'Offer sent $' + parseFloat(price).toLocaleString() + '. Check if they received and reviewed.',
+        created: today(), createdAt: new Date().toISOString(),
+      });
+      save();
+      updateTaskBadge();
+
+    } else {
+      throw new Error(data.error || data.message || JSON.stringify(data));
+    }
+  })
+  .catch(function(err) {
+    console.error('SignWell error:', err);
+    if (statusEl) {
+      statusEl.style.background = 'rgba(248,113,113,0.1)';
+      statusEl.style.border = '1px solid rgba(248,113,113,0.3)';
+      statusEl.style.color = 'var(--coral)';
+      statusEl.textContent = 'Error: ' + (err.message || 'Something went wrong. Check console.');
+    }
+    if (btn) { btn.disabled = false; btn.textContent = '📄 Send Agreement'; }
+  });
 }
 
 // INIT
