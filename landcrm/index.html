@@ -672,7 +672,19 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
         </select>
         <select class="filter-select" id="seller-stage-filter" onchange="renderSellers()">
           <option value="">All stages</option>
-          ${[...ACQ_STAGES_CONST,'---',...DIS_STAGES_CONST].filter(s=>s!=='---').map(s=>`<option>${s}</option>`).join('')}
+          <option value="New">New</option>
+          <option value="Outreach Active">Outreach Active</option>
+          <option value="Contacted">Contacted</option>
+          <option value="Negotiating">Negotiating</option>
+          <option value="Offer Made">Offer Made</option>
+          <option value="Under Contract">Under Contract</option>
+          <option value="Under Agreement">Under Agreement</option>
+          <option value="Dead">Dead</option>
+          <option value="Not Motivated Yet">Not Motivated Yet</option>
+          <option value="Available">Available</option>
+          <option value="Buyer Found">Buyer Found</option>
+          <option value="Under Contract">Under Contract</option>
+          <option value="Closed">Closed</option>
         </select>
         <select class="filter-select" id="seller-state-filter" onchange="renderSellers()">
           <option value="">All states</option>
@@ -680,7 +692,14 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
         </select>
         <select class="filter-select" id="seller-source-filter" onchange="renderSellers()">
           <option value="">All sources</option>
-          ${SOURCES.map(s=>`<option>${s}</option>`).join('')}
+          <option value="Driving for Dollars">Driving for Dollars</option>
+          <option value="Direct Mail">Direct Mail</option>
+          <option value="Cold Call">Cold Call</option>
+          <option value="Text Blast">Text Blast</option>
+          <option value="Referral">Referral</option>
+          <option value="Online Lead">Online Lead</option>
+          <option value="MLS">MLS</option>
+          <option value="Other">Other</option>
         </select>
       </div>
       <div class="card">
@@ -1126,7 +1145,16 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
         </div>
         <select class="form-select" id="title-state-filter" onchange="renderTitleCos()" style="font-size:12px;padding:6px 10px;min-width:140px;">
           <option value="">All states</option>
-          ${['TN','MS','AR','MO','AL','KY','GA','TX','OK','LA'].map(s => '<option>'+s+'</option>').join('')}
+          <option value="TN">TN</option>
+            <option value="MS">MS</option>
+            <option value="AR">AR</option>
+            <option value="MO">MO</option>
+            <option value="AL">AL</option>
+            <option value="KY">KY</option>
+            <option value="GA">GA</option>
+            <option value="TX">TX</option>
+            <option value="OK">OK</option>
+            <option value="LA">LA</option>
         </select>
       </div>
 
@@ -1155,7 +1183,16 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
         <div style="display:flex;gap:8px;align-items:center;">
           <select class="form-select" id="lender-state-filter" onchange="renderLenders()" style="font-size:12px;padding:6px 10px;min-width:120px;">
             <option value="">All states</option>
-            ${['TN','MS','AR','MO','AL','KY','GA','TX','OK','LA'].map(s => '<option>'+s+'</option>').join('')}
+            <option value="TN">TN</option>
+            <option value="MS">MS</option>
+            <option value="AR">AR</option>
+            <option value="MO">MO</option>
+            <option value="AL">AL</option>
+            <option value="KY">KY</option>
+            <option value="GA">GA</option>
+            <option value="TX">TX</option>
+            <option value="OK">OK</option>
+            <option value="LA">LA</option>
           </select>
         </div>
       </div>
@@ -1178,7 +1215,16 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
         </div>
         <select class="form-select" id="referral-state-filter" onchange="renderReferrals()" style="font-size:12px;padding:6px 10px;min-width:120px;">
           <option value="">All states</option>
-          ${['TN','MS','AR','MO','AL','KY','GA','TX','OK','LA'].map(s => '<option>'+s+'</option>').join('')}
+          <option value="TN">TN</option>
+            <option value="MS">MS</option>
+            <option value="AR">AR</option>
+            <option value="MO">MO</option>
+            <option value="AL">AL</option>
+            <option value="KY">KY</option>
+            <option value="GA">GA</option>
+            <option value="TX">TX</option>
+            <option value="OK">OK</option>
+            <option value="LA">LA</option>
         </select>
       </div>
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;" id="referral-stats"></div>
@@ -1323,7 +1369,16 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
         </div>
         <select class="form-select" id="title-state-filter" onchange="renderTitleCos()" style="font-size:12px;padding:6px 10px;min-width:140px;">
           <option value="">All states</option>
-          ${['TN','MS','AR','MO','AL','KY','GA','TX','OK','LA'].map(s => '<option>'+s+'</option>').join('')}
+          <option value="TN">TN</option>
+            <option value="MS">MS</option>
+            <option value="AR">AR</option>
+            <option value="MO">MO</option>
+            <option value="AL">AL</option>
+            <option value="KY">KY</option>
+            <option value="GA">GA</option>
+            <option value="TX">TX</option>
+            <option value="OK">OK</option>
+            <option value="LA">LA</option>
         </select>
       </div>
 
@@ -1352,7 +1407,16 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
         <div style="display:flex;gap:8px;align-items:center;">
           <select class="form-select" id="lender-state-filter" onchange="renderLenders()" style="font-size:12px;padding:6px 10px;min-width:120px;">
             <option value="">All states</option>
-            ${['TN','MS','AR','MO','AL','KY','GA','TX','OK','LA'].map(s => '<option>'+s+'</option>').join('')}
+            <option value="TN">TN</option>
+            <option value="MS">MS</option>
+            <option value="AR">AR</option>
+            <option value="MO">MO</option>
+            <option value="AL">AL</option>
+            <option value="KY">KY</option>
+            <option value="GA">GA</option>
+            <option value="TX">TX</option>
+            <option value="OK">OK</option>
+            <option value="LA">LA</option>
           </select>
         </div>
       </div>
@@ -1375,7 +1439,16 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
         </div>
         <select class="form-select" id="referral-state-filter" onchange="renderReferrals()" style="font-size:12px;padding:6px 10px;min-width:120px;">
           <option value="">All states</option>
-          ${['TN','MS','AR','MO','AL','KY','GA','TX','OK','LA'].map(s => '<option>'+s+'</option>').join('')}
+          <option value="TN">TN</option>
+            <option value="MS">MS</option>
+            <option value="AR">AR</option>
+            <option value="MO">MO</option>
+            <option value="AL">AL</option>
+            <option value="KY">KY</option>
+            <option value="GA">GA</option>
+            <option value="TX">TX</option>
+            <option value="OK">OK</option>
+            <option value="LA">LA</option>
         </select>
       </div>
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;" id="referral-stats"></div>
