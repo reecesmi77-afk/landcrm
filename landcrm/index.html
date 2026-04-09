@@ -2363,7 +2363,8 @@ function updateAddContactFields(type, editId) {
       '</select></div></div>' +
       '<div class="form-section-title">Parcel Info</div>' +
       '<div class="form-grid" style="margin-bottom:14px">' +
-      '<div class="form-group"><label class="form-label">County</label><input class="form-input" id="f-county" value="'+(c&&c.county||'')+'" placeholder="Shelby"></div>' +
+      '<div class="form-grid" style="margin-bottom:14px">' +
+      '<div class="form-group"><label class="form-label">Mailing Address</label><input class="form-input" id="f-address" style="grid-column:1/-1" value="'+(c&&c.address||'')+'" placeholder="123 Main St"></div>' +
       '<div class="form-group"><label class="form-label">City</label><input class="form-input" id="f-city" value="'+(c&&c.city||'')+'" placeholder="Memphis"></div>' +
       '<div class="form-group"><label class="form-label">Zip</label><input class="form-input" id="f-zip" value="'+(c&&c.zip||'')+'" placeholder="38101"></div>' +
       '<div class="form-group"><label class="form-label">State</label><select class="form-select" id="f-state">' +
@@ -2699,7 +2700,7 @@ function saveContact(editId){
   const motivation=document.getElementById('f-motivation')?.value?.trim()||'';
   const apn=document.getElementById('f-apn')?.value?.trim()||'';
   const fields={name,phone:document.getElementById('f-phone').value.trim(),email:document.getElementById('f-email').value.trim(),county:document.getElementById('f-county').value.trim(),
-    city:(document.getElementById('f-city')&&document.getElementById('f-city').value.trim())||'',
+    address:(document.getElementById('f-address')&&document.getElementById('f-address').value.trim())||'',city:(document.getElementById('f-city')&&document.getElementById('f-city').value.trim())||'',
     zip:(document.getElementById('f-zip')&&document.getElementById('f-zip').value.trim())||'',state:document.getElementById('f-state').value,acreage:document.getElementById('f-acreage').value.trim(),apn:document.getElementById('f-apn').value.trim(),zoning:document.getElementById('f-zoning').value,road:document.getElementById('f-road').value,utilities:document.getElementById('f-utilities').value,flood:document.getElementById('f-flood').value,backTaxes:document.getElementById('f-taxes').value.trim(),survey:document.getElementById('f-survey').value,source:document.getElementById('f-source').value,dealType:document.getElementById('f-dealtype').value,pipeline:document.getElementById('f-pipeline').value,stage:document.getElementById('f-stage').value,handoff:document.getElementById('f-handoff').value,lastContact:document.getElementById('f-lastcontact').value||today(),temp:document.getElementById('f-temp').value,askingPrice:document.getElementById('f-asking').value.trim(),ourOffer:document.getElementById('f-offer').value.trim(),tags,motivation,apn};
   if(editId){
     const c=db.contacts.find(x=>x.id===editId);if(!c)return;
