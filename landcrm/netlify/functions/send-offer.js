@@ -7,12 +7,10 @@ exports.handler = async (event) => {
   try {
     const body = JSON.parse(event.body);
     const { sellerName, sellerEmail, sellerPhone, sellerAddress, sellerCityStateZip,
-            apn, acreage, county, state, purchasePrice, agreementDate, acceptanceDeadline } = body;
+            apn, acreage, county, state, purchasePrice, agreementDate, acceptanceDeadline,
+            additionalNotes } = body;
 
     const senderEmail = 'coldwaterpropertygroup@gmail.com';
-    const senderName = 'William Smith';
-
-    // If seller email matches sender, use a + alias to avoid duplicate error
     const effectiveSenderEmail = sellerEmail.toLowerCase() === senderEmail.toLowerCase()
       ? 'wsmith+cw@coldwaterpropertygroup.com'
       : senderEmail;
@@ -24,18 +22,8 @@ exports.handler = async (event) => {
       message: body.message,
       apply_signing_order: true,
       recipients: [
-        {
-          id: 'seller',
-          name: sellerName,
-          email: sellerEmail,
-          placeholder_name: 'Seller',
-        },
-        {
-          id: 'sender',
-          name: senderName,
-          email: effectiveSenderEmail,
-          placeholder_name: 'Document Sender',
-        }
+        { id: 'seller', name: sellerName, email: sellerEmail, placeholder_name: 'Seller' },
+        { id: 'sender', name: 'William Smith', email: effectiveSenderEmail, placeholder_name: 'Document Sender' }
       ],
       template_fields: [
         { api_id: 'seller_name',           value: sellerName            },
@@ -51,6 +39,7 @@ exports.handler = async (event) => {
         { api_id: 'purchase_price',        value: purchasePrice || ''   },
         { api_id: 'agreement_date',        value: agreementDate || ''   },
         { api_id: 'acceptance_deadline',   value: acceptanceDeadline || '' },
+        { api_id: 'additional_notes',      value: additionalNotes || '' },
       ],
     };
 
