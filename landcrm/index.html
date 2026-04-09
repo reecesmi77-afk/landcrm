@@ -8343,7 +8343,7 @@ function logReferralTouch(id) {
 // SIGNWELL — SEND OFFER INTEGRATION
 // ══════════════════════════════════════════════════════
 
-var SIGNWELL_TEMPLATE_ID = '60df744e-326f-423d-9e8c-62a971063423';
+var SIGNWELL_TEMPLATE_ID = '1a02eadb-ccbe-4be6-ab76-bcd8fbc71d52';
 var SIGNWELL_API_KEY = 'YWNjZXNzOmYyOWE0ZTEyYjc4NzYwZDMwMDNjZmIxMzM3ZmMxYzQ0';
 
 function openSendOfferModal(contactId) {
@@ -8418,6 +8418,32 @@ function openSendOfferModal(contactId) {
         </div>
       </div>
 
+      <div style="border-top:1px solid var(--border);margin:14px 0 10px;padding-top:10px;">
+        <div style="font-size:10px;color:var(--accent);font-weight:600;letter-spacing:.05em;margin-bottom:10px;">CO-SELLER (OPTIONAL)</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div class="form-group">
+            <label class="form-label">Co-Seller Name</label>
+            <input class="form-input" id="sw-seller2-name" placeholder="Full legal name" value="${c.coSellerName||''}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Co-Seller Email</label>
+            <input class="form-input" id="sw-seller2-email" placeholder="coseller@email.com" type="email" value="${c.coSellerEmail||''}">
+          </div>
+        </div>
+      </div>
+      <div style="border-top:1px solid var(--border);margin:14px 0 10px;padding-top:10px;">
+        <div style="font-size:10px;color:var(--accent);font-weight:600;letter-spacing:.05em;margin-bottom:10px;">OPTIONAL OVERRIDES</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div class="form-group">
+            <label class="form-label">Earnest Money Deposit <span style="color:var(--text3);font-size:10px;">— default $200</span></label>
+            <input class="form-input" id="sw-emd" placeholder="$200.00" value="${c.emdAmount||'$200.00'}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Alt Closing Date <span style="color:var(--text3);font-size:10px;">— optional</span></label>
+            <input class="form-input" id="sw-alt-closing" placeholder="Leave blank for 45 days" value="">
+          </div>
+        </div>
+      </div>
       <div class="form-group" style="margin-bottom:14px;">
         <label class="form-label">Additional Notes / Property Description <span style="color:var(--text3);font-size:10px;">— pre-fills Section 16</span></label>
         <textarea class="form-textarea" id="sw-notes" style="min-height:80px;" placeholder="e.g. Vacant land on Cooper Road, Jonesboro, Craighead County AR. Approx. 2 acres undeveloped."></textarea>
@@ -8485,6 +8511,13 @@ function sendSignWellOffer(contactId) {
     purchasePrice: formattedPrice,
     agreementDate: agreeDate,
     acceptanceDeadline: deadline,
+    seller2Name: (document.getElementById('sw-seller2-name') && document.getElementById('sw-seller2-name').value) || '',
+    seller2Email: (document.getElementById('sw-seller2-email') && document.getElementById('sw-seller2-email').value) || '',
+    seller2Phone: '',
+    seller2Address: '',
+    seller2CityStateZip: '',
+    emdAmount: (document.getElementById('sw-emd') && document.getElementById('sw-emd').value) || '$200.00',
+    altClosingDate: (document.getElementById('sw-alt-closing') && document.getElementById('sw-alt-closing').value) || '',
     additionalNotes: (document.getElementById('sw-notes') && document.getElementById('sw-notes').value) || '',
     subject: 'Purchase Agreement — Coldwater Property Group',
     message: 'Hi ' + sellerName.split(' ')[0] + ',\n\nPlease review and sign the attached Purchase Agreement for your property. You can sign directly from your phone or computer — no account needed.\n\nThe process takes less than two minutes. If you have any questions, feel free to call or text me directly.\n\nWilliam Smith\nColdwater Property Group, LLC',
