@@ -8,8 +8,6 @@ exports.handler = async (event) => {
     const body = JSON.parse(event.body);
     const { sellerName, sellerEmail, apn, acreage, county, state, purchasePrice, agreementDate, acceptanceDeadline } = body;
 
-    // SignWell template document format - no pre-filled fields
-    // Fields will be filled by the signer directly
     const payload = {
       test_mode: false,
       template_id: body.template_id,
@@ -21,6 +19,12 @@ exports.handler = async (event) => {
           name: sellerName,
           email: sellerEmail,
           placeholder_name: 'Seller',
+        },
+        {
+          id: 'sender',
+          name: 'William Smith',
+          email: 'coldwaterpropertygroup@gmail.com',
+          placeholder_name: 'Document Sender',
         }
       ],
     };
