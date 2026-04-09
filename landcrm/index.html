@@ -8459,32 +8459,18 @@ function sendSignWellOffer(contactId) {
   var formattedPrice = '$' + parseFloat(price).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   var payload = {
-    test_mode: false,
     template_id: SIGNWELL_TEMPLATE_ID,
+    sellerName: sellerName,
+    sellerEmail: sellerEmail,
+    apn: apn,
+    acreage: acreage,
+    county: county,
+    state: state,
+    purchasePrice: formattedPrice,
+    agreementDate: agreeDate,
+    acceptanceDeadline: deadline,
     subject: 'Purchase Agreement — Coldwater Property Group',
     message: 'Hi ' + sellerName.split(' ')[0] + ',\n\nPlease review and sign the attached Purchase Agreement for your property. You can sign directly from your phone or computer — no account needed.\n\nThe process takes less than two minutes. If you have any questions, feel free to call or text me directly.\n\nWilliam Smith\nColdwater Property Group, LLC',
-    recipients: [
-      {
-        id: 'seller',
-        name: sellerName,
-        email: sellerEmail,
-        placeholder_name: 'Seller',
-      }
-    ],
-    fields: {
-      seller: [
-        { api_id: 'seller_name',     value: sellerName      },
-        { api_id: 'seller_name_top', value: sellerName      },
-        { api_id: 'seller_email',    value: sellerEmail     },
-        { api_id: 'apn',             value: apn             },
-        { api_id: 'acreage',         value: acreage         },
-        { api_id: 'county',          value: county          },
-        { api_id: 'state',           value: state           },
-        { api_id: 'purchase_price',  value: formattedPrice  },
-        { api_id: 'agreement_date',  value: agreeDate       },
-        { api_id: 'acceptance_deadline', value: deadline    },
-      ]
-    }
   };
 
   fetch('/.netlify/functions/send-offer', {
