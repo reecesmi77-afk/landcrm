@@ -8,25 +8,33 @@ exports.handler = async (event) => {
     const body = JSON.parse(event.body);
     const { sellerName, sellerEmail, apn, acreage, county, state, purchasePrice, agreementDate, acceptanceDeadline } = body;
 
+    // If seller email is same as sender, use send_to_signing_order instead
+    const senderEmail = 'wsmith@coldwaterpropertygroup.com';
+    const recipients = [
+      {
+        id: 'seller',
+        name: sellerName,
+        email: sellerEmail,
+        placeholder_name: 'Seller',
+      }
+    ];
+
+    // Only add sender as recipient if different email
+    if (sellerEmail.toLowerCase() !== senderEmail.toLowerCase()) {
+      recipients.push({
+        id: 'sender',
+        name: 'William Smith',
+        email: senderEmail,
+        placeholder_name: 'Document Sender',
+      });
+    }
+
     const payload = {
       test_mode: false,
       template_id: body.template_id,
       subject: body.subject,
       message: body.message,
-      recipients: [
-        {
-          id: 'seller',
-          name: sellerName,
-          email: sellerEmail,
-          placeholder_name: 'Seller',
-        },
-        {
-          id: 'sender',
-          name: 'William Smith',
-          email: 'coldwaterpropertygroup@gmail.com',
-          placeholder_name: 'Document Sender',
-        }
-      ],
+      recipients,
     };
 
     console.log('Sending to SignWell:', JSON.stringify(payload).slice(0, 500));
