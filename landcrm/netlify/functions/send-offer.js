@@ -16,6 +16,18 @@ exports.handler = async (event) => {
         name: sellerName,
         email: sellerEmail,
         placeholder_name: 'Seller',
+        // Pre-fill fields using template_field_values keyed by api_id
+        template_field_values: [
+          { api_id: 'seller_name',         value: sellerName        },
+          { api_id: 'seller_name_top',     value: sellerName        },
+          { api_id: 'apn',                 value: apn || ''         },
+          { api_id: 'acreage',             value: acreage || ''     },
+          { api_id: 'county',              value: county || ''      },
+          { api_id: 'state',               value: state || ''       },
+          { api_id: 'purchase_price',      value: purchasePrice || '' },
+          { api_id: 'agreement_date',      value: agreementDate || '' },
+          { api_id: 'acceptance_deadline', value: acceptanceDeadline || '' },
+        ]
       }
     ];
 
@@ -28,27 +40,12 @@ exports.handler = async (event) => {
       });
     }
 
-    // SignWell field pre-fill format:
-    // fields is a flat array, each item has api_id and value
     const payload = {
       test_mode: false,
       template_id: body.template_id,
       subject: body.subject,
       message: body.message,
       recipients,
-      fields: [
-        [
-          { api_id: 'seller_name',         value: sellerName       },
-          { api_id: 'seller_name_top',     value: sellerName       },
-          { api_id: 'apn',                 value: apn || ''        },
-          { api_id: 'acreage',             value: acreage || ''    },
-          { api_id: 'county',              value: county || ''     },
-          { api_id: 'state',               value: state || ''      },
-          { api_id: 'purchase_price',      value: purchasePrice || '' },
-          { api_id: 'agreement_date',      value: agreementDate || '' },
-          { api_id: 'acceptance_deadline', value: acceptanceDeadline || '' },
-        ]
-      ],
     };
 
     console.log('Sending to SignWell:', JSON.stringify(payload).slice(0, 600));
