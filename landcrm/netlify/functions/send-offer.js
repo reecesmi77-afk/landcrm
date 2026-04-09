@@ -5,8 +5,41 @@ exports.handler = async (event) => {
   }
 
   try {
-    const payload = JSON.parse(event.body);
-    console.log('Payload:', JSON.stringify(payload).slice(0, 300));
+    const body = JSON.parse(event.body);
+
+    // SignWell API format for template fields:
+    // fields is an array of objects with api_id and value
+    // Each recipient gets their own fields array keyed by placeholder_name
+    const { sellerName, sellerEmail, apn, acreage, county, state, purchasePrice, agreementDate, acceptanceDeadline } = body;
+
+    const payload = {
+      test_mode: false,
+      template_id: body.template_id,
+      subject: body.subject,
+      message: body.message,
+      recipients: [
+        {
+          id: 'seller',
+          name: sellerName,
+          email: sellerEmail,
+          placeholder_name: 'Seller',
+        }
+      ],
+      fields: [
+        { api_id: 'seller_name',          value: sellerName },
+        { api_id: 'seller_name_top',      value: sellerName },
+        { api_id: 'seller_email',         value: sellerEmail },
+        { api_id: 'apn',                  value: apn || '' },
+        { api_id: 'acreage',              value: acreage || '' },
+        { api_id: 'county',               value: county || '' },
+        { api_id: 'state',                value: state || '' },
+        { api_id: 'purchase_price',       value: purchasePrice || '' },
+        { api_id: 'agreement_date',       value: agreementDate || '' },
+        { api_id: 'acceptance_deadline',  value: acceptanceDeadline || '' },
+      ]
+    };
+
+    console.log('Sending to SignWell:', JSON.stringify(payload).slice(0, 500));
 
     const response = await fetch('https://www.signwell.com/api/v1/document_templates/documents/', {
       method: 'POST',
@@ -27,7 +60,7 @@ exports.handler = async (event) => {
     if (!response.ok) {
       return {
         statusCode: 200,
-        body: JSON.stringify({ error: data.errors || data.error || data.message || text }),
+        body: JSON.stringify({ error: JSON.stringify(data.errors || data.error || data) }),
       };
     }
 
