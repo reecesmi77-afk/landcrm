@@ -6,7 +6,8 @@ exports.handler = async (event) => {
 
   try {
     const body = JSON.parse(event.body);
-    const { sellerName, sellerEmail, apn, acreage, county, state, purchasePrice, agreementDate, acceptanceDeadline } = body;
+    const { sellerName, sellerEmail, sellerPhone, sellerAddress, sellerCityStateZip,
+            apn, acreage, county, state, purchasePrice, agreementDate, acceptanceDeadline } = body;
 
     const senderEmail = 'coldwaterpropertygroup@gmail.com';
 
@@ -34,19 +35,21 @@ exports.handler = async (event) => {
       subject: body.subject,
       message: body.message,
       apply_signing_order: true,
-      // Exclude Document Sender placeholder so seller gets it first
-      // and you countersign manually in SignWell
       exclude_placeholders: sellerEmail.toLowerCase() === senderEmail.toLowerCase() ? ['Document Sender'] : [],
       recipients,
       template_fields: [
-        { api_id: 'seller_name',          value: sellerName        },
-        { api_id: 'seller_name_top',      value: sellerName        },
-        { api_id: 'apn',                  value: apn || ''         },
-        { api_id: 'acreage',              value: acreage || ''     },
-        { api_id: 'county',               value: county || ''      },
-        { api_id: 'state',                value: state || ''       },
-        { api_id: 'purchase_price',       value: purchasePrice || '' },
-        { api_id: 'agreement_date',       value: agreementDate || '' },
+        { api_id: 'seller_name',          value: sellerName           },
+        { api_id: 'seller_name_top',      value: sellerName           },
+        { api_id: 'seller_email',         value: sellerEmail          },
+        { api_id: 'seller_phone',         value: sellerPhone || ''    },
+        { api_id: 'seller_address',       value: sellerAddress || ''  },
+        { api_id: 'seller_city_state_zip',value: sellerCityStateZip || '' },
+        { api_id: 'apn',                  value: apn || ''            },
+        { api_id: 'acreage',              value: acreage || ''        },
+        { api_id: 'county',               value: county || ''         },
+        { api_id: 'state',                value: state || ''          },
+        { api_id: 'purchase_price',       value: purchasePrice || ''  },
+        { api_id: 'agreement_date',       value: agreementDate || ''  },
         { api_id: 'acceptance_deadline',  value: acceptanceDeadline || '' },
       ],
     };
