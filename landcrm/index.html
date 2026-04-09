@@ -8487,11 +8487,10 @@ function sendSignWellOffer(contactId) {
     }
   };
 
-  fetch('https://api.signwell.com/v1/document_templates/documents/', {
+  fetch('/.netlify/functions/send-offer', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'X-Api-Key': SIGNWELL_API_KEY,
     },
     body: JSON.stringify(payload)
   })
