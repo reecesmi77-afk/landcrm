@@ -10,24 +10,12 @@ exports.handler = async (event) => {
             apn, acreage, county, state, purchasePrice, agreementDate, acceptanceDeadline } = body;
 
     const senderEmail = 'coldwaterpropertygroup@gmail.com';
+    const senderName = 'William Smith';
 
-    const recipients = [
-      {
-        id: 'seller',
-        name: sellerName,
-        email: sellerEmail,
-        placeholder_name: 'Seller',
-      }
-    ];
-
-    if (sellerEmail.toLowerCase() !== senderEmail.toLowerCase()) {
-      recipients.push({
-        id: 'sender',
-        name: 'William Smith',
-        email: senderEmail,
-        placeholder_name: 'Document Sender',
-      });
-    }
+    // If seller email matches sender, use a + alias to avoid duplicate error
+    const effectiveSenderEmail = sellerEmail.toLowerCase() === senderEmail.toLowerCase()
+      ? 'wsmith+cw@coldwaterpropertygroup.com'
+      : senderEmail;
 
     const payload = {
       test_mode: false,
@@ -35,22 +23,34 @@ exports.handler = async (event) => {
       subject: body.subject,
       message: body.message,
       apply_signing_order: true,
-      exclude_placeholders: sellerEmail.toLowerCase() === senderEmail.toLowerCase() ? ['Document Sender'] : [],
-      recipients,
+      recipients: [
+        {
+          id: 'seller',
+          name: sellerName,
+          email: sellerEmail,
+          placeholder_name: 'Seller',
+        },
+        {
+          id: 'sender',
+          name: senderName,
+          email: effectiveSenderEmail,
+          placeholder_name: 'Document Sender',
+        }
+      ],
       template_fields: [
-        { api_id: 'seller_name',          value: sellerName           },
-        { api_id: 'seller_name_top',      value: sellerName           },
-        { api_id: 'seller_email',         value: sellerEmail          },
-        { api_id: 'seller_phone',         value: sellerPhone || ''    },
-        { api_id: 'seller_address',       value: sellerAddress || ''  },
-        { api_id: 'seller_city_state_zip',value: sellerCityStateZip || '' },
-        { api_id: 'apn',                  value: apn || ''            },
-        { api_id: 'acreage',              value: acreage || ''        },
-        { api_id: 'county',               value: county || ''         },
-        { api_id: 'state',                value: state || ''          },
-        { api_id: 'purchase_price',       value: purchasePrice || ''  },
-        { api_id: 'agreement_date',       value: agreementDate || ''  },
-        { api_id: 'acceptance_deadline',  value: acceptanceDeadline || '' },
+        { api_id: 'seller_name',           value: sellerName            },
+        { api_id: 'seller_name_top',       value: sellerName            },
+        { api_id: 'seller_email',          value: sellerEmail           },
+        { api_id: 'seller_phone',          value: sellerPhone || ''     },
+        { api_id: 'seller_address',        value: sellerAddress || ''   },
+        { api_id: 'seller_city_state_zip', value: sellerCityStateZip || '' },
+        { api_id: 'apn',                   value: apn || ''             },
+        { api_id: 'acreage',               value: acreage || ''         },
+        { api_id: 'county',                value: county || ''          },
+        { api_id: 'state',                 value: state || ''           },
+        { api_id: 'purchase_price',        value: purchasePrice || ''   },
+        { api_id: 'agreement_date',        value: agreementDate || ''   },
+        { api_id: 'acceptance_deadline',   value: acceptanceDeadline || '' },
       ],
     };
 
