@@ -8341,7 +8341,7 @@ function logReferralTouch(id) {
 // SIGNWELL — SEND OFFER INTEGRATION
 // ══════════════════════════════════════════════════════
 
-var SIGNWELL_TEMPLATE_ID = '88958b6d-bf7d-44fb-b6fc-8c4d77261e31';
+var SIGNWELL_TEMPLATE_ID = 'b4f76d23-68e3-40be-aa3f-00c3ef58c439';
 var SIGNWELL_API_KEY = 'YWNjZXNzOmYyOWE0ZTEyYjc4NzYwZDMwMDNjZmIxMzM3ZmMxYzQ0';
 
 function openSendOfferModal(contactId) {
@@ -8412,6 +8412,10 @@ function openSendOfferModal(contactId) {
         </div>
       </div>
 
+      <div class="form-group" style="margin-bottom:14px;">
+        <label class="form-label">Additional Notes / Property Description <span style="color:var(--text3);font-size:10px;">— pre-fills Section 16</span></label>
+        <textarea class="form-textarea" id="sw-notes" style="min-height:80px;" placeholder="e.g. Vacant land on Cooper Road, Jonesboro, Craighead County AR. Approx. 2 acres undeveloped."></textarea>
+      </div>
       <div id="sw-status" style="display:none;padding:10px 14px;border-radius:6px;font-size:12px;margin-bottom:10px;"></div>
 
     </div>
@@ -8475,6 +8479,7 @@ function sendSignWellOffer(contactId) {
     purchasePrice: formattedPrice,
     agreementDate: agreeDate,
     acceptanceDeadline: deadline,
+    additionalNotes: (document.getElementById('sw-notes') && document.getElementById('sw-notes').value) || '',
     subject: 'Purchase Agreement — Coldwater Property Group',
     message: 'Hi ' + sellerName.split(' ')[0] + ',\n\nPlease review and sign the attached Purchase Agreement for your property. You can sign directly from your phone or computer — no account needed.\n\nThe process takes less than two minutes. If you have any questions, feel free to call or text me directly.\n\nWilliam Smith\nColdwater Property Group, LLC',
   };
