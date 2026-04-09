@@ -6,9 +6,10 @@ exports.handler = async (event) => {
 
   try {
     const payload = JSON.parse(event.body);
-    console.log('Sending to SignWell:', JSON.stringify(payload).slice(0, 500));
+    console.log('Sending to SignWell:', JSON.stringify(payload).slice(0, 300));
 
-    const response = await fetch('https://api.signwell.com/v1/document_templates/documents/', {
+    // SignWell correct API endpoint
+    const response = await fetch('https://app.signwell.com/api/v1/document_templates/documents/', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -19,7 +20,7 @@ exports.handler = async (event) => {
 
     const text = await response.text();
     console.log('SignWell status:', response.status);
-    console.log('SignWell response:', text.slice(0, 1000));
+    console.log('SignWell response:', text.slice(0, 500));
 
     let data;
     try { data = JSON.parse(text); } catch(e) { data = { raw: text }; }
