@@ -18,16 +18,51 @@ exports.handler = async (event) => {
       ? 'wsmith+cw@coldwaterpropertygroup.com'
       : senderEmail;
 
-    // Build recipients — Seller 2 is optional
+    const hasSeller2 = seller2Email && seller2Email.trim().length > 0;
+
     const recipients = [
       { id: 'seller1', name: sellerName, email: sellerEmail, placeholder_name: 'Seller 1' },
     ];
 
-    if (seller2Email && seller2Email.trim()) {
+    if (hasSeller2) {
       recipients.push({ id: 'seller2', name: seller2Name || 'Co-Seller', email: seller2Email.trim(), placeholder_name: 'Seller 2' });
     }
 
     recipients.push({ id: 'sender', name: 'William Smith', email: effectiveSenderEmail, placeholder_name: 'Document Sender' });
+
+    // Exclude Seller 2 placeholder if no co-seller
+    const excludePlaceholders = hasSeller2 ? [] : ['Seller 2'];
+
+    const templateFields = [
+      { api_id: 'agreement_date',        value: agreementDate || '' },
+      { api_id: 'acceptance_deadline',   value: acceptanceDeadline || '' },
+      { api_id: 'seller_name_top',       value: sellerName || '' },
+      { api_id: 'apn',                   value: apn || '' },
+      { api_id: 'state',                 value: state || '' },
+      { api_id: 'county',                value: county || '' },
+      { api_id: 'acreage',               value: acreage || '' },
+      { api_id: 'purchase_price',        value: purchasePrice || '' },
+      { api_id: 'emd_amount',            value: emdAmount || '$200.00' },
+      { api_id: 'alt_closing_date',      value: altClosingDate || '' },
+      { api_id: 'additional_notes',      value: additionalNotes || '' },
+      { api_id: 'seller_name',           value: sellerName || '' },
+      { api_id: 'seller_email',          value: sellerEmail || '' },
+      { api_id: 'seller_phone',          value: sellerPhone || '' },
+      { api_id: 'seller_address',        value: sellerAddress || '' },
+      { api_id: 'seller_city_state_zip', value: sellerCityStateZip || '' },
+    ];
+
+    // Only include seller2 fields if we have a co-seller
+    if (hasSeller2) {
+      templateFields.push(
+        { api_id: 'seller2_name_top', value: seller2Name || '' },
+        { api_id: 'seller2_name',     value: seller2Name || '' },
+        { api_id: 'seller2_email',    value: seller2Email || '' },
+        { api_id: 'seller2_phone',    value: seller2Phone || '' },
+        { api_id: 'seller2_address',  value: seller2Address || '' },
+        { api_id: 'seller2_city_state_zip', value: seller2CityStateZip || '' }
+      );
+    }
 
     const payload = {
       test_mode: false,
@@ -36,33 +71,11 @@ exports.handler = async (event) => {
       message: body.message,
       apply_signing_order: true,
       recipients,
-      template_fields: [
-        { api_id: 'agreement_date',        value: agreementDate || '' },
-        { api_id: 'acceptance_deadline',   value: acceptanceDeadline || '' },
-        { api_id: 'seller_name_top',       value: sellerName || '' },
-        { api_id: 'seller2_name_top',      value: seller2Name || '' },
-        { api_id: 'apn',                   value: apn || '' },
-        { api_id: 'state',                 value: state || '' },
-        { api_id: 'county',                value: county || '' },
-        { api_id: 'acreage',               value: acreage || '' },
-        { api_id: 'purchase_price',        value: purchasePrice || '' },
-        { api_id: 'emd_amount',            value: emdAmount || '$200.00' },
-        { api_id: 'alt_closing_date',      value: altClosingDate || '' },
-        { api_id: 'additional_notes',      value: additionalNotes || '' },
-        { api_id: 'seller_name',           value: sellerName || '' },
-        { api_id: 'seller_email',          value: sellerEmail || '' },
-        { api_id: 'seller_phone',          value: sellerPhone || '' },
-        { api_id: 'seller_address',        value: sellerAddress || '' },
-        { api_id: 'seller_city_state_zip', value: sellerCityStateZip || '' },
-        { api_id: 'seller2_name',          value: seller2Name || '' },
-        { api_id: 'seller2_email',         value: seller2Email || '' },
-        { api_id: 'seller2_phone',         value: seller2Phone || '' },
-        { api_id: 'seller2_address',       value: seller2Address || '' },
-        { api_id: 'seller2_city_state_zip',value: seller2CityStateZip || '' },
-      ],
+      exclude_placeholders: excludePlaceholders,
+      template_fields: templateFields,
     };
 
-    console.log('Sending to SignWell:', JSON.stringify(payload).slice(0, 600));
+    console.log('Sending to SignWell:', JSON.stringify(payload).slice(0, 800));
 
     const response = await fetch('https://www.signwell.com/api/v1/document_templates/documents/', {
       method: 'POST',
