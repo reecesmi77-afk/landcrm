@@ -8,8 +8,8 @@ exports.handler = async (event) => {
     const body = JSON.parse(event.body);
     const { sellerName, sellerEmail, apn, acreage, county, state, purchasePrice, agreementDate, acceptanceDeadline } = body;
 
-    // If seller email is same as sender, use send_to_signing_order instead
-    const senderEmail = 'wsmith@coldwaterpropertygroup.com';
+    const senderEmail = 'coldwaterpropertygroup@gmail.com';
+
     const recipients = [
       {
         id: 'seller',
@@ -19,7 +19,6 @@ exports.handler = async (event) => {
       }
     ];
 
-    // Only add sender as recipient if different email
     if (sellerEmail.toLowerCase() !== senderEmail.toLowerCase()) {
       recipients.push({
         id: 'sender',
@@ -29,15 +28,30 @@ exports.handler = async (event) => {
       });
     }
 
+    // SignWell field pre-fill format:
+    // fields is a flat array, each item has api_id and value
     const payload = {
       test_mode: false,
       template_id: body.template_id,
       subject: body.subject,
       message: body.message,
       recipients,
+      fields: [
+        [
+          { api_id: 'seller_name',         value: sellerName       },
+          { api_id: 'seller_name_top',     value: sellerName       },
+          { api_id: 'apn',                 value: apn || ''        },
+          { api_id: 'acreage',             value: acreage || ''    },
+          { api_id: 'county',              value: county || ''     },
+          { api_id: 'state',               value: state || ''      },
+          { api_id: 'purchase_price',      value: purchasePrice || '' },
+          { api_id: 'agreement_date',      value: agreementDate || '' },
+          { api_id: 'acceptance_deadline', value: acceptanceDeadline || '' },
+        ]
+      ],
     };
 
-    console.log('Sending to SignWell:', JSON.stringify(payload).slice(0, 500));
+    console.log('Sending to SignWell:', JSON.stringify(payload).slice(0, 600));
 
     const response = await fetch('https://www.signwell.com/api/v1/document_templates/documents/', {
       method: 'POST',
@@ -50,7 +64,7 @@ exports.handler = async (event) => {
 
     const text = await response.text();
     console.log('Status:', response.status);
-    console.log('Response:', text.slice(0, 500));
+    console.log('Response:', text.slice(0, 600));
 
     let data;
     try { data = JSON.parse(text); } catch(e) { data = { raw: text }; }
