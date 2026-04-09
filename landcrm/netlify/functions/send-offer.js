@@ -34,6 +34,9 @@ exports.handler = async (event) => {
       subject: body.subject,
       message: body.message,
       apply_signing_order: true,
+      // Exclude Document Sender placeholder so seller gets it first
+      // and you countersign manually in SignWell
+      exclude_placeholders: sellerEmail.toLowerCase() === senderEmail.toLowerCase() ? ['Document Sender'] : [],
       recipients,
       template_fields: [
         { api_id: 'seller_name',          value: sellerName        },
