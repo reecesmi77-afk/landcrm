@@ -8458,10 +8458,16 @@ function sendSignWellOffer(contactId) {
 
   var formattedPrice = '$' + parseFloat(price).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
+  // Build city/state/zip from contact data
+  var cityStateZip = [c.city, c.state, c.zip].filter(Boolean).join(', ');
+
   var payload = {
     template_id: SIGNWELL_TEMPLATE_ID,
     sellerName: sellerName,
     sellerEmail: sellerEmail,
+    sellerPhone: c.phone || '',
+    sellerAddress: c.address || '',
+    sellerCityStateZip: cityStateZip,
     apn: apn,
     acreage: acreage,
     county: county,
