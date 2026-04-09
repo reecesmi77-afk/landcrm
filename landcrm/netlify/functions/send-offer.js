@@ -6,14 +6,28 @@ exports.handler = async (event) => {
 
   try {
     const body = JSON.parse(event.body);
-    const { sellerName, sellerEmail, sellerPhone, sellerAddress, sellerCityStateZip,
-            apn, acreage, county, state, purchasePrice, agreementDate, acceptanceDeadline,
-            additionalNotes } = body;
+    const {
+      sellerName, sellerEmail, sellerPhone, sellerAddress, sellerCityStateZip,
+      seller2Name, seller2Email, seller2Phone, seller2Address, seller2CityStateZip,
+      apn, acreage, county, state, purchasePrice, agreementDate, acceptanceDeadline,
+      emdAmount, altClosingDate, additionalNotes
+    } = body;
 
     const senderEmail = 'coldwaterpropertygroup@gmail.com';
     const effectiveSenderEmail = sellerEmail.toLowerCase() === senderEmail.toLowerCase()
       ? 'wsmith+cw@coldwaterpropertygroup.com'
       : senderEmail;
+
+    // Build recipients — Seller 2 is optional
+    const recipients = [
+      { id: 'seller1', name: sellerName, email: sellerEmail, placeholder_name: 'Seller 1' },
+    ];
+
+    if (seller2Email && seller2Email.trim()) {
+      recipients.push({ id: 'seller2', name: seller2Name || 'Co-Seller', email: seller2Email.trim(), placeholder_name: 'Seller 2' });
+    }
+
+    recipients.push({ id: 'sender', name: 'William Smith', email: effectiveSenderEmail, placeholder_name: 'Document Sender' });
 
     const payload = {
       test_mode: false,
@@ -21,25 +35,30 @@ exports.handler = async (event) => {
       subject: body.subject,
       message: body.message,
       apply_signing_order: true,
-      recipients: [
-        { id: 'seller', name: sellerName, email: sellerEmail, placeholder_name: 'Seller' },
-        { id: 'sender', name: 'William Smith', email: effectiveSenderEmail, placeholder_name: 'Document Sender' }
-      ],
+      recipients,
       template_fields: [
-        { api_id: 'seller_name',           value: sellerName            },
-        { api_id: 'seller_name_top',       value: sellerName            },
-        { api_id: 'seller_email',          value: sellerEmail           },
-        { api_id: 'seller_phone',          value: sellerPhone || ''     },
-        { api_id: 'seller_address',        value: sellerAddress || ''   },
-        { api_id: 'seller_city_state_zip', value: sellerCityStateZip || '' },
-        { api_id: 'apn',                   value: apn || ''             },
-        { api_id: 'acreage',               value: acreage || ''         },
-        { api_id: 'county',                value: county || ''          },
-        { api_id: 'state',                 value: state || ''           },
-        { api_id: 'purchase_price',        value: purchasePrice || ''   },
-        { api_id: 'agreement_date',        value: agreementDate || ''   },
+        { api_id: 'agreement_date',        value: agreementDate || '' },
         { api_id: 'acceptance_deadline',   value: acceptanceDeadline || '' },
+        { api_id: 'seller_name_top',       value: sellerName || '' },
+        { api_id: 'seller2_name_top',      value: seller2Name || '' },
+        { api_id: 'apn',                   value: apn || '' },
+        { api_id: 'state',                 value: state || '' },
+        { api_id: 'county',                value: county || '' },
+        { api_id: 'acreage',               value: acreage || '' },
+        { api_id: 'purchase_price',        value: purchasePrice || '' },
+        { api_id: 'emd_amount',            value: emdAmount || '$200.00' },
+        { api_id: 'alt_closing_date',      value: altClosingDate || '' },
         { api_id: 'additional_notes',      value: additionalNotes || '' },
+        { api_id: 'seller_name',           value: sellerName || '' },
+        { api_id: 'seller_email',          value: sellerEmail || '' },
+        { api_id: 'seller_phone',          value: sellerPhone || '' },
+        { api_id: 'seller_address',        value: sellerAddress || '' },
+        { api_id: 'seller_city_state_zip', value: sellerCityStateZip || '' },
+        { api_id: 'seller2_name',          value: seller2Name || '' },
+        { api_id: 'seller2_email',         value: seller2Email || '' },
+        { api_id: 'seller2_phone',         value: seller2Phone || '' },
+        { api_id: 'seller2_address',       value: seller2Address || '' },
+        { api_id: 'seller2_city_state_zip',value: seller2CityStateZip || '' },
       ],
     };
 
