@@ -6,12 +6,10 @@ exports.handler = async (event) => {
 
   try {
     const body = JSON.parse(event.body);
-
-    // SignWell API format for template fields:
-    // fields is an array of objects with api_id and value
-    // Each recipient gets their own fields array keyed by placeholder_name
     const { sellerName, sellerEmail, apn, acreage, county, state, purchasePrice, agreementDate, acceptanceDeadline } = body;
 
+    // SignWell template document format - no pre-filled fields
+    // Fields will be filled by the signer directly
     const payload = {
       test_mode: false,
       template_id: body.template_id,
@@ -25,18 +23,6 @@ exports.handler = async (event) => {
           placeholder_name: 'Seller',
         }
       ],
-      fields: [
-        { api_id: 'seller_name',          value: sellerName },
-        { api_id: 'seller_name_top',      value: sellerName },
-        { api_id: 'seller_email',         value: sellerEmail },
-        { api_id: 'apn',                  value: apn || '' },
-        { api_id: 'acreage',              value: acreage || '' },
-        { api_id: 'county',               value: county || '' },
-        { api_id: 'state',                value: state || '' },
-        { api_id: 'purchase_price',       value: purchasePrice || '' },
-        { api_id: 'agreement_date',       value: agreementDate || '' },
-        { api_id: 'acceptance_deadline',  value: acceptanceDeadline || '' },
-      ]
     };
 
     console.log('Sending to SignWell:', JSON.stringify(payload).slice(0, 500));
