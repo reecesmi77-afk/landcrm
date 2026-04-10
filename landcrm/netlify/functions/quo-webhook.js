@@ -284,25 +284,26 @@ async function runAIConversation(phone, message, KEY, BIN) {
     return cp && pp && (cp === pp || cp === pp.slice(-10) || pp === cp.slice(-10));
   });
 
-  // Build user message with CRM context + transcript if available
+  // Build user message — always inject CRM context so AI has full picture at every turn
   let userMessage = message;
-  if (crmContact && convo.messages.length === 0) {
-    // Check for stored transcript
+  if (crmContact) {
     const transcripts = record.transcripts || {};
     const normPhone = phone.replace(/\D/g,'');
     const transcript = transcripts[normPhone] || transcripts[phone] || null;
 
-    let crmInfo = `\n\n[CRM DATA for this seller: Name: ${crmContact.name||'unknown'}, County: ${crmContact.county||'unknown'}, State: ${crmContact.state||'unknown'}, Acreage: ${crmContact.acreage||'unknown'} acres, Source: ${crmContact.source||'unknown'}.`;
+    // Always include current CRM snapshot so AI knows name, county, acreage etc.
+    let crmInfo = `\n\n[CRM CONTEXT: Name: ${crmContact.name||'unknown'}, County: ${crmContact.county||'unknown'}, State: ${crmContact.state||'unknown'}, Acreage: ${crmContact.acreage||'unknown'} acres, Source: ${crmContact.source||'unknown'}, Stage: ${crmContact.stage||'unknown'}.`;
 
-    if (transcript) {
+    // Only include transcript instruction on very first message
+    if (transcript && convo.messages.length === 0) {
       crmInfo += `\n\nLEAD GEN TRANSCRIPT (conversation a partner company already had with this seller before us — they were texted from a different number):\n${transcript}\n\nThis seller is now texting YOUR number for the first time. Re-introduce briefly as a follow-up from a different number, pick up where the prior conversation left off, and move toward booking a call.]`;
-      console.log('Transcript found for:', crmContact.name);
+      console.log('Transcript injected for:', crmContact.name);
     } else {
-      crmInfo += ' Use this to confirm details rather than asking from scratch.]';
+      crmInfo += ' Use this context — skip any questions you already have answers to. Read the conversation history above and respond naturally to what was just said.]';
     }
 
     userMessage = message + crmInfo;
-    console.log('CRM data injected for:', crmContact.name);
+    console.log('CRM data injected for:', crmContact.name, '| msg #', convo.messages.length + 1);
   }
 
   convo.messages.push({ role: 'user', content: userMessage });
@@ -313,7 +314,32 @@ async function runAIConversation(phone, message, KEY, BIN) {
     console.log('Claude response:', aiResponse.slice(0,150));
   } catch (e) {
     console.error('Claude error:', e.message);
-    aiResponse = "Thanks for reaching out to Coldwater Property Group! Our team will follow up with you shortly.";
+    // Retry once on overload errors
+    if (e.message && e.message.includes('529')) {
+      console.log('Claude overloaded — retrying in 3 seconds...');
+      await new Promise(r => setTimeout(r, 3000));
+      try {
+        aiResponse = await callClaude(convo.messages);
+        console.log('Retry succeeded:', aiResponse.slice(0,100));
+      } catch (e2) {
+        console.error('Retry also failed:', e2.message);
+        // Store message but don't respond — better than a confusing generic reply
+        convo.messages.push({ role: 'user', content: message });
+        if (!record.conversations) record.conversations = {};
+        record.conversations[phone] = convo;
+        await writeBin(record, KEY, BIN);
+        console.log('Claude unavailable — message stored, no reply sent');
+        return;
+      }
+    } else {
+      // Store message but don't respond — better than a confusing generic reply
+      convo.messages.push({ role: 'user', content: message });
+      if (!record.conversations) record.conversations = {};
+      record.conversations[phone] = convo;
+      await writeBin(record, KEY, BIN);
+      console.log('Claude error — message stored, no reply sent');
+      return;
+    }
   }
 
   const isQualified = aiResponse.includes('[QUALIFIED]');
