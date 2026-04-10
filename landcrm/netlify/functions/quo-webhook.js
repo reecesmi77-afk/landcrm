@@ -1,5 +1,6 @@
 // quo-webhook.js
-const { sendSlackMessage, buildHotLeadCard } = require('./slack-notify'); — Quo webhook + AI SMS qualification engine (merged)
+const { sendSlackMessage, buildHotLeadCard } = require('./slack-notify');
+// Quo webhook + AI SMS qualification engine (merged)
 // Receives Quo events, stores touches, and runs AI conversation for inbound SMS
 
 const crypto = require('crypto');
@@ -150,7 +151,7 @@ FORMATTING RULES:
 - No exclamation points in first message
 - No abbreviations that look unprofessional
 
-OPT-OUT: If they say STOP, UNSUBSCRIBE, QUIT, END, REMOVE, or NOT INTERESTED:
+OPT-OUT: If they say STOP, UNSUBSCRIBE, QUIT, END, REMOVE, NOT INTERESTED, LEAVE ME ALONE, STOP TEXTING, DO NOT CONTACT, TAKE ME OFF, REMOVE ME, GO AWAY, or any profanity or hostile language:
 → "No problem — we'll remove you right away. Sorry to bother you." then output [OPT_OUT]
 
 QUALIFIED format (only if doing text qualification):
@@ -217,6 +218,37 @@ async function runAIConversation(phone, message, KEY, BIN) {
 
   if (convo.qualified) { console.log('Already qualified'); return; }
   if (convo.optOut) { console.log('Opted out'); return; }
+
+  // ── HARD STOP: Dead stage CRM check ─────────────────────────────────────
+  const crmContacts2 = record.crmContacts || [];
+  const crmContact2 = crmContacts2.find(c => {
+    const cp = c.phone ? c.phone.replace(/\D/g,'') : '';
+    const pp = phone.replace(/\D/g,'');
+    return cp && pp && (cp === pp || cp === pp.slice(-10) || pp === cp.slice(-10));
+  });
+  const DEAD_STAGES_WH = ['Dead', 'Not Motivated Yet'];
+  if (crmContact2 && DEAD_STAGES_WH.includes(crmContact2.stage)) {
+    convo.optOut = true;
+    convo.optOutReason = `CRM stage: ${crmContact2.stage}`;
+    record.conversations[phone] = convo;
+    await writeBin(record, KEY, BIN);
+    console.log('BLOCKED — CRM stage is', crmContact2.stage, 'for', phone);
+    return;
+  }
+
+  // ── HARD STOP: Profanity detection ───────────────────────────────────────
+  const PROFANITY = ['fuck','shit','bitch','asshole','bastard','damn you','screw you','go to hell','leave me alone','stop texting','stop calling','never contact','do not contact','dont contact','harassment','sue you','lawyer','police','report you'];
+  const msgLower = message.toLowerCase();
+  const hasProfanity = PROFANITY.some(w => msgLower.includes(w));
+  if (hasProfanity) {
+    convo.optOut = true;
+    convo.optOutReason = 'profanity / hostile message';
+    convo.messages.push({ role: 'user', content: message });
+    record.conversations[phone] = convo;
+    await writeBin(record, KEY, BIN);
+    console.log('PROFANITY DETECTED — sequence killed, no response sent:', phone);
+    return;
+  }
 
   // Rate limit: minimum 30 seconds between AI responses to same number
   const now = Date.now();
@@ -490,6 +522,26 @@ exports.handler = async (event) => {
           record.sequences = sequences;
           console.log('Sequence paused for:', contactPhone, '— seller replied');
         }
+      }
+
+      // ── Pre-flight profanity / hostile check ───────────────────────────────
+      const PROFANITY_WH = ['fuck','shit','bitch','asshole','bastard','damn you','screw you','go to hell','leave me alone','stop texting','stop calling','never contact','do not contact','dont contact','harassment','sue you','lawyer','police','report you'];
+      const msgLowerWH = (messageText || '').toLowerCase();
+      const isProfane = eventType === 'message.received' && PROFANITY_WH.some(w => msgLowerWH.includes(w));
+      if (isProfane) {
+        // Mark opted out immediately before AI even runs
+        if (!record.conversations) record.conversations = {};
+        if (!record.conversations[contactPhone]) record.conversations[contactPhone] = { messages: [], qualified: false, optOut: false, leadData: {} };
+        record.conversations[contactPhone].optOut = true;
+        record.conversations[contactPhone].optOutReason = 'profanity / hostile message';
+        // Pause any active sequence
+        if (record.sequences && record.sequences[contactPhone]) {
+          record.sequences[contactPhone].active = false;
+          record.sequences[contactPhone].paused = true;
+          record.sequences[contactPhone].pausedReason = 'profanity / hostile';
+        }
+        await writeBin(record, KEY, BIN);
+        console.log('PROFANITY PRE-FLIGHT — opted out before AI:', contactPhone);
       }
 
       // Run AI conversation for inbound SMS (inline, no HTTP call)
