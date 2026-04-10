@@ -59,7 +59,18 @@ exports.handler = async (event) => {
     );
     const searchData = await searchRes.json();
     console.log('Search result:', JSON.stringify(searchData?.data?.length), 'contacts found');
-    const existing = searchData?.data?.[0];
+
+    // Verify the returned contact actually has our phone number — prevents overwriting wrong contact
+    const rawExisting = searchData?.data?.[0];
+    const existing = rawExisting && rawExisting.defaultFields?.phoneNumbers?.some(p => {
+      const d = String(p.value || '').replace(/\D/g,'');
+      const target = e164.replace(/\D/g,'');
+      return d === target || d === target.slice(-10);
+    }) ? rawExisting : null;
+
+    if (rawExisting && !existing) {
+      console.log('Search returned contact', rawExisting.id, 'but phone did not match — will create new');
+    }
 
     const contactFields = {
       defaultFields: {
