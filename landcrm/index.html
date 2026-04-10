@@ -2355,6 +2355,7 @@ function updateAddContactFields(type, editId) {
       '<div class="form-grid" style="margin-bottom:14px">' +
       '<div class="form-group"><label class="form-label">Full name *</label><input class="form-input" id="f-name" value="'+(c&&c.name||'')+'" placeholder="Robert Hines"></div>' +
       '<div class="form-group"><label class="form-label">Phone</label><input class="form-input" id="f-phone" value="'+(c&&c.phone||'')+'" placeholder="901-555-0100"></div>' +
+      '<div class="form-group"><label class="form-label">Mailing Address</label><input class="form-input" id="f-address" style="grid-column:1/-1" value="'+(c&&c.address||'')+'" placeholder="123 Main St"></div>' +
       '<div class="form-group"><label class="form-label">Email</label><input class="form-input" id="f-email" value="'+(c&&c.email||'')+'"></div>' +
       '<div class="form-group"><label class="form-label">Temperature</label><select class="form-select" id="f-temp">' +
       '<option value="hot" '+(c&&c.temp==='hot'?'selected':'')+'>Hot</option>' +
@@ -2363,8 +2364,6 @@ function updateAddContactFields(type, editId) {
       '</select></div></div>' +
       '<div class="form-section-title">Parcel Info</div>' +
       '<div class="form-grid" style="margin-bottom:14px">' +
-      '<div class="form-grid" style="margin-bottom:14px">' +
-      '<div class="form-group"><label class="form-label">Mailing Address</label><input class="form-input" id="f-address" style="grid-column:1/-1" value="'+(c&&c.address||'')+'" placeholder="123 Main St"></div>' +
       '<div class="form-group"><label class="form-label">County</label><input class="form-input" id="f-county" value="'+(c&&c.county||'')+'" placeholder="Craighead"></div>' +
       '<div class="form-group"><label class="form-label">City</label><input class="form-input" id="f-city" value="'+(c&&c.city||'')+'" placeholder="Memphis"></div>' +
       '<div class="form-group"><label class="form-label">Zip</label><input class="form-input" id="f-zip" value="'+(c&&c.zip||'')+'" placeholder="38101"></div>' +
