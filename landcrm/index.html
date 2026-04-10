@@ -8388,6 +8388,22 @@ function openSendOfferModal(contactId) {
           <input class="form-input" id="sw-seller-email" value="${c.email||''}" placeholder="seller@email.com" type="email">
         </div>
         <div class="form-group">
+          <label class="form-label">Phone</label>
+          <input class="form-input" id="sw-phone" value="${c.phone||''}" placeholder="901-555-0100">
+        </div>
+        <div class="form-group">
+          <label class="form-label">City</label>
+          <input class="form-input" id="sw-city" value="${c.city||''}" placeholder="Memphis">
+        </div>
+        <div class="form-group">
+          <label class="form-label">State</label>
+          <input class="form-input" id="sw-seller-state" value="${c.state||''}" placeholder="TN">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Zip</label>
+          <input class="form-input" id="sw-zip" value="${c.zip||''}" placeholder="38101">
+        </div>
+        <div class="form-group">
           <label class="form-label">APN / Parcel Number</label>
           <input class="form-input" id="sw-apn" value="${c.apn||c.parcelId||''}" placeholder="000-000-000">
         </div>
@@ -8495,13 +8511,16 @@ function sendSignWellOffer(contactId) {
   var formattedPrice = '$' + parseFloat(price).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   // Build city/state/zip from contact data
-  var cityStateZip = [c.city, c.state, c.zip].filter(Boolean).join(', ');
+  var swCity  = (document.getElementById('sw-city') && document.getElementById('sw-city').value) || c.city || '';
+  var swState = (document.getElementById('sw-seller-state') && document.getElementById('sw-seller-state').value) || c.state || '';
+  var swZip   = (document.getElementById('sw-zip') && document.getElementById('sw-zip').value) || c.zip || '';
+  var cityStateZip = [swCity, swState, swZip].filter(Boolean).join(', ');
 
   var payload = {
     template_id: SIGNWELL_TEMPLATE_ID,
     sellerName: sellerName,
     sellerEmail: sellerEmail,
-    sellerPhone: c.phone || '',
+    sellerPhone: (document.getElementById('sw-phone') && document.getElementById('sw-phone').value) || c.phone || '',
     sellerAddress: (document.getElementById('sw-address') && document.getElementById('sw-address').value) || c.address || '',
     sellerCityStateZip: cityStateZip,
     apn: apn,
