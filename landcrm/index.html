@@ -922,37 +922,70 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
               </div>
             </div>
 
-            <div class="integration-card">
+            <div class="integration-card active-integration">
               <div class="integration-card-header">
                 <div>
-                  <div class="integration-name">PandaDoc</div>
-                  <div class="integration-status">E-signature & document generation</div>
-                </div>
-                <div class="integration-badge amber">Coming Soon</div>
-              </div>
-              <div style="font-size:11px;color:var(--text3);margin-top:8px">Send pre-filled Purchase Agreements for e-signature directly from a contact record.</div>
-            </div>
-
-            <div class="integration-card">
-              <div class="integration-card-header">
-                <div>
-                  <div class="integration-name">JSONbin</div>
-                  <div class="integration-status">Webhook event storage</div>
+                  <div class="integration-name">SignWell</div>
+                  <div class="integration-status connected">Connected</div>
                 </div>
                 <div class="integration-badge green">Active</div>
               </div>
-              <div style="font-size:11px;color:var(--text3);margin-top:8px">Stores incoming Quo events between syncs. Bin ID is set as a Netlify environment variable.</div>
+              <div style="font-size:11px;color:var(--text3);margin-top:8px">Sends pre-filled Purchase Agreements directly from a contact record. Supports Seller 1 &amp; 2, custom EMD, alt closing date, and additional notes. Template ID and API key set as Netlify environment variables.</div>
             </div>
 
-            <div class="integration-card">
+            <div class="integration-card active-integration">
               <div class="integration-card-header">
                 <div>
                   <div class="integration-name">Claude AI</div>
-                  <div class="integration-status">Morning briefings & deal analysis</div>
+                  <div class="integration-status connected">Connected</div>
                 </div>
                 <div class="integration-badge green">Active</div>
               </div>
-              <div style="font-size:11px;color:var(--text3);margin-top:8px">Use the AI Briefing button to export your pipeline for Claude analysis. Direct API integration coming soon.</div>
+              <div style="font-size:11px;color:var(--text3);margin-top:8px">Powers the AI SMS qualification engine, inbound response handling, objection handling, and deal analysis briefings. API key set as a Netlify environment variable.</div>
+            </div>
+
+            <div class="integration-card active-integration">
+              <div class="integration-card-header">
+                <div>
+                  <div class="integration-name">JSONbin</div>
+                  <div class="integration-status connected">Connected</div>
+                </div>
+                <div class="integration-badge amber">Temporary</div>
+              </div>
+              <div style="font-size:11px;color:var(--text3);margin-top:8px">Current database for contacts, sequences, conversations, and touches. Will be replaced by Supabase when scaling beyond ~500 contacts. Bin ID set as a Netlify environment variable.</div>
+            </div>
+
+            <div class="integration-card active-integration">
+              <div class="integration-card-header">
+                <div>
+                  <div class="integration-name">Slack</div>
+                  <div class="integration-status connected">Connected</div>
+                </div>
+                <div class="integration-badge green">Active</div>
+              </div>
+              <div style="font-size:11px;color:var(--text3);margin-top:8px">Receives hot lead alerts, daily pipeline summaries, and action-required notifications. Webhook URL set as a Netlify environment variable.</div>
+            </div>
+
+            <div class="integration-card active-integration">
+              <div class="integration-card-header">
+                <div>
+                  <div class="integration-name">PropertyAPI</div>
+                  <div class="integration-status connected">Connected</div>
+                </div>
+                <div class="integration-badge green">Active</div>
+              </div>
+              <div style="font-size:11px;color:var(--text3);margin-top:8px">Pulls county records, AVM estimates, assessed values, ownership, and skip trace data directly into each contact record. API key set as a Netlify environment variable.</div>
+            </div>
+
+            <div class="integration-card">
+              <div class="integration-card-header">
+                <div>
+                  <div class="integration-name">Supabase</div>
+                  <div class="integration-status">Production database — replaces JSONbin</div>
+                </div>
+                <div class="integration-badge amber">Next Up</div>
+              </div>
+              <div style="font-size:11px;color:var(--text3);margin-top:8px">Postgres-based database with real-time sync, row-level security, and unlimited scale. Migration from JSONbin will happen before volume exceeds 500 active contacts.</div>
             </div>
           </div>
 
