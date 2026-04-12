@@ -543,90 +543,130 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
     <!-- DASHBOARD / COCKPIT -->
     <div id="view-dashboard" class="view active">
 
-      <!-- COCKPIT LANES -->
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:20px;">
+      <!-- TOP METRICS BAR -->
+      <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:18px;">
+
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:2px;">
+          <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;font-family:'DM Mono',monospace;">Active Leads</div>
+          <div style="font-size:26px;font-weight:800;color:var(--accent)" id="s-acq">0</div>
+          <div style="font-size:10px;color:var(--text3);">in pipeline</div>
+        </div>
+
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:2px;">
+          <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;font-family:'DM Mono',monospace;">AI Sequences</div>
+          <div style="font-size:26px;font-weight:800;color:var(--teal)" id="s-handoff">0</div>
+          <div style="font-size:10px;color:var(--text3);">actively texting</div>
+        </div>
+
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:2px;">
+          <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;font-family:'DM Mono',monospace;">Offers Out</div>
+          <div style="font-size:22px;font-weight:800;color:var(--amber)" id="s-offers">0</div>
+          <div style="font-size:11px;font-weight:600;color:var(--amber);opacity:.8;" id="s-offers-val">—</div>
+          <div style="font-size:10px;color:var(--text3);">pending response</div>
+        </div>
+
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:2px;">
+          <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;font-family:'DM Mono',monospace;">Under Contract</div>
+          <div style="font-size:22px;font-weight:800;color:var(--coral)" id="s-uc">0</div>
+          <div style="font-size:11px;font-weight:600;color:var(--coral);opacity:.8;" id="s-uc-val">—</div>
+          <div style="font-size:10px;color:var(--text3);">active deals</div>
+        </div>
+
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:2px;">
+          <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;font-family:'DM Mono',monospace;">Closed This Month</div>
+          <div style="font-size:22px;font-weight:800;color:var(--green,#22c55e)" id="s-closed-count">0</div>
+          <div style="font-size:11px;font-weight:600;color:var(--green,#22c55e);opacity:.8;" id="s-closed-val">—</div>
+          <div style="font-size:10px;color:var(--text3);">deals closed</div>
+        </div>
+
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:2px;">
+          <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;font-family:'DM Mono',monospace;">Total Leads</div>
+          <div style="font-size:26px;font-weight:800;color:var(--text1)" id="s-total">0</div>
+          <div style="font-size:10px;color:var(--text3);">all stages</div>
+        </div>
+
+      </div>
+
+      <!-- PRIORITY ACTION LANES — top 3 only -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:18px;">
 
         <!-- LANE 1: CALL NOW -->
         <div class="card" style="border-top:3px solid var(--coral);">
           <div class="card-header" style="padding-bottom:8px;">
             <span style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--coral);">
-              <span style="font-size:16px;">🔴</span> Call Now
+              🔴 Call Now
             </span>
             <span id="call-now-count" style="font-size:11px;background:var(--coral);color:#fff;border-radius:20px;padding:2px 8px;font-weight:700;">0</span>
           </div>
           <div style="font-size:11px;color:var(--text3);padding:0 14px 8px;">Seller agreed to a call — reach out immediately</div>
-          <div class="card-body" id="lane-call-now" style="padding-top:0;max-height:420px;overflow-y:auto;"></div>
+          <div class="card-body" id="lane-call-now" style="padding-top:0;max-height:380px;overflow-y:auto;"></div>
         </div>
 
         <!-- LANE 2: CALL TODAY -->
         <div class="card" style="border-top:3px solid var(--amber);">
           <div class="card-header" style="padding-bottom:8px;">
             <span style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--amber);">
-              <span style="font-size:16px;">🟡</span> Call Today
+              🟡 Call Today
             </span>
             <span id="call-today-count" style="font-size:11px;background:var(--amber);color:#000;border-radius:20px;padding:2px 8px;font-weight:700;">0</span>
           </div>
           <div style="font-size:11px;color:var(--text3);padding:0 14px 8px;">New leads — call before AI sequence fires</div>
-          <div class="card-body" id="lane-call-today" style="padding-top:0;max-height:420px;overflow-y:auto;"></div>
+          <div class="card-body" id="lane-call-today" style="padding-top:0;max-height:380px;overflow-y:auto;"></div>
         </div>
 
         <!-- LANE 3: AI REVIEW -->
         <div class="card" style="border-top:3px solid var(--accent);">
           <div class="card-header" style="padding-bottom:8px;">
             <span style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--accent);">
-              <span style="font-size:16px;">🟢</span> AI Review
+              🟢 AI Review
             </span>
             <span id="ai-review-count" style="font-size:11px;background:var(--accent);color:#fff;border-radius:20px;padding:2px 8px;font-weight:700;">0</span>
           </div>
           <div style="font-size:11px;color:var(--text3);padding:0 14px 8px;">AI qualified or flagged — review before calling</div>
-          <div class="card-body" id="lane-ai-review" style="padding-top:0;max-height:420px;overflow-y:auto;"></div>
+          <div class="card-body" id="lane-ai-review" style="padding-top:0;max-height:380px;overflow-y:auto;"></div>
         </div>
 
-        <!-- Task Lane -->
+      </div>
+
+      <!-- BOTTOM ROW: Tasks + Pipeline snapshot -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+
+        <!-- TODAY'S TASKS — compact, max 5 shown -->
         <div class="card" style="border-top:2px solid var(--amber);">
           <div class="card-header" style="padding-bottom:8px;">
             <span style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--amber);">
-              <span style="font-size:16px;">✅</span> Today's Tasks
+              ✅ Today's Tasks
             </span>
-            <span id="task-cockpit-count" style="font-size:11px;background:var(--amber);color:#000;border-radius:20px;padding:2px 8px;font-weight:700;">0</span>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span id="task-cockpit-count" style="font-size:11px;background:var(--amber);color:#000;border-radius:20px;padding:2px 8px;font-weight:700;">0</span>
+              <button class="btn btn-ghost btn-sm" onclick="showView('tasks')" style="font-size:10px;">View all</button>
+            </div>
           </div>
           <div style="font-size:11px;color:var(--text3);padding:0 14px 8px;">Overdue and due today</div>
-          <div class="card-body" id="lane-tasks" style="padding-top:0;max-height:420px;overflow-y:auto;"></div>
+          <div class="card-body" id="lane-tasks" style="padding-top:0;max-height:320px;overflow-y:auto;"></div>
         </div>
 
-        <!-- Agent Touches Lane -->
-        <div class="card" style="border-top:2px solid var(--purple);">
+        <!-- PIPELINE SNAPSHOT — acquisitions only, compact -->
+        <div class="card" style="border-top:2px solid var(--accent);">
           <div class="card-header" style="padding-bottom:8px;">
-            <span style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--purple);">
-              <span style="font-size:16px;">🤝</span> Agent Touches
-            </span>
-            <span id="agent-touch-count" style="font-size:11px;background:var(--purple);color:#fff;border-radius:20px;padding:2px 8px;font-weight:700;">0</span>
+            <span style="font-size:13px;font-weight:700;color:var(--text1);">Pipeline Snapshot</span>
+            <button class="btn btn-ghost btn-sm" onclick="showView('reporting')" style="font-size:10px;">Full report</button>
           </div>
-          <div style="font-size:11px;color:var(--text3);padding:0 14px 8px;">RE agents due for a touch</div>
-          <div class="card-body" id="lane-agent-touch" style="padding-top:0;max-height:420px;overflow-y:auto;"></div>
+          <div class="card-body" style="padding-top:0;">
+            <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;font-family:'DM Mono',monospace;margin-bottom:8px;">Acquisitions</div>
+            <div id="acq-snapshot"></div>
+            <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;font-family:'DM Mono',monospace;margin:14px 0 8px;">Dispositions</div>
+            <div id="dis-snapshot"></div>
+          </div>
         </div>
 
       </div>
 
-      <!-- STATS ROW -->
-      <div class="stats-grid" style="margin-bottom:20px;">
-        <div class="stat-card green"><div class="stat-label">Total leads</div><div class="stat-value green" id="s-total">0</div><div class="stat-sub">all stages</div></div>
-        <div class="stat-card coral"><div class="stat-label">Active acq.</div><div class="stat-value coral" id="s-acq">0</div><div class="stat-sub">in pipeline</div></div>
-        <div class="stat-card amber"><div class="stat-label">Follow-ups due</div><div class="stat-value amber" id="s-fu">0</div><div class="stat-sub">today</div></div>
-        <div class="stat-card ai"><div class="stat-label">Sequences active</div><div class="stat-value ai" id="s-handoff">0</div><div class="stat-sub">AI working</div></div>
-        <div class="stat-card blue"><div class="stat-label">Under contract</div><div class="stat-value blue" id="s-uc">0</div><div class="stat-sub">active deals</div></div>
-      </div>
-
-      <!-- PIPELINE SNAPSHOTS -->
-      <div class="dash-grid">
-        <div class="card">
-          <div class="card-header"><span class="card-title">Acquisitions Pipeline</span></div>
-          <div class="card-body" id="acq-snapshot"></div>
-        </div>
-        <div class="card">
-          <div class="card-header"><span class="card-title">Dispositions Pipeline</span></div>
-          <div class="card-body" id="dis-snapshot"></div>
-        </div>
+      <!-- hidden elements kept for JS compatibility -->
+      <div style="display:none;">
+        <span id="s-fu">0</span>
+        <div id="lane-agent-touch"></div>
+        <span id="agent-touch-count">0</span>
       </div>
 
     </div>
@@ -1590,7 +1630,36 @@ function renderDashboard(){
   document.getElementById('s-acq').textContent=c.filter(function(x){return x.pipeline==='acq'&&x.stage!=='Dead';}).length;
   document.getElementById('s-fu').textContent=c.filter(followupDue).length;
   document.getElementById('s-handoff').textContent=c.filter(function(x){return x.sequenceActive||needsHandoff(x);}).length;
-  document.getElementById('s-uc').textContent=c.filter(function(x){return x.stage==='Under Contract'||x.stage==='Under Agreement';}).length;
+  // Offers Out — count + $ total
+  var offerContacts=c.filter(function(x){return x.stage==='Offer Made';});
+  var offersEl=document.getElementById('s-offers');if(offersEl)offersEl.textContent=offerContacts.length;
+  var offersVal=offerContacts.reduce(function(sum,x){return sum+(parseFloat(x.ourOffer)||0);},0);
+  var offersValEl=document.getElementById('s-offers-val');
+  if(offersValEl)offersValEl.textContent=offersVal>0?'$'+offersVal.toLocaleString('en-US',{maximumFractionDigits:0}):'—';
+
+  // Under Contract — count + $ total
+  var ucContacts=c.filter(function(x){return x.stage==='Under Contract'||x.stage==='Under Agreement';});
+  document.getElementById('s-uc').textContent=ucContacts.length;
+  var ucVal=ucContacts.reduce(function(sum,x){return sum+(parseFloat(x.ourOffer)||0);},0);
+  var ucValEl=document.getElementById('s-uc-val');
+  if(ucValEl)ucValEl.textContent=ucVal>0?'$'+ucVal.toLocaleString('en-US',{maximumFractionDigits:0}):'—';
+
+  // Auto-set closedDate when stage is Closed
+  var thisMonth=new Date().toISOString().slice(0,7);
+  c.forEach(function(x){
+    if((x.stage==='Closed — Assignment'||x.stage==='Closed — Double Close')&&!x.closedDate){
+      x.closedDate=today();
+    }
+  });
+
+  // Closed This Month — count + $ total
+  var closedContacts=c.filter(function(x){
+    return (x.stage==='Closed — Assignment'||x.stage==='Closed — Double Close')&&x.closedDate&&x.closedDate.slice(0,7)===thisMonth;
+  });
+  var closedCountEl=document.getElementById('s-closed-count');if(closedCountEl)closedCountEl.textContent=closedContacts.length;
+  var closedVal=closedContacts.reduce(function(sum,x){return sum+(parseFloat(x.ourOffer)||0);},0);
+  var closedValEl=document.getElementById('s-closed-val');
+  if(closedValEl)closedValEl.textContent=closedVal>0?'$'+closedVal.toLocaleString('en-US',{maximumFractionDigits:0}):'—';
   var sfCount=document.getElementById('sf-count');if(sfCount)sfCount.textContent=c.length;
   var sfFill=document.getElementById('sf-fill');if(sfFill)sfFill.style.width=Math.min(c.length/100*100,100)+'%';
   var nbAcq=document.getElementById('nb-acq');if(nbAcq)nbAcq.textContent=c.filter(function(x){return x.pipeline==='acq'&&!['Dead','Not Motivated Yet'].includes(x.stage);}).length;
