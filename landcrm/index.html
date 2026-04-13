@@ -2425,18 +2425,16 @@ function moveStage(id,stage){
   if(stage==='Dead'&&c.handoff!=='Human active')c.handoff='Human active';
   save();
 
-  // Fire sequence when manually moved to Outreach Active — but only once
-  // Guard: source is lead gen, has phone, wasn't already in Outreach Active, no prior touches
+  // Fire sequence whenever stage is set to Outreach Active — any source, any contact with a phone
   if(stage === 'Outreach Active' && prevStage !== 'Outreach Active') {
-    var isLeadGen = c.source && (c.source.toLowerCase().includes('lead gen') || c.source.toLowerCase().includes('agency'));
     var noPriorSequence = !c.touches || !c.touches.some(function(t){ return t.by === 'AI' && t.channel === 'SMS'; });
-    if(isLeadGen && c.phone && noPriorSequence) {
+    if(c.phone && noPriorSequence) {
       setTimeout(function(){ triggerLeadGenSequence(c); }, 500);
       toast('Stage → Outreach Active — AI sequence starting...', 'success');
-    } else if(isLeadGen && c.phone && !noPriorSequence) {
+    } else if(c.phone && !noPriorSequence) {
       toast('Stage → Outreach Active — sequence already started, no duplicate sent', 'info');
     } else {
-      toast('Stage updated','success');
+      toast('Stage updated', 'success');
     }
   } else {
     toast('Stage updated','success');
@@ -2616,11 +2614,10 @@ function saveUnifiedContact(editId) {
         var prevStage = c.stage;
         Object.assign(c, fields);
         if(noteText) c.notes.unshift({date:today(), text:noteText});
-        // If stage was just changed to Outreach Active via edit, fire sequence
+        // If stage was just changed to Outreach Active via edit, fire sequence — any source
         if(fields.stage === 'Outreach Active' && prevStage !== 'Outreach Active') {
-          var isLeadGen = c.source && (c.source.toLowerCase().includes('lead gen') || c.source.toLowerCase().includes('agency'));
           var noPrior = !c.touches || !c.touches.some(function(t){ return t.by === 'AI' && t.channel === 'SMS'; });
-          if(isLeadGen && c.phone && noPrior) {
+          if(c.phone && noPrior) {
             setTimeout(function(){ triggerLeadGenSequence(c); }, 500);
           }
         }
@@ -2629,9 +2626,8 @@ function saveUnifiedContact(editId) {
       var newC = Object.assign({id:uid(), created:today(), touches:[], notes:noteText?[{date:today(),text:noteText}]:[]}, fields);
       db.contacts.unshift(newC);
       if(newC.phone) pushContactToQuo(newC);
-      // Auto-trigger sequence ONLY if stage is explicitly set to Outreach Active
-      // New Lead = hold, review first. Outreach Active = you've approved it, fire the sequence.
-      if(newC.source && (newC.source.toLowerCase().includes('lead gen') || newC.source.toLowerCase().includes('agency')) && newC.phone && newC.stage === 'Outreach Active') {
+      // Auto-trigger sequence when new contact is added directly as Outreach Active
+      if(newC.phone && newC.stage === 'Outreach Active') {
         triggerLeadGenSequence(newC);
       }
       // Sync transcript to JSONbin if we parsed a lead
@@ -4684,14 +4680,26 @@ function onColDrop(e, stage, pipeline) {
   if(!dragContactId) return;
   var c = db.contacts.find(function(x){return x.id===dragContactId;});
   if(!c) return;
+  var prevStage = c.stage;
   c.stage = stage;
   c.pipeline = pipeline;
   c.lastContact = today();
   save();
+  // Fire sequence if dragged to Outreach Active
+  if(stage === 'Outreach Active' && prevStage !== 'Outreach Active') {
+    var noPrior = !c.touches || !c.touches.some(function(t){ return t.by === 'AI' && t.channel === 'SMS'; });
+    if(c.phone && noPrior) {
+      setTimeout(function(){ triggerLeadGenSequence(c); }, 500);
+      toast(c.name + ' moved to Outreach Active — AI sequence starting...', 'success');
+    } else {
+      toast(c.name + ' moved to ' + stage, 'success');
+    }
+  } else {
+    toast(c.name + ' moved to ' + stage, 'success');
+  }
   renderPipeline(pipeline);
   if(pipeline === 'acq') renderPipeline('dis');
   else renderPipeline('acq');
-  toast(c.name + ' moved to ' + stage, 'success');
 }
 
 
