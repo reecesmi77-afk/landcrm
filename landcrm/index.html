@@ -2268,8 +2268,8 @@ function renderTabPanel(c, tabIdx) {
         </div>
         <div style="display:flex;gap:8px;align-items:center;">
           <button class="btn btn-ghost btn-sm" onclick="switchTab('${id}', 0)">← Call Script</button>
-          <button class="btn btn-primary btn-sm" onclick="runDDAnalysis('${id}')" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);border:none;">
-            ✦ Run AI Analysis
+          <button class="btn btn-primary btn-sm" onclick="exportForDDAnalysis('${id}')" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);border:none;">
+            📋 Export for Analysis
           </button>
         </div>
       </div>
@@ -2279,18 +2279,9 @@ function renderTabPanel(c, tabIdx) {
         <div style="height:100%;width:${ddPct}%;background:${ddStatusColor};border-radius:4px;transition:width .3s;"></div>
       </div>
 
-      <!-- AI ANALYSIS OUTPUT — shown when available -->
-      <div id="dd-analysis-${id}" style="${c.ddAnalysis?'':'display:none'}">
-        <div style="background:linear-gradient(135deg,rgba(99,102,241,0.08),rgba(139,92,246,0.08));border:1px solid rgba(99,102,241,0.25);border-radius:10px;padding:16px;margin-bottom:16px;">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-            <div style="font-size:11px;font-weight:700;color:#8b5cf6;text-transform:uppercase;letter-spacing:.06em;font-family:'DM Mono',monospace;">✦ AI Due Diligence Analysis</div>
-            <div style="display:flex;gap:6px;">
-              <button class="btn btn-ghost btn-sm" style="font-size:10px;" onclick="runDDAnalysis('${id}')">Refresh</button>
-              <button class="btn btn-ghost btn-sm" style="font-size:10px;" onclick="clearDDAnalysis('${id}')">Clear</button>
-            </div>
-          </div>
-          <div id="dd-analysis-text-${id}" style="font-size:13px;color:var(--text2);line-height:1.7;white-space:pre-wrap;">${c.ddAnalysis||''}</div>
-        </div>
+      <!-- EXPORT CONFIRMATION -->
+      <div id="dd-export-confirm-${id}" style="display:none;background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.25);border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:12px;color:#8b5cf6;">
+        ✓ Deal summary copied to clipboard — paste it into your Claude Due Diligence project
       </div>
 
       <!-- DD CHECKLIST -->
@@ -4347,6 +4338,102 @@ function ddDecision(cid, decision) {
   save();
   switchTab(cid, 1);
   toast('Decision saved: ' + labels[decision], decision === 'forward' ? 'success' : 'info');
+}
+
+function exportForDDAnalysis(cid) {
+  var c = db.contacts.find(function(x){ return x.id === cid; });
+  if (!c) return;
+
+  var dd = c.dd || {};
+  var ddLines = [];
+  DD_SECTIONS.forEach(function(sec) {
+    var secLines = [];
+    sec.items.forEach(function(item) {
+      var d = dd[item.id] || {};
+      if (d.value || d.notes) {
+        secLines.push('  ' + item.prompt + ' ' + (d.value||'') + (d.notes ? ' — ' + d.notes : ''));
+      }
+    });
+    if (secLines.length) {
+      ddLines.push(sec.title + ':');
+      ddLines = ddLines.concat(secLines);
+    }
+  });
+
+  var lines = [];
+  lines.push('=== DEAL SUMMARY FOR DUE DILIGENCE ANALYSIS ===');
+  lines.push('');
+  lines.push('CONTACT');
+  lines.push('Name: ' + (c.name||'Unknown'));
+  lines.push('Phone: ' + (c.phone||'—'));
+  lines.push('Email: ' + (c.email||'—'));
+  lines.push('Stage: ' + (c.stage||'—'));
+  lines.push('Source: ' + (c.source||'—'));
+  lines.push('');
+  lines.push('PROPERTY');
+  lines.push('County / State: ' + (c.county||'—') + ', ' + (c.state||'—'));
+  lines.push('Acreage: ' + (c.acreage||'—') + ' acres');
+  lines.push('APN: ' + (c.apn||'—'));
+  lines.push('Address: ' + (c.address||'—') + ', ' + (c.city||'—') + ' ' + (c.zip||'—'));
+  lines.push('');
+  lines.push('COUNTY RECORD DATA');
+  lines.push('Assessed Value: ' + (c.assessedValue ? '$'+parseFloat(c.assessedValue).toLocaleString() : '—'));
+  lines.push('Market Value: ' + (c.marketValue ? '$'+parseFloat(c.marketValue).toLocaleString() : '—'));
+  lines.push('AVM Estimate: ' + (c.avm ? '$'+parseFloat(c.avm).toLocaleString() : '—'));
+  lines.push('Annual Tax: ' + (c.annualTax ? '$'+parseFloat(c.annualTax).toLocaleString() : '—'));
+  lines.push('Owner of Record: ' + (c.ownerOfRecord||'—'));
+  lines.push('Land Use: ' + (c.landUse||'—'));
+  lines.push('Wetlands: ' + (c.wetlands||'—'));
+  lines.push('Road Access: ' + (c.roadAccess||'—'));
+  lines.push('Last Sale Price: ' + (c.lastSalePrice ? '$'+parseFloat(c.lastSalePrice).toLocaleString() : '—'));
+  lines.push('');
+  lines.push('DEAL NUMBERS');
+  lines.push('Asking Price: ' + (c.askingPrice ? '$'+parseFloat(c.askingPrice).toLocaleString() : 'Not given'));
+  lines.push('Our Offer: ' + (c.ourOffer ? '$'+parseFloat(c.ourOffer).toLocaleString() : 'Not set'));
+  lines.push('');
+  lines.push('CALL SCRIPT NOTES');
+  lines.push('Reaction: ' + (c.cs_reaction||'not captured'));
+  lines.push('Ownership: ' + (c.cs_ownership||'not captured'));
+  lines.push('Motivation: ' + (c.cs_motivation||'not captured'));
+  lines.push('Timeline: ' + (c.cs_timeline||'not captured'));
+  lines.push('Price Flex: ' + (c.cs_price_flex||'not captured'));
+  lines.push('Taxes Current: ' + (c.cs_taxes_current ? 'Yes' : 'not captured'));
+  lines.push('Multiple Owners: ' + (c.cs_multiple_owners ? 'Yes' : 'No'));
+  lines.push('Has Liens: ' + (c.cs_has_liens ? 'Yes' : 'No'));
+  lines.push('Road Type: ' + (c.cs_road_type||'not captured'));
+  lines.push('Next Step: ' + (c.cs_nextstep||'not captured'));
+  lines.push('Additional Notes: ' + (c.cs_additional||'none'));
+  lines.push('');
+
+  if (ddLines.length) {
+    lines.push('DD CHECKLIST COMPLETED');
+    lines = lines.concat(ddLines);
+    lines.push('');
+  }
+
+  lines.push('=== END OF SUMMARY ===');
+  lines.push('');
+  lines.push('Please run a complete 10-point due diligence analysis on this deal. For each item tell me: what is known, what is unknown, and for anything unknown give me the exact phone number to call, who to ask for, and the exact questions to ask. End with a clear verdict: Move Forward / Needs More Info / Pass, and why.');
+
+  var text = lines.join('\n');
+
+  navigator.clipboard.writeText(text).then(function() {
+    var confirm = document.getElementById('dd-export-confirm-' + cid);
+    if (confirm) {
+      confirm.style.display = 'block';
+      setTimeout(function(){ confirm.style.display = 'none'; }, 4000);
+    }
+    toast('Deal summary copied — paste into Claude Due Diligence project', 'success');
+  }).catch(function() {
+    // Fallback for older browsers
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    toast('Deal summary copied — paste into Claude Due Diligence project', 'success');
+  });
 }
 
 function clearDDAnalysis(cid) {
