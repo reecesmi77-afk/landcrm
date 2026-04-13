@@ -1,4 +1,4 @@
-// dd-analysis.js — proxies DD analysis requests to Claude API
+// dd-analysis.js — proxies DD analysis requests to Claude API with retry
 exports.handler = async (event) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
@@ -19,7 +19,7 @@ exports.handler = async (event) => {
   const { prompt } = body;
   if (!prompt) return { statusCode: 400, headers, body: JSON.stringify({ error: 'prompt required' }) };
 
-  try {
+  const callClaude = async () => {
     const resp = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -33,19 +33,29 @@ exports.handler = async (event) => {
         messages: [{ role: 'user', content: prompt }]
       })
     });
-
     const data = await resp.json();
+    if (!resp.ok) throw new Error(data.error?.message || `Claude API ${resp.status}`);
+    return data.content && data.content[0] ? data.content[0].text : 'No response received.';
+  };
 
-    if (!resp.ok) {
-      console.error('Claude API error:', JSON.stringify(data));
-      return { statusCode: 200, headers, body: JSON.stringify({ error: data.error?.message || 'Claude API error' }) };
-    }
-
-    const text = data.content && data.content[0] ? data.content[0].text : 'No response received.';
+  try {
+    const text = await callClaude();
     return { statusCode: 200, headers, body: JSON.stringify({ ok: true, text }) };
-
   } catch (err) {
-    console.error('dd-analysis error:', err.message);
-    return { statusCode: 500, headers, body: JSON.stringify({ error: err.message }) };
+    console.error('First attempt failed:', err.message);
+    // Retry once on overload
+    if (err.message.includes('529') || err.message.toLowerCase().includes('overload')) {
+      console.log('Overloaded — retrying in 4 seconds...');
+      await new Promise(r => setTimeout(r, 4000));
+      try {
+        const text = await callClaude();
+        console.log('Retry succeeded');
+        return { statusCode: 200, headers, body: JSON.stringify({ ok: true, text }) };
+      } catch (err2) {
+        console.error('Retry failed:', err2.message);
+        return { statusCode: 200, headers, body: JSON.stringify({ error: 'Claude is busy right now — please try again in a moment.' }) };
+      }
+    }
+    return { statusCode: 200, headers, body: JSON.stringify({ error: err.message }) };
   }
 };
