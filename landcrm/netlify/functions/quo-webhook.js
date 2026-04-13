@@ -480,6 +480,34 @@ exports.handler = async (event) => {
       : normalisePhone(Array.isArray(obj.to) ? obj.to[0] : obj.to);
     duration = obj.duration;
     summary = obj.summary || null;
+
+    // Slack alert for inbound calls
+    if (direction === 'Inbound' && duration && duration > 5) {
+      const CALL_CH = process.env.SLACK_CHANNEL_HOT || process.env.SLACK_CHANNEL_ACTION;
+      if (CALL_CH) {
+        try {
+          const KEY2 = process.env.JSONBIN_API_KEY;
+          const BIN2 = process.env.JSONBIN_BIN_ID;
+          let callerName = contactPhone;
+          if (KEY2 && BIN2) {
+            const r2 = await fetch(`https://api.jsonbin.io/v3/b/${BIN2}/latest`, { headers: { 'X-Master-Key': KEY2 } });
+            const d2 = await r2.json();
+            const crm2 = (d2.record?.crmContacts || []).find(c => {
+              const cp = c.phone ? c.phone.replace(/\D/g,'') : '';
+              const pp = (contactPhone||'').replace(/\D/g,'');
+              return cp && pp && (cp === pp || cp === pp.slice(-10) || pp === cp.slice(-10));
+            });
+            if (crm2) callerName = crm2.name || contactPhone;
+          }
+          const mins = Math.floor(duration/60), secs = duration % 60;
+          const callBlocks = [
+            { type: 'header', text: { type: 'plain_text', text: '📞 Inbound Call Received', emoji: true } },
+            { type: 'section', text: { type: 'mrkdwn', text: `*${callerName}* called in\n📱 ${contactPhone}\n⏱ Duration: ${mins}m ${secs}s${summary ? '\n\n*Summary:* ' + summary.slice(0,200) : ''}` } }
+          ];
+          await sendSlackMessage(CALL_CH, callBlocks, `📞 Inbound call from ${callerName}`);
+        } catch(e) { console.error('Slack call alert error:', e.message); }
+      }
+    }
   }
 
   if (!contactPhone) {
@@ -575,28 +603,87 @@ exports.handler = async (event) => {
       }
 
       // AI inbound responses DISABLED — sequences-only mode
-      // When a seller replies, sequence is paused (above) and contact is flagged for manual follow-up
-      // William handles all inbound responses personally
+      // When a seller replies: pause sequence, flag for human, store message, send Slack alert
       if (eventType === 'message.received' && messageText) {
-        // Flag contact for human attention in CRM
+
+        // Store inbound message in conversations so process-sequences Hard Stop 3 still works
+        if (!record.conversations) record.conversations = {};
+        if (!record.conversations[contactPhone]) {
+          record.conversations[contactPhone] = { messages: [], qualified: false, optOut: false, leadData: {} };
+        }
+        record.conversations[contactPhone].messages.push({
+          role: 'user',
+          direction: 'inbound',
+          content: messageText,
+          timestamp: new Date().toISOString()
+        });
+
+        // Flag contact in CRM for human attention
         const crmContacts = record.crmContacts || [];
         const idx = crmContacts.findIndex(c => {
           const cp = c.phone ? c.phone.replace(/\D/g,'') : '';
           const pp = contactPhone.replace(/\D/g,'');
           return cp && pp && (cp === pp || cp === pp.slice(-10) || pp === cp.slice(-10));
         });
+        let contactName = contactPhone;
+        let contactCounty = '';
+        let contactAcreage = '';
         if (idx !== -1) {
           crmContacts[idx].needsHumanReply = true;
           crmContacts[idx].lastInboundMessage = messageText.slice(0, 200);
           crmContacts[idx].lastInboundAt = new Date().toISOString();
-          crmContacts[idx].stage = crmContacts[idx].stage === 'Outreach Active' ? 'Conversation Active' : crmContacts[idx].stage;
+          if (crmContacts[idx].stage === 'Outreach Active') {
+            crmContacts[idx].stage = 'Conversation Active';
+          }
+          contactName = crmContacts[idx].name || contactPhone;
+          contactCounty = crmContacts[idx].county || '';
+          contactAcreage = crmContacts[idx].acreage || '';
           record.crmContacts = crmContacts;
-          console.log('Inbound flagged for human reply:', contactPhone, '— message:', messageText.slice(0,50));
+          console.log('Inbound flagged for human reply:', contactPhone, '—', contactName, '— message:', messageText.slice(0,50));
         }
+
+        // Send Slack alert so William can jump in immediately
+        const REPLY_CH = process.env.SLACK_CHANNEL_HOT || process.env.SLACK_CHANNEL_ACTION;
+        if (REPLY_CH) {
+          try {
+            const blocks = [
+              {
+                type: 'header',
+                text: { type: 'plain_text', text: '💬 Seller Replied — Take Over Now', emoji: true }
+              },
+              {
+                type: 'section',
+                text: {
+                  type: 'mrkdwn',
+                  text: `*${contactName}* replied to your outreach\n📍 ${contactCounty}${contactCounty && contactAcreage ? ' · ' : ''}${contactAcreage ? contactAcreage + ' ac' : ''}\n📱 ${contactPhone}`
+                }
+              },
+              {
+                type: 'section',
+                text: {
+                  type: 'mrkdwn',
+                  text: `*Their message:*\n_"${messageText.slice(0, 200)}"_`
+                }
+              },
+              {
+                type: 'section',
+                text: {
+                  type: 'mrkdwn',
+                  text: '✅ Sequence paused · No AI response sent · Waiting for you'
+                }
+              }
+            ];
+            await sendSlackMessage(REPLY_CH, blocks, `💬 ${contactName} replied — take over now`);
+            console.log('Slack reply alert sent for:', contactName);
+          } catch(slackErr) {
+            console.error('Slack alert error:', slackErr.message);
+          }
+        }
+
         await writeBin(record, KEY, BIN);
-        console.log('Sequences-only mode — no AI response sent. Contact flagged for manual follow-up.');
+        console.log('Sequences-only mode — no AI response sent. Slack alert fired.');
       } else {
-        console.log('Not a message.received event — skipping AI. eventType:', eventType);
+        console.log('Not a message.received event — skipping. eventType:', eventType);
         await writeBin(record, KEY, BIN);
       }
 
