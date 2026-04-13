@@ -2253,12 +2253,59 @@ function renderTabPanel(c, tabIdx) {
 
   if (tabIdx === 1) {
     // ── DUE DILIGENCE ──
+    var ddProg = ddProgress(c);
+    var ddTotal = ddTotalItems();
+    var ddPct = ddTotal > 0 ? Math.round((ddProg/ddTotal)*100) : 0;
+    var ddStatus = ddPct === 100 ? 'Complete' : ddPct >= 60 ? 'In Progress' : ddPct > 0 ? 'Started' : 'Not Started';
+    var ddStatusColor = ddPct === 100 ? 'var(--teal)' : ddPct >= 60 ? 'var(--amber)' : ddPct > 0 ? 'var(--accent)' : 'var(--text3)';
+
     return `
-      <div style="font-size:15px;color:var(--text2);margin-bottom:14px;padding:10px 12px;background:var(--adim);border-radius:8px">
-        Items auto-filled from call script are marked. Verify each independently via county records, title search, and site visit.
-        <span style="color:var(--accent);font-weight:500">${ddProgress(c)} items confirmed</span>
+      <!-- DD HEADER -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--text1);">Due Diligence Workspace</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:2px;">${ddProg} of ${ddTotal} items confirmed &middot; <span style="color:${ddStatusColor}">${ddStatus}</span></div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button class="btn btn-ghost btn-sm" onclick="switchTab('${id}', 0)">← Call Script</button>
+          <button class="btn btn-primary btn-sm" onclick="runDDAnalysis('${id}')" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);border:none;">
+            ✦ Run AI Analysis
+          </button>
+        </div>
       </div>
-      ${renderDD(c)}`;
+
+      <!-- PROGRESS BAR -->
+      <div style="background:var(--bg3);border-radius:4px;height:6px;margin-bottom:16px;overflow:hidden;">
+        <div style="height:100%;width:${ddPct}%;background:${ddStatusColor};border-radius:4px;transition:width .3s;"></div>
+      </div>
+
+      <!-- AI ANALYSIS OUTPUT — shown when available -->
+      <div id="dd-analysis-${id}" style="${c.ddAnalysis?'':'display:none'}">
+        <div style="background:linear-gradient(135deg,rgba(99,102,241,0.08),rgba(139,92,246,0.08));border:1px solid rgba(99,102,241,0.25);border-radius:10px;padding:16px;margin-bottom:16px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+            <div style="font-size:11px;font-weight:700;color:#8b5cf6;text-transform:uppercase;letter-spacing:.06em;font-family:'DM Mono',monospace;">✦ AI Due Diligence Analysis</div>
+            <div style="display:flex;gap:6px;">
+              <button class="btn btn-ghost btn-sm" style="font-size:10px;" onclick="runDDAnalysis('${id}')">Refresh</button>
+              <button class="btn btn-ghost btn-sm" style="font-size:10px;" onclick="clearDDAnalysis('${id}')">Clear</button>
+            </div>
+          </div>
+          <div id="dd-analysis-text-${id}" style="font-size:13px;color:var(--text2);line-height:1.7;white-space:pre-wrap;">${c.ddAnalysis||''}</div>
+        </div>
+      </div>
+
+      <!-- DD CHECKLIST -->
+      ${renderDD(c)}
+
+      <!-- DECISION BUTTONS -->
+      <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:10px;text-transform:uppercase;letter-spacing:.06em;font-family:'DM Mono',monospace;">Decision</div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-sm" style="background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.3);color:#22c55e;" onclick="ddDecision('${id}','forward')">✓ Move Forward</button>
+          <button class="btn btn-ghost btn-sm" onclick="ddDecision('${id}','more-info')">? Needs More Info</button>
+          <button class="btn btn-sm" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);color:#ef4444;" onclick="ddDecision('${id}','pass')">✕ Pass on Deal</button>
+        </div>
+        ${c.ddDecision ? `<div style="font-size:11px;color:var(--text3);margin-top:8px;">Last decision: <strong style="color:var(--text2)">${c.ddDecision}</strong> &middot; ${c.ddDecisionDate||''}</div>` : ''}
+      </div>`;
   }
 
   if (tabIdx === 2) {
@@ -4208,6 +4255,7 @@ function confirmReset() {
 
 // DUE DILIGENCE
 // ══════════════════════════════════
+// ── DD SECTIONS ──────────────────────────────────────────────────────────────
 const DD_SECTIONS=[
   {id:'ownership',title:'Ownership & Title',items:[
     {id:'deed_received',prompt:'Deed received?',type:'yn'},
@@ -4224,13 +4272,179 @@ const DD_SECTIONS=[
     {id:'setbacks',prompt:'Setbacks confirmed?',type:'setbacks'},
     {id:'zoning_notes',prompt:'Min sq ft, any other important info?',type:'noteonly'},
   ]},
-  {id:'utilities',title:'Utilities',items:[
-    {id:'electric',prompt:'Electric available?',type:'yn'},
-    {id:'water',prompt:'Water?',type:'opts',opts:['Public water','Needs well']},
-    {id:'sewer',prompt:'Sewer?',type:'opts',opts:['Public sewer','Needs septic']},
-    {id:'soil_tests',prompt:'Any previous soil/buildability tests on file at the county?',type:'yn'},
+  {id:'ownership',title:'1. Ownership & Title',items:[
+    {id:'seller_on_deed',prompt:'Seller confirmed on deed?',type:'yn'},
+    {id:'all_owners_signing',prompt:'All owners on title aware and willing to sign?',type:'yn'},
+    {id:'deed_type',prompt:'Deed type:',type:'opts',opts:['Warranty','Quit Claim','Trust','Unknown']},
+    {id:'liens_judgments',prompt:'Any liens or judgments found?',type:'yn'},
+    {id:'probate',prompt:'Is this an estate/probate situation?',type:'yn'},
+    {id:'ownership_notes',prompt:'Notes (deed history, red flags, etc.)',type:'noteonly'},
+  ]},
+  {id:'taxes',title:'2. Taxes',items:[
+    {id:'taxes_current',prompt:'Taxes current?',type:'yn'},
+    {id:'tax_balance',prompt:'Any delinquent balance?',type:'noteonly'},
+    {id:'prior_years',prompt:'Prior year balances confirmed clean with county?',type:'yn'},
+  ]},
+  {id:'poa_hoa',title:'3. POA / HOA',items:[
+    {id:'poa_exists',prompt:'POA or HOA exists?',type:'yn'},
+    {id:'poa_monthly',prompt:'Monthly fee amount & what it covers:',type:'noteonly'},
+    {id:'poa_delinquent',prompt:'Any delinquent POA balance on this parcel?',type:'yn'},
+    {id:'poa_special',prompt:'Any special assessments beyond base dues?',type:'yn'},
+    {id:'poa_deal_killer',prompt:'Do the fees kill the deal economics?',type:'yn'},
+  ]},
+  {id:'buildability',title:'4. Buildability & Zoning',items:[
+    {id:'zoning_confirmed',prompt:'Zoning confirmed for intended use?',type:'yn'},
+    {id:'site_built',prompt:'Site built homes allowed?',type:'yn'},
+    {id:'mobile_home',prompt:'Mobile/manufactured homes allowed?',type:'yn'},
+    {id:'min_lot_size',prompt:'Meets minimum lot size for septic (if applicable)?',type:'yn'},
+    {id:'perc_test',prompt:'Perc test on file or required?',type:'opts',opts:['On file — passed','Required — not done','Not required','Unknown']},
+    {id:'setbacks',prompt:'Setbacks confirmed?',type:'setbacks'},
+    {id:'zoning_notes',prompt:'Zoning notes, restrictions, min sq ft:',type:'noteonly'},
+  ]},
+  {id:'utilities',title:'5. Utilities & Access',items:[
+    {id:'electric',prompt:'Electric available at street?',type:'yn'},
+    {id:'water',prompt:'Water:',type:'opts',opts:['Public water','Needs well','Unknown']},
+    {id:'sewer',prompt:'Sewer:',type:'opts',opts:['Public sewer','Needs septic','Unknown']},
+    {id:'road_type',prompt:'Road access:',type:'opts',opts:['Paved public','Dirt/gravel public','Private road','Landlocked']},
+    {id:'legal_access',prompt:'Legal access confirmed?',type:'yn'},
+    {id:'utility_notes',prompt:'Utility notes (connection fees, availability):',type:'noteonly'},
+  ]},
+  {id:'environmental',title:'6. Environmental',items:[
+    {id:'flood_zone',prompt:'In a flood zone?',type:'yn'},
+    {id:'wetlands',prompt:'Wetlands present or flagged?',type:'yn'},
+    {id:'env_notes',prompt:'Environmental notes:',type:'noteonly'},
+  ]},
+  {id:'comps',title:'7. Comps & Exit',items:[
+    {id:'comps_run',prompt:'Comps pulled?',type:'yn'},
+    {id:'arv',prompt:'ARV / estimated sale price:',type:'noteonly'},
+    {id:'days_on_market',prompt:'Avg days on market for comps:',type:'noteonly'},
+    {id:'exit_strategy',prompt:'Exit strategy:',type:'opts',opts:['Facebook/Social','Buyer list','MLS list','Land sites','Neighbor outreach']},
+    {id:'buyer_identified',prompt:'Buyer already identified?',type:'yn'},
+    {id:'exit_notes',prompt:'Exit notes:',type:'noteonly'},
   ]},
 ];
+
+// ── DD HELPER FUNCTIONS ──────────────────────────────────────────────────────
+
+function ddTotalItems() {
+  var total = 0;
+  DD_SECTIONS.forEach(function(sec) {
+    sec.items.forEach(function(item) {
+      if (item.type !== 'noteonly') total++;
+    });
+  });
+  return total;
+}
+
+function ddDecision(cid, decision) {
+  var c = db.contacts.find(function(x){ return x.id === cid; });
+  if (!c) return;
+  var labels = { 'forward': 'Move Forward', 'more-info': 'Needs More Info', 'pass': 'Pass on Deal' };
+  var stages = { 'forward': 'Offer Made', 'more-info': 'Follow Up', 'pass': 'Dead' };
+  c.ddDecision = labels[decision];
+  c.ddDecisionDate = today();
+  if (stages[decision]) { c.stage = stages[decision]; }
+  save();
+  switchTab(cid, 1);
+  toast('Decision saved: ' + labels[decision], decision === 'forward' ? 'success' : 'info');
+}
+
+function clearDDAnalysis(cid) {
+  var c = db.contacts.find(function(x){ return x.id === cid; });
+  if (!c) return;
+  c.ddAnalysis = '';
+  save();
+  switchTab(cid, 1);
+}
+
+async function runDDAnalysis(cid) {
+  var c = db.contacts.find(function(x){ return x.id === cid; });
+  if (!c) return;
+
+  var btn = document.querySelector('[onclick="runDDAnalysis(\''+cid+'\')"]');
+  if (btn) { btn.textContent = '✦ Analyzing...'; btn.disabled = true; }
+
+  // Build context from everything we know about this contact
+  var ddData = c.dd || {};
+  var checklist = [];
+  DD_SECTIONS.forEach(function(sec) {
+    sec.items.forEach(function(item) {
+      var d = ddData[item.id] || {};
+      if (d.value || d.notes) {
+        checklist.push(sec.title + ' — ' + item.prompt + ' ' + (d.value||'') + (d.notes ? ' ('+d.notes+')' : ''));
+      }
+    });
+  });
+
+  var prompt = `You are a land wholesaling due diligence expert for Coldwater Property Group based in Tennessee.
+
+PROPERTY:
+- Name: ${c.name||'Unknown'}
+- County: ${c.county||'Unknown'}, ${c.state||'Unknown'}
+- Acreage: ${c.acreage||'Unknown'} acres
+- APN: ${c.apn||'Unknown'}
+- Source: ${c.source||'Unknown'}
+- Stage: ${c.stage||'Unknown'}
+- Our Offer: ${c.ourOffer ? '$'+parseFloat(c.ourOffer).toLocaleString() : 'Not set'}
+- Asking Price: ${c.askingPrice ? '$'+parseFloat(c.askingPrice).toLocaleString() : 'Not set'}
+- City/Zip: ${c.city||''} ${c.zip||''}
+- County Record Data: Assessed value $${c.assessedValue||'unknown'}, Market value $${c.marketValue||'unknown'}, AVM $${c.avm||'unknown'}
+- Owner of Record: ${c.ownerOfRecord||'unknown'}
+- Annual Tax: ${c.annualTax||'unknown'}
+- Wetlands: ${c.wetlands||'unknown'}
+- Road Access: ${c.roadAccess||'unknown'}
+- Land Use: ${c.landUse||'unknown'}
+
+CALL SCRIPT NOTES:
+- Reaction: ${c.cs_reaction||'not captured'}
+- Ownership: ${c.cs_ownership||'not captured'}
+- Motivation: ${c.cs_motivation||'not captured'}
+- Timeline: ${c.cs_timeline||'not captured'}
+- Price Flex: ${c.cs_price_flex||'not captured'}
+- Road: ${c.cs_road_type||'not captured'}
+- Next Step: ${c.cs_nextstep||'not captured'}
+
+DD CHECKLIST COMPLETED SO FAR:
+${checklist.length > 0 ? checklist.join('\n') : 'Nothing filled in yet'}
+
+Run a complete due diligence analysis using the 10-point framework:
+1. Ownership — confirmed, deed health, all signers
+2. Taxes — current or delinquent, total owed
+3. POA/HOA — exists, fees, deal impact
+4. Buildability — zoning, septic/sewer, min lot size
+5. Access — road type, legal access, landlocked risk
+6. Environmental — flood zone, wetlands
+7. Comps — ARV, days on market, market depth
+8. Offer Math — what to offer and why
+9. Exit Strategy — who buys this and how
+10. Action Checklist — specific next steps with exact phone numbers and questions to ask
+
+For each item: state what is KNOWN, what is UNKNOWN, and if unknown — give the exact phone number to call, who to ask for, and the exact questions to ask.
+
+Be direct. If something looks like a pass, say so. Format clearly with section headers. Keep it practical — this will be used by an acquisitions manager.`;
+
+  try {
+    var resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    var data = await resp.json();
+    var text = data.content && data.content[0] ? data.content[0].text : 'No response received.';
+    c.ddAnalysis = text;
+    c.ddAnalysisDate = new Date().toISOString();
+    save();
+    switchTab(cid, 1);
+    toast('DD Analysis complete', 'success');
+  } catch(err) {
+    toast('Analysis failed: ' + err.message, 'error');
+    if (btn) { btn.textContent = '✦ Run AI Analysis'; btn.disabled = false; }
+  }
+}
 
 function ddSet(cid,iid,val,btn){
   var c=db.contacts.find(function(x){return x.id===cid;});
