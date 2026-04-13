@@ -62,21 +62,17 @@ const SYSTEM_PROMPT = `You are an SMS assistant for Coldwater Property Group, a 
 
 PERSONA: You represent the Coldwater Property Group team. Use "we" and "our." Never use a person's name. Never say you are AI or a bot. If asked, say you help manage messages for the team.
 
-PRIMARY GOAL: Get the seller to agree to a quick phone call. Ask once, maybe twice if naturally appropriate. If they say they prefer to text or can't talk — STOP pushing for a call. Respect that immediately and shift to text qualification. Never ask for a call again once they've declined.
+PRIMARY GOAL: Get the seller to agree to a quick phone call. That is the ONLY goal of every text. Do not qualify over text unless they refuse a call.
 
-TEXT QUALIFICATION MODE: When the seller says they prefer text, can't talk, or declines a call — immediately switch into text qualification. Collect these 6 things one at a time, conversationally. Use CRM data you already have — skip anything you already know:
-1. Confirm they own the property (owner_confirmed) — skip if CRM shows their name as owner
-2. County and state (county) — skip if already in CRM
-3. Acreage (acreage) — skip if already in CRM
+SECONDARY GOAL: If they decline a call but want to continue over text, collect these 6 things naturally:
+1. Confirm they own the property (owner_confirmed)
+2. County and state (county)
+3. Acreage (acreage)
 4. Whether they are sole owner on title (sole_owner)
 5. Whether taxes are current (taxes_current)
-6. Best time for a call (callback_time) — frame this as "when would be a good time for us to follow up with you?" not "can we call you now?"
+6. Best time for a call (callback_time)
 
-CRITICAL: Ask only ONE question per message. Never stack multiple questions. Keep it natural and conversational — like a real person texting, not a form being filled out.
-
-Once all 6 are collected, output [QUALIFIED] followed by JSON. If the seller goes quiet or stops responding mid-qualification, output [INCOMPLETE] on a new line — this flags the record in the CRM so William knows to call them directly.
-
-IF CRM DATA IS PROVIDED: Use it. Reference what you already know naturally. Skip questions you already have answers to. County and acreage from CRM count as confirmed — don't ask again.
+IF CRM DATA IS PROVIDED: Use it. Reference what you already know naturally. Skip questions you already have answers to.
 
 IF LEAD GEN TRANSCRIPT IS PROVIDED: This is the conversation a partner company already had with this seller before we got involved. They were texted from a different number. Read it carefully — understand where the conversation left off, what the seller said, and what they want. Your first message must:
 1. Briefly re-introduce as a different team member following up ("someone from our team reached out recently — this is us following up from a different number")
@@ -98,59 +94,51 @@ Vary your openers. Never start with "Hey [Name]". Examples:
 - "Noticed you own land out in [County] — have you ever thought about what it might be worth?"
 
 Step 2 — They show interest / respond:
-Offer a call once:
+Immediately pivot to a call:
 - "Great — do you have 5 minutes for a quick call? We can go over everything then."
 - "Awesome — easiest thing would be a quick call. Do you have a few minutes today?"
+- "Perfect — would you be open to a quick call? Easier to talk through it."
 
-Step 3a — They agree to a call:
+Step 3 — They agree to a call:
 Confirm and output the trigger:
 - "Perfect — we'll give you a ring shortly. What's the best number to reach you?"
 Then output [CALL_REQUESTED] on a new line.
 
-Step 3b — They decline a call or prefer text:
-Immediately accept it and begin text qualification — ONE question at a time:
-- "No problem at all — happy to do it over text. Can you confirm you're the owner on the title?"
-NEVER ask for a call again after this point.
-
-Step 4 — All 6 text qualification answers collected:
-- "Thanks — that's everything we need. Someone from our team will be in touch soon."
-Then output [QUALIFIED] followed by JSON.
-
-Step 5 — Seller goes quiet mid-qualification (stops responding after 1+ unanswered follow-up):
-Output [INCOMPLETE] on a new line so William knows to call them directly.
+Step 4 — They want to do it over text instead:
+Respect that and collect the 6 data points one at a time, naturally.
+Once all 6 collected, output [QUALIFIED] on a new line followed by JSON.
 
 OBJECTION HANDLING:
 
 "What's your offer?" / "How much?"
-→ If they haven't declined a call yet: "That's what the call is for — we pull comps on your specific parcel and give a real number. Do you have 5 minutes?"
-→ If they've declined a call: "We'd need a few details first to run the numbers — are you the sole owner on the title?"
+→ "That's what the call is for — we pull comps specific to your parcel and give a real number. Do you have 5 minutes to chat?"
 
 "Who are you?" / "How did you get my number?"
-→ "County records are public — we reach out to landowners in areas we buy. Happy to answer any questions."
+→ "County records are public — we reach out to landowners in areas we buy. Are you open to a quick call to learn more?"
 
 "Not interested"
-→ "No problem at all — sorry to bother you. Have a great day." then output [OPT_OUT]
+→ "No problem at all — sorry to bother you. If anything changes, feel free to reach out. Have a great day." then output [OPT_OUT]
 
 "I already have a realtor" / "It's listed"
-→ "Totally fine — we work with listed land too and can sometimes move faster. Worth a quick text conversation at least?"
+→ "Totally fine — we work with listed properties too and can close faster than most. Worth a 5-minute call?"
 
 "Is this a scam?" / "Are you legit?"
-→ "Completely fair — we're Coldwater Property Group, a land buying company based in TN. Happy to answer anything."
+→ "Completely fair — we're Coldwater Property Group, a land buying company based in TN. Happy to answer any questions on a quick call."
 
 "I need to think about it"
-→ "Of course — no pressure at all. When would be a better time to connect?"
+→ "Of course — no pressure. When would be a better time to connect?"
 
 "Back taxes" / "There are liens"
-→ "We work with that all the time — doesn't necessarily stop a deal. Happy to look into it."
+→ "We work with that all the time — doesn't necessarily stop a deal. Worth a quick call to see what's possible?"
 
 "Multiple owners" / "Need to talk to family"
-→ "Totally understand — we work with multiple owners. When do you think you'd know if everyone's on board?"
+→ "Totally understand — we work with multiple owners. When do you think you'd know if everyone's on the same page?"
 
 "How fast can you close?"
-→ "Typically 2-4 weeks once both sides agree — we handle all the paperwork."
+→ "Typically 2-4 weeks once both sides agree — we handle all the paperwork. Want to jump on a quick call to go over it?"
 
 Seller names a price:
-→ "Good to know — we'll look at the comps for your parcel. Can I ask a couple quick questions first?"
+→ "Good to know — we'll look at the comps and see what we can do. Do you have 5 minutes for a call so we can discuss it properly?"
 
 LANGUAGE RULES — NEVER use these words (carrier spam triggers):
 Initial texts: offer, cash, buy, purchase, sell, selling, investor, deal, interested, mortgage, loan, insurance, debt, lend, property (use "land" instead), looking
@@ -162,17 +150,13 @@ FORMATTING RULES:
 - Casual and warm — like a real person, not a script
 - No exclamation points in first message
 - No abbreviations that look unprofessional
-- NEVER push for a call after the seller has said they prefer text
 
 OPT-OUT: If they say STOP, UNSUBSCRIBE, QUIT, END, REMOVE, NOT INTERESTED, LEAVE ME ALONE, STOP TEXTING, DO NOT CONTACT, TAKE ME OFF, REMOVE ME, GO AWAY, or any profanity or hostile language:
-→ output [OPT_OUT] — no reply sent
+→ "No problem — we'll remove you right away. Sorry to bother you." then output [OPT_OUT]
 
-QUALIFIED format:
+QUALIFIED format (only if doing text qualification):
 [QUALIFIED]
-{"owner_confirmed":true,"county":"Craighead, AR","acreage":"10","sole_owner":true,"taxes_current":true,"callback_time":"Thursday 2pm"}
-
-INCOMPLETE format (seller went quiet mid-qualification):
-[INCOMPLETE]`;
+{"owner_confirmed":true,"county":"Shelby, TN","acreage":"3","sole_owner":true,"taxes_current":true,"callback_time":"Thursday 2pm"}`;
 
 async function getConversation(phone, record) {
   const convos = record.conversations || {};
@@ -300,26 +284,25 @@ async function runAIConversation(phone, message, KEY, BIN) {
     return cp && pp && (cp === pp || cp === pp.slice(-10) || pp === cp.slice(-10));
   });
 
-  // Build user message — always inject CRM context so AI has full picture at every turn
+  // Build user message with CRM context + transcript if available
   let userMessage = message;
-  if (crmContact) {
+  if (crmContact && convo.messages.length === 0) {
+    // Check for stored transcript
     const transcripts = record.transcripts || {};
     const normPhone = phone.replace(/\D/g,'');
     const transcript = transcripts[normPhone] || transcripts[phone] || null;
 
-    // Always include current CRM snapshot so AI knows name, county, acreage etc.
-    let crmInfo = `\n\n[CRM CONTEXT: Name: ${crmContact.name||'unknown'}, County: ${crmContact.county||'unknown'}, State: ${crmContact.state||'unknown'}, Acreage: ${crmContact.acreage||'unknown'} acres, Source: ${crmContact.source||'unknown'}, Stage: ${crmContact.stage||'unknown'}.`;
+    let crmInfo = `\n\n[CRM DATA for this seller: Name: ${crmContact.name||'unknown'}, County: ${crmContact.county||'unknown'}, State: ${crmContact.state||'unknown'}, Acreage: ${crmContact.acreage||'unknown'} acres, Source: ${crmContact.source||'unknown'}.`;
 
-    // Only include transcript instruction on very first message
-    if (transcript && convo.messages.length === 0) {
+    if (transcript) {
       crmInfo += `\n\nLEAD GEN TRANSCRIPT (conversation a partner company already had with this seller before us — they were texted from a different number):\n${transcript}\n\nThis seller is now texting YOUR number for the first time. Re-introduce briefly as a follow-up from a different number, pick up where the prior conversation left off, and move toward booking a call.]`;
-      console.log('Transcript injected for:', crmContact.name);
+      console.log('Transcript found for:', crmContact.name);
     } else {
-      crmInfo += ' Use this context — skip any questions you already have answers to. Read the conversation history above and respond naturally to what was just said.]';
+      crmInfo += ' Use this to confirm details rather than asking from scratch.]';
     }
 
     userMessage = message + crmInfo;
-    console.log('CRM data injected for:', crmContact.name, '| msg #', convo.messages.length + 1);
+    console.log('CRM data injected for:', crmContact.name);
   }
 
   convo.messages.push({ role: 'user', content: userMessage });
@@ -330,59 +313,15 @@ async function runAIConversation(phone, message, KEY, BIN) {
     console.log('Claude response:', aiResponse.slice(0,150));
   } catch (e) {
     console.error('Claude error:', e.message);
-    // Retry once on overload errors
-    if (e.message && e.message.includes('529')) {
-      console.log('Claude overloaded — retrying in 3 seconds...');
-      await new Promise(r => setTimeout(r, 3000));
-      try {
-        aiResponse = await callClaude(convo.messages);
-        console.log('Retry succeeded:', aiResponse.slice(0,100));
-      } catch (e2) {
-        console.error('Retry also failed:', e2.message);
-        // Store message but don't respond — better than a confusing generic reply
-        convo.messages.push({ role: 'user', content: message });
-        if (!record.conversations) record.conversations = {};
-        record.conversations[phone] = convo;
-        await writeBin(record, KEY, BIN);
-        console.log('Claude unavailable — message stored, no reply sent');
-        return;
-      }
-    } else {
-      // Store message but don't respond — better than a confusing generic reply
-      convo.messages.push({ role: 'user', content: message });
-      if (!record.conversations) record.conversations = {};
-      record.conversations[phone] = convo;
-      await writeBin(record, KEY, BIN);
-      console.log('Claude error — message stored, no reply sent');
-      return;
-    }
+    aiResponse = "Thanks for reaching out to Coldwater Property Group! Our team will follow up with you shortly.";
   }
 
   const isQualified = aiResponse.includes('[QUALIFIED]');
   const isOptOut = aiResponse.includes('[OPT_OUT]');
   const isCallRequested = aiResponse.includes('[CALL_REQUESTED]');
-  const isIncomplete = aiResponse.includes('[INCOMPLETE]');
 
-  let smsMessage = aiResponse.split('[QUALIFIED]')[0].split('[OPT_OUT]')[0].split('[CALL_REQUESTED]')[0].split('[INCOMPLETE]')[0].trim();
+  let smsMessage = aiResponse.split('[QUALIFIED]')[0].split('[OPT_OUT]')[0].split('[CALL_REQUESTED]')[0].trim();
   let leadData = {};
-
-  // Handle incomplete qualification — flag contact so William knows to call
-  if (isIncomplete) {
-    console.log('INCOMPLETE QUALIFICATION — flagging for manual follow-up:', phone);
-    const crmContacts = record.crmContacts || [];
-    const idx = crmContacts.findIndex(c => {
-      const cp = c.phone ? c.phone.replace(/\D/g,'') : '';
-      const pp = phone.replace(/\D/g,'');
-      return cp && pp && (cp === pp || cp === pp.slice(-10) || pp === cp.slice(-10));
-    });
-    if (idx !== -1) {
-      crmContacts[idx].incompleteQualification = true;
-      crmContacts[idx].incompleteNote = 'Seller gave partial info over text — needs manual call';
-      crmContacts[idx].stage = 'Follow Up';
-      record.crmContacts = crmContacts;
-      console.log('CRM contact flagged incomplete — stage set to Follow Up');
-    }
-  }
 
   if (isQualified) {
     try {
@@ -605,17 +544,59 @@ exports.handler = async (event) => {
         console.log('PROFANITY PRE-FLIGHT — opted out before AI:', contactPhone);
       }
 
-      // Run AI conversation for inbound SMS (inline, no HTTP call)
-      if (eventType === 'message.received' && messageText && KEY && BIN) {
-        console.log('=== STARTING AI CONVERSATION ===');
-        console.log('Phone:', contactPhone, 'Message:', messageText.slice(0,50));
-        console.log('ANTHROPIC_API_KEY set:', !!process.env.ANTHROPIC_API_KEY);
-        console.log('QUO_API_KEY set:', !!process.env.QUO_API_KEY);
-        console.log('QUO_PHONE_NUMBER_ID set:', !!process.env.QUO_PHONE_NUMBER_ID);
-        await runAIConversation(contactPhone, messageText, KEY, BIN);
-        console.log('=== AI CONVERSATION COMPLETE ===');
+      // Opt-out keyword check — still handle STOP etc even without AI
+      const OPT_OUT_WORDS = ['stop','unsubscribe','quit','end','remove','leave me alone','stop texting','do not contact','dont contact','take me off','remove me','go away','not interested'];
+      const msgLowerOpt = (messageText || '').toLowerCase();
+      const isOptOut = eventType === 'message.received' && OPT_OUT_WORDS.some(w => msgLowerOpt.includes(w));
+      if (isOptOut) {
+        if (!record.conversations) record.conversations = {};
+        if (!record.conversations[contactPhone]) record.conversations[contactPhone] = { messages: [], qualified: false, optOut: false, leadData: {} };
+        record.conversations[contactPhone].optOut = true;
+        record.conversations[contactPhone].optOutReason = 'opt-out keyword';
+        if (record.sequences && record.sequences[contactPhone]) {
+          record.sequences[contactPhone].active = false;
+          record.sequences[contactPhone].paused = true;
+          record.sequences[contactPhone].pausedReason = 'opt-out';
+        }
+        // Update CRM stage to Dead
+        const crmContacts2 = record.crmContacts || [];
+        const optIdx = crmContacts2.findIndex(c => {
+          const cp = c.phone ? c.phone.replace(/\D/g,'') : '';
+          const pp = contactPhone.replace(/\D/g,'');
+          return cp && pp && (cp === pp || cp === pp.slice(-10) || pp === cp.slice(-10));
+        });
+        if (optIdx !== -1) {
+          crmContacts2[optIdx].stage = 'Dead';
+          crmContacts2[optIdx].optOut = true;
+          record.crmContacts = crmContacts2;
+        }
+        await writeBin(record, KEY, BIN);
+        console.log('OPT-OUT detected — sequence killed, stage set to Dead:', contactPhone);
+      }
+
+      // AI inbound responses DISABLED — sequences-only mode
+      // When a seller replies, sequence is paused (above) and contact is flagged for manual follow-up
+      // William handles all inbound responses personally
+      if (eventType === 'message.received' && messageText) {
+        // Flag contact for human attention in CRM
+        const crmContacts = record.crmContacts || [];
+        const idx = crmContacts.findIndex(c => {
+          const cp = c.phone ? c.phone.replace(/\D/g,'') : '';
+          const pp = contactPhone.replace(/\D/g,'');
+          return cp && pp && (cp === pp || cp === pp.slice(-10) || pp === cp.slice(-10));
+        });
+        if (idx !== -1) {
+          crmContacts[idx].needsHumanReply = true;
+          crmContacts[idx].lastInboundMessage = messageText.slice(0, 200);
+          crmContacts[idx].lastInboundAt = new Date().toISOString();
+          crmContacts[idx].stage = crmContacts[idx].stage === 'Outreach Active' ? 'Conversation Active' : crmContacts[idx].stage;
+          record.crmContacts = crmContacts;
+          console.log('Inbound flagged for human reply:', contactPhone, '— message:', messageText.slice(0,50));
+        }
+        await writeBin(record, KEY, BIN);
+        console.log('Sequences-only mode — no AI response sent. Contact flagged for manual follow-up.');
       } else {
-        console.log('Not running AI. eventType:', eventType, 'hasMessage:', !!messageText, 'hasKey:', !!KEY);
+        console.log('Not a message.received event — skipping AI. eventType:', eventType);
         await writeBin(record, KEY, BIN);
       }
 
