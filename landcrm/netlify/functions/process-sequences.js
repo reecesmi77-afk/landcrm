@@ -122,12 +122,20 @@ exports.handler = async (event) => {
     }
 
     // ── HARD STOP 3: Has replied — pause sequence ─────────────────────
-    if (convo?.messages?.some(m => m.direction === 'inbound')) {
+    const hasInbound = convo?.messages?.some(m => m.direction === 'inbound');
+    // Also check needsHumanReply flag set by quo-webhook in sequences-only mode
+    const contact = crmContacts.find(c => {
+      const cp = c.phone ? c.phone.replace(/\D/g,'') : '';
+      const norm = phone.replace(/\D/g,'');
+      return cp && (cp === norm || cp === norm.slice(-10) || norm === cp.slice(-10));
+    });
+    const needsHuman = contact?.needsHumanReply === true;
+    if (hasInbound || needsHuman) {
       seq.active = false;
       seq.paused = true;
       seq.pausedReason = 'replied';
       seq.pausedAt = new Date().toISOString();
-      log.push(`PAUSED ${seq.contactName || phone} — replied`);
+      log.push(`PAUSED ${seq.contactName || phone} — replied (needsHumanReply: ${needsHuman})`);
       paused++;
       continue;
     }
