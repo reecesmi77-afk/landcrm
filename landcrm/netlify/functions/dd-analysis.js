@@ -1,4 +1,4 @@
-// dd-analysis.js — proxies DD analysis requests to Claude API with retry
+// dd-analysis.js — proxies DD analysis requests to Claude API with 3-attempt retry
 exports.handler = async (event) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
@@ -34,28 +34,39 @@ exports.handler = async (event) => {
       })
     });
     const data = await resp.json();
-    if (!resp.ok) throw new Error(data.error?.message || `Claude API ${resp.status}`);
+    if (!resp.ok) {
+      const msg = data.error?.message || `Claude API ${resp.status}`;
+      const err = new Error(msg);
+      err.status = resp.status;
+      throw err;
+    }
     return data.content && data.content[0] ? data.content[0].text : 'No response received.';
   };
 
-  try {
-    const text = await callClaude();
-    return { statusCode: 200, headers, body: JSON.stringify({ ok: true, text }) };
-  } catch (err) {
-    console.error('First attempt failed:', err.message);
-    // Retry once on overload
-    if (err.message.includes('529') || err.message.toLowerCase().includes('overload')) {
-      console.log('Overloaded — retrying in 4 seconds...');
-      await new Promise(r => setTimeout(r, 4000));
-      try {
-        const text = await callClaude();
-        console.log('Retry succeeded');
-        return { statusCode: 200, headers, body: JSON.stringify({ ok: true, text }) };
-      } catch (err2) {
-        console.error('Retry failed:', err2.message);
-        return { statusCode: 200, headers, body: JSON.stringify({ error: 'Claude is busy right now — please try again in a moment.' }) };
-      }
+  const delays = [0, 6000, 12000]; // immediate, 6s, 12s
+  let lastError = null;
+
+  for (let i = 0; i < delays.length; i++) {
+    if (delays[i] > 0) {
+      console.log(`Attempt ${i+1} — waiting ${delays[i]/1000}s before retry...`);
+      await new Promise(r => setTimeout(r, delays[i]));
     }
-    return { statusCode: 200, headers, body: JSON.stringify({ error: err.message }) };
+    try {
+      const text = await callClaude();
+      console.log(`Succeeded on attempt ${i+1}`);
+      return { statusCode: 200, headers, body: JSON.stringify({ ok: true, text }) };
+    } catch (err) {
+      lastError = err;
+      const isOverload = err.status === 529 || err.message.toLowerCase().includes('overload');
+      console.error(`Attempt ${i+1} failed:`, err.message);
+      if (!isOverload) break; // don't retry non-overload errors
+    }
   }
+
+  console.error('All attempts failed:', lastError?.message);
+  return {
+    statusCode: 200,
+    headers,
+    body: JSON.stringify({ error: 'Claude is busy right now — please try again in a few minutes.' })
+  };
 };
