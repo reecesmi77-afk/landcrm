@@ -4424,17 +4424,14 @@ For each item: state what is KNOWN, what is UNKNOWN, and if unknown — give the
 Be direct. If something looks like a pass, say so. Format clearly with section headers. Keep it practical — this will be used by an acquisitions manager.`;
 
   try {
-    var resp = await fetch('https://api.anthropic.com/v1/messages', {
+    var resp = await fetch('/.netlify/functions/dd-analysis', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        messages: [{ role: 'user', content: prompt }]
-      })
+      body: JSON.stringify({ prompt: prompt })
     });
     var data = await resp.json();
-    var text = data.content && data.content[0] ? data.content[0].text : 'No response received.';
+    if (data.error) throw new Error(data.error);
+    var text = data.text || 'No response received.';
     c.ddAnalysis = text;
     c.ddAnalysisDate = new Date().toISOString();
     save();
