@@ -389,7 +389,7 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
 .team-member-avatar{width:36px;height:36px;border-radius:8px;background:var(--bg4);display:flex;align-items:center;justify-content:center;font-family:'Inter',sans-serif;font-weight:700;font-size:12px;color:var(--accent);flex-shrink:0;}
 .team-role-badge{font-family:'DM Mono',monospace;font-size:9px;padding:2px 8px;border-radius:20px;border:1px solid var(--border2);color:var(--text3);background:var(--bg4);}
 
-.cockpit-card{background:var(--bg3);border-radius:8px;padding:8px 11px;margin-bottom:5px;cursor:pointer;transition:opacity .15s;}
+.agent-list-row{display:grid;grid-template-columns:200px 1fr 160px 130px 100px 80px;gap:12px;align-items:center;padding:10px 8px;border-bottom:0.5px solid var(--border);cursor:pointer;transition:background .1s;}.agent-list-row:hover{background:var(--bg3);}.cockpit-card{background:var(--bg3);border-radius:8px;padding:8px 11px;margin-bottom:5px;cursor:pointer;transition:opacity .15s;}
 .cockpit-card:hover{opacity:0.85;}
 .cockpit-card:last-child{margin-bottom:0;}
 .cockpit-name{font-size:15px;font-weight:700;color:var(--text);margin-bottom:2px;}
@@ -1160,27 +1160,25 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
           <div style="font-size:13px;color:var(--text2)">Build relationships. Get deal flow.</div>
         </div>
         <div style="display:flex;gap:8px;align-items:center;">
-          <select class="form-select" id="agent-county-filter" onchange="filterAgentsByCounty(this.value)" style="font-size:12px;padding:6px 10px;min-width:180px;">
-            <option value="">All counties</option>
-          </select>
+          <input class="form-input" type="text" id="agent-search" placeholder="Search agents..." oninput="renderAgents()" style="font-size:12px;padding:6px 10px;width:200px;">
         </div>
       </div>
 
       <!-- Stats bar -->
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;" id="agent-stats"></div>
 
-      <!-- Filter tabs -->
-      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
-        <button class="btn btn-ghost btn-sm agent-filter-btn active" onclick="filterAgents('all')" id="af-all">All</button>
-        <button class="btn btn-ghost btn-sm agent-filter-btn" onclick="filterAgents('Identified')" id="af-identified">Identified</button>
-        <button class="btn btn-ghost btn-sm agent-filter-btn" onclick="filterAgents('Contacted')" id="af-contacted">Contacted</button>
-        <button class="btn btn-ghost btn-sm agent-filter-btn" onclick="filterAgents('Building')" id="af-building">Building</button>
-        <button class="btn btn-ghost btn-sm agent-filter-btn" onclick="filterAgents('Active Partner')" id="af-active">Active Partner</button>
-        <button class="btn btn-ghost btn-sm agent-filter-btn" onclick="filterAgents('needs-touch')" id="af-touch" style="border-color:rgba(251,191,36,0.4);color:var(--amber)">⚡ Needs Touch</button>
+      <!-- Column headers -->
+      <div style="display:grid;grid-template-columns:200px 1fr 160px 130px 100px 80px;gap:12px;padding:0 8px 8px;border-bottom:1px solid var(--border);">
+        <div style="font-size:10px;color:var(--text3);font-weight:500;text-transform:uppercase;letter-spacing:.06em;font-family:'DM Mono',monospace;">Agent</div>
+        <div style="font-size:10px;color:var(--text3);font-weight:500;text-transform:uppercase;letter-spacing:.06em;font-family:'DM Mono',monospace;">Counties served</div>
+        <div style="font-size:10px;color:var(--text3);font-weight:500;text-transform:uppercase;letter-spacing:.06em;font-family:'DM Mono',monospace;">Phone</div>
+        <div style="font-size:10px;color:var(--text3);font-weight:500;text-transform:uppercase;letter-spacing:.06em;font-family:'DM Mono',monospace;">Last contact</div>
+        <div style="font-size:10px;color:var(--text3);font-weight:500;text-transform:uppercase;letter-spacing:.06em;font-family:'DM Mono',monospace;">Status</div>
+        <div></div>
       </div>
 
-      <!-- Agent cards grid -->
-      <div id="agent-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;"></div>
+      <!-- Agent list grouped by state -->
+      <div id="agent-grid"></div>
     </div>
 
     <!-- TASKS -->
@@ -6465,74 +6463,93 @@ function renderAgents() {
   var el = document.getElementById('agent-grid');
   if (!el) return;
   var agents = db.agents || [];
-  rebuildCountyFilter();
+  var search = (document.getElementById('agent-search') && document.getElementById('agent-search').value || '').toLowerCase();
 
-  var filtered = agents.filter(a => {
-    var stageOk = _agentFilter === 'all' ? true : _agentFilter === 'needs-touch' ? agentNeedsTouch(a) : a.stage === _agentFilter;
-    var countyOk = !_agentCountyFilter || getAgentCounties(a).some(c => c === _agentCountyFilter);
-    return stageOk && countyOk;
-  });
-
-  // Sort: needs touch first, then by last contact
-  filtered.sort((a, b) => {
-    var an = agentNeedsTouch(a), bn = agentNeedsTouch(b);
-    if (an && !bn) return -1;
-    if (!an && bn) return 1;
-    return daysSince(a.lastContact) - daysSince(b.lastContact);
+  var filtered = agents.filter(function(a) {
+    if (!search) return true;
+    return (a.name||'').toLowerCase().includes(search) ||
+           (a.brokerage||'').toLowerCase().includes(search) ||
+           (a.markets||'').toLowerCase().includes(search) ||
+           (a.phone||'').includes(search);
   });
 
   if (!filtered.length) {
-    el.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--text3);">
-      <div style="font-size:28px;margin-bottom:12px;">🤝</div>
-      <div style="font-size:13px;margin-bottom:16px;">${_agentFilter === 'all' ? 'No agents yet — add your first RE agent contact' : 'No agents in this category'}</div>
-      ${_agentFilter === 'all' ? '<button class="btn btn-primary btn-sm" onclick="openAddAgent()">+ Add First Agent</button>' : ''}
-    </div>`;
+    el.innerHTML = '<div style="text-align:center;padding:60px 20px;color:var(--text3);"><div style="font-size:28px;margin-bottom:12px;">🤝</div><div style="font-size:13px;margin-bottom:16px;">' + (agents.length === 0 ? 'No agents yet — add your first RE agent contact' : 'No agents match your search') + '</div>' + (agents.length === 0 ? '<button class="btn btn-primary btn-sm" onclick="openAddAgent()">+ Add First Agent</button>' : '') + '</div>';
     return;
   }
 
-  el.innerHTML = filtered.map(agent => {
-    var needsTouch = agentNeedsTouch(agent);
-    var days = daysSince(agent.lastContact);
-    var stageColor = {
-      'Identified':'var(--text3)',
-      'Contacted':'var(--accent)',
-      'Building':'var(--amber)',
-      'Active Partner':'var(--teal)',
-      'Sent Deal':'var(--purple)'
-    }[agent.stage] || 'var(--text3)';
+  // Group by state — extract from counties array ("Cleburne, AR") or agent.state field
+  var byState = {};
+  filtered.forEach(function(a) {
+    var state = 'Unknown';
+    // Try to get state from counties array first (format: "County, ST")
+    var counties = getAgentCounties(a);
+    if (counties.length) {
+      var parts = counties[0].split(',');
+      if (parts.length >= 2) state = parts[parts.length-1].trim();
+    }
+    // Fall back to agent.state if set
+    if (state === 'Unknown' && a.state) state = a.state.trim();
+    // Fall back to markets field
+    if (state === 'Unknown' && a.markets) {
+      var mp = a.markets.split(',')[0].split(' ');
+      // look for 2-letter state code
+      mp.forEach(function(p){ if(p.length===2 && p===p.toUpperCase()) state = p; });
+    }
+    if (!byState[state]) byState[state] = [];
+    byState[state].push(a);
+  });
+  var states = Object.keys(byState).sort();
 
-    return `<div style="background:var(--bg2);border:1px solid ${needsTouch ? 'rgba(251,191,36,0.35)' : 'var(--border)'};border-radius:var(--rl);padding:16px;cursor:pointer;transition:border-color 0.15s;" onclick="openAgentDetail('${agent.id}')">
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;">
-        <div style="display:flex;align-items:center;gap:10px;">
-          <div style="width:36px;height:36px;border-radius:50%;background:var(--adim);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:13px;color:var(--accent);flex-shrink:0;">${(agent.name||'?')[0].toUpperCase()}</div>
-          <div>
-            <div style="font-weight:600;font-size:14px;">${agent.name||'Unknown'}</div>
-            <div style="font-size:11px;color:var(--text3);">${agent.brokerage||'Independent'}</div>
-          </div>
-        </div>
-        <div style="font-size:10px;font-family:'DM Mono',monospace;color:${stageColor};text-transform:uppercase;letter-spacing:.05em;padding:2px 7px;border-radius:4px;background:${stageColor}18;">${agent.stage||'Identified'}</div>
-      </div>
-      <div style="display:flex;gap:14px;font-size:11px;color:var(--text3);margin-bottom:10px;flex-wrap:wrap;">
-        ${agent.phone ? `<span>📞 ${agent.phone}</span>` : ''}
-        ${agent.dealsReferred ? `<span style="color:var(--teal)">🤝 ${agent.dealsReferred} deal${agent.dealsReferred>1?'s':''}</span>` : ''}
-      </div>
-      ${getAgentCounties(agent).length ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;">
-        ${getAgentCounties(agent).map(c => '<span style="background:var(--adim);border:1px solid var(--border2);border-radius:4px;padding:1px 6px;font-size:10px;color:var(--accent);">'+c+'</span>').join('')}
-      </div>` : ''}
-      <div style="display:flex;gap:14px;font-size:11px;color:var(--text3);margin-bottom:10px;flex-wrap:wrap;">
-        <span style="display:none"></span>
-      </div>
-      <div style="display:flex;align-items:center;justify-content:space-between;">
-        <div style="font-size:11px;color:${needsTouch ? 'var(--amber)' : 'var(--text3)'}">
-          ${needsTouch ? '⚡ Needs touch — ' : ''}${agent.lastContact ? days + 'd since last contact' : 'Never contacted'}
-        </div>
-        <div style="display:flex;gap:6px;">
-          <button onclick="event.stopPropagation();logAgentTouch('${agent.id}')" class="btn btn-ghost btn-sm" style="font-size:10px;padding:2px 8px;">Log touch</button>
-          ${agent.phone ? `<button onclick="event.stopPropagation();window.location='openphone://call?number=${encodeURIComponent(agent.phone)}'" class="btn btn-ghost btn-sm" style="font-size:10px;padding:2px 8px;color:var(--accent);">📞 Call</button>` : ''}
-        </div>
-      </div>
-      ${agent.notes && agent.notes.length ? `<div style="margin-top:8px;font-size:11px;color:var(--text3);border-top:1px solid var(--border);padding-top:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${agent.notes[agent.notes.length-1].text}</div>` : ''}
-    </div>`;
+  var stageColors = {
+    'Identified': { bg: 'rgba(100,116,139,0.12)', color: 'var(--text3)' },
+    'Outreach Active': { bg: 'rgba(14,165,233,0.12)', color: 'var(--accent)' },
+    'Contacted': { bg: 'rgba(14,165,233,0.15)', color: 'var(--accent)' },
+    'Building': { bg: 'rgba(251,191,36,0.15)', color: 'var(--amber)' },
+    'Active Partner': { bg: 'rgba(52,211,153,0.15)', color: 'var(--teal)' },
+    'Sent Deal': { bg: 'rgba(192,132,252,0.15)', color: 'var(--purple)' },
+    'Pass': { bg: 'rgba(239,68,68,0.1)', color: 'var(--coral)' }
+  };
+
+  el.innerHTML = states.map(function(state) {
+    var stateAgents = byState[state];
+    // Sort within state: needs touch first, then alphabetical
+    stateAgents.sort(function(a, b) {
+      var an = agentNeedsTouch(a), bn = agentNeedsTouch(b);
+      if (an && !bn) return -1;
+      if (!an && bn) return 1;
+      return (a.name||'').localeCompare(b.name||'');
+    });
+
+    var rows = stateAgents.map(function(agent) {
+      var needsTouch = agentNeedsTouch(agent);
+      var days = agent.lastContact ? daysSince(agent.lastContact) : null;
+      var sc = stageColors[agent.stage] || stageColors['Identified'];
+      var counties = getAgentCounties(agent);
+      var lastContactStr = days === null ? 'Never' : days === 0 ? 'Today' : days + 'd ago';
+      var lastContactColor = days === null ? 'var(--text3)' : needsTouch ? 'var(--amber)' : 'var(--text3)';
+
+      return '<div class="agent-list-row" onclick="openAgentDetail(\'' + agent.id + '\')">' +
+        '<div>' +
+          '<div style="font-size:13px;font-weight:600;color:var(--text1);">' + (agent.name||'Unknown') + (needsTouch ? ' <span style="color:var(--amber);font-size:10px;">⚡</span>' : '') + '</div>' +
+          '<div style="font-size:11px;color:var(--text3);margin-top:1px;">' + (agent.brokerage||'Independent') + '</div>' +
+        '</div>' +
+        '<div style="font-size:12px;color:var(--text2);">' + (counties.length ? counties.join(', ') : '—') + '</div>' +
+        '<div style="font-size:12px;color:var(--text2);">' + (agent.phone || '—') + '</div>' +
+        '<div style="font-size:12px;color:' + lastContactColor + ';">' + lastContactStr + '</div>' +
+        '<div><span style="font-size:11px;padding:2px 8px;border-radius:4px;background:' + sc.bg + ';color:' + sc.color + ';white-space:nowrap;">' + (agent.stage||'Identified') + '</span></div>' +
+        '<div style="display:flex;gap:4px;justify-content:flex-end;">' +
+          '<button onclick="event.stopPropagation();logAgentTouch(\\\'' + agent.id + '\\\')" class="btn btn-ghost btn-sm" style="font-size:10px;padding:2px 6px;">Touch</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+
+    return '<div style="margin-bottom:8px;">' +
+      '<div style="font-size:10px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;font-family:DM Mono,monospace;padding:14px 8px 6px;border-bottom:1px solid var(--border);">' +
+        state + ' <span style="opacity:.5;">(' + stateAgents.length + ')</span>' +
+      '</div>' +
+      rows +
+    '</div>';
   }).join('');
 }
 
