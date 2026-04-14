@@ -6414,8 +6414,8 @@ async function openContactEmail(contactId) {
 // ══════════════════════════════════════════════════════
 
 var _agentFilter = 'all';
-const AGENT_STAGES = ['Identified','Contacted','Building','Active Partner','Sent Deal'];
-const AGENT_TOUCH_DAYS = { 'Identified':7, 'Contacted':14, 'Building':30, 'Active Partner':45, 'Sent Deal':21 };
+const AGENT_STAGES = ['Identified','Outreach Active','Contacted','Building','Active Partner','Sent Deal','Pass'];
+const AGENT_TOUCH_DAYS = { 'Identified':7, 'Outreach Active':3, 'Contacted':14, 'Building':30, 'Active Partner':45, 'Sent Deal':21 };
 
 function daysSince(dateStr) {
   if (!dateStr) return 999;
@@ -6782,6 +6782,10 @@ function saveAgent(id) {
       touches: intelFilled ? [{date:today(), channel:'Call', note:'Discovery call — intel captured'}] : [],
     };
     db.agents.unshift(newAgent);
+    // Fire outreach sequence if added directly as Outreach Active
+    if (newAgent.stage === 'Outreach Active' && newAgent.phone) {
+      setTimeout(function(){ createAgentOutreachTasks(newAgent); }, 300);
+    }
   }
   save();
   closeModal();
@@ -6891,16 +6895,102 @@ function openAgentDetail(id) {
     </div>`);
 }
 
+function createAgentOutreachTasks(agent) {
+  if (!agent || !agent.phone) return;
+  var first = agent.name ? agent.name.split(' ')[0] : 'there';
+  var today_date = today();
+
+  function addDays(d, n) {
+    var dt = new Date(d);
+    dt.setDate(dt.getDate() + n);
+    return dt.toISOString().slice(0,10);
+  }
+
+  var tasks = [
+    {
+      id: uid(),
+      title: 'Agent SMS 1 — ' + agent.name,
+      contactId: agent.id,
+      contactName: agent.name,
+      contactType: 'agent',
+      dueDate: today_date,
+      type: 'SMS',
+      priority: 'high',
+      done: false,
+      created: today_date,
+      note: 'SEND THIS TEXT:\n\n"Hey ' + first + ' — William with Coldwater Property Group. I'm a cash land buyer in AR focusing on 2–20 acre rural tracts. Close in 2–3 weeks, no contingencies. Just wanted to get on your radar."\n\nPhone: ' + agent.phone
+    },
+    {
+      id: uid(),
+      title: 'Agent SMS 2 — ' + agent.name,
+      contactId: agent.id,
+      contactName: agent.name,
+      contactType: 'agent',
+      dueDate: addDays(today_date, 4),
+      type: 'SMS',
+      priority: 'normal',
+      done: false,
+      created: today_date,
+      note: 'SEND THIS TEXT:\n\n"Hey ' + first + ' — following up. If you have any rural acreage listings that have been sitting 60+ days, those are exactly what I look for. Happy to move fast if the numbers work."\n\nPhone: ' + agent.phone
+    },
+    {
+      id: uid(),
+      title: 'Agent SMS 3 — ' + agent.name,
+      contactId: agent.id,
+      contactName: agent.name,
+      contactType: 'agent',
+      dueDate: addDays(today_date, 8),
+      type: 'SMS',
+      priority: 'normal',
+      done: false,
+      created: today_date,
+      note: 'SEND THIS TEXT:\n\n"' + first + ' — last message from me for now. If you ever have a seller who needs a fast cash close on rural land, I'm your guy. — William, Coldwater Property Group"\n\nPhone: ' + agent.phone
+    },
+    {
+      id: uid(),
+      title: 'Agent CALL — ' + agent.name + ' (no reply to texts)',
+      contactId: agent.id,
+      contactName: agent.name,
+      contactType: 'agent',
+      dueDate: addDays(today_date, 10),
+      type: 'Call',
+      priority: 'high',
+      done: false,
+      created: today_date,
+      note: 'CALL SCRIPT:\n\n"Hey ' + first + ', this is William with Coldwater Property Group. I'm a cash land buyer — I buy rural acreage in the 2–20 acre range in Arkansas. I close in 2–3 weeks, no financing, no contingencies. I'm specifically looking for properties that have been sitting a while or sellers who need to move quickly. Do you have anything like that right now or coming up?"\n\nPhone: ' + agent.phone
+    }
+  ];
+
+  if (!db.tasks) db.tasks = [];
+  tasks.forEach(function(t) { db.tasks.push(t); });
+  save();
+  updateTaskBadge();
+  toast('Outreach sequence created for ' + agent.name + ' — 3 texts + call reminder added to Tasks', 'success');
+}
+
 function moveAgentStage(id, stage) {
   var agent = db.agents.find(a => a.id === id);
   if (!agent) return;
+  var prevStage = agent.stage;
   agent.stage = stage;
   save();
+  // Fire outreach sequence when moved to Outreach Active
+  if (stage === 'Outreach Active' && prevStage !== 'Outreach Active') {
+    var alreadyHasTasks = (db.tasks||[]).some(function(t){
+      return t.contactId === agent.id && t.contactType === 'agent' && !t.done;
+    });
+    if (!alreadyHasTasks) {
+      createAgentOutreachTasks(agent);
+    } else {
+      toast(agent.name + ' → Outreach Active (tasks already exist)', 'info');
+    }
+  } else {
+    toast(agent.name + ' → ' + stage, 'success');
+  }
   closeModal();
   openAgentDetail(id);
   renderAgents();
   renderAgentStats();
-  toast(agent.name + ' → ' + stage, 'success');
 }
 
 function logAgentTouch(id) {
@@ -7925,6 +8015,24 @@ function openTaskContact(el) {
   else openDetail(id);
 }
 
+function copyAgentTaskMsg(taskId) {
+  var task = (db.tasks||[]).find(function(t){ return t.id === taskId; });
+  if (!task || !task.note) return;
+  var msgMatch = task.note.match(/"([^"]+)"/);
+  if (!msgMatch) return;
+  navigator.clipboard.writeText(msgMatch[1]).then(function() {
+    toast('Message copied — paste into OpenPhone', 'success');
+  }).catch(function() {
+    var ta = document.createElement('textarea');
+    ta.value = msgMatch[1];
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    toast('Message copied — paste into OpenPhone', 'success');
+  });
+}
+
 function renderTaskCockpitLane() {
   var el = document.getElementById('lane-tasks');
   if (!el) return;
@@ -7948,16 +8056,25 @@ function renderTaskCockpitLane() {
 
   el.innerHTML = tasks.map(function(task) {
     var overdue = taskIsOverdue(task);
+    var isAgentSMS = task.contactType === 'agent' && task.type === 'SMS' && task.note;
+    var msgPreview = '';
+    if (isAgentSMS && task.note) {
+      var msgMatch = task.note.match(/"([^"]+)"/);
+      if (msgMatch) msgPreview = '<div style="font-size:11px;color:var(--text2);background:var(--bg3);border-radius:6px;padding:6px 8px;margin:6px 0;line-height:1.5;font-style:italic;">&ldquo;' + msgMatch[1].slice(0,120) + (msgMatch[1].length>120?'&hellip;':'') + '&rdquo;</div>';
+    }
+    var typeLabel = task.contactType === 'agent' && task.type === 'SMS' ? ' &middot; 💬 Text to send' : task.contactType === 'agent' && task.type === 'Call' ? ' &middot; 📞 Call' : '';
     return '<div class="cockpit-card" style="border-left:3px solid '+(overdue?'var(--coral)':'var(--amber)')+';">'+
       '<div class="cockpit-name">'+task.title+'</div>'+
       (task.contactName ? '<div class="cockpit-sub" style="color:var(--accent);">→ '+task.contactName+'</div>' : '')+
-      '<div class="cockpit-sub" style="color:'+(overdue?'var(--coral)':'var(--amber)')+';">'+(overdue?'⚠ Overdue':'Due today')+(task.priority==='urgent'?' · 🔴 Urgent':'')+'</div>'+
+      '<div class="cockpit-sub" style="color:'+(overdue?'var(--coral)':'var(--amber)')+';">'+(overdue?'⚠ Overdue':'Due today')+(task.priority==='urgent'?' · 🔴 Urgent':'')+typeLabel+'</div>'+
+      msgPreview+
       '<div class="cockpit-actions">'+
         '<button class="btn btn-primary btn-sm" onclick="completeTask(\'' + task.id + '\')">✓ Done</button>'+
+        (isAgentSMS ? '<button class="btn btn-ghost btn-sm" onclick="copyAgentTaskMsg(\'' + task.id + '\')" style="font-size:10px;">Copy text</button>' : '')+
         (task.contactId ? '<button onclick="openTaskContactById(\'' + task.contactId + '\', \'' + (task.contactType||'contact') + '\')" class="btn btn-ghost btn-sm" style="font-size:10px;padding:2px 8px;">Open</button>' : '')+
       '</div>'+
     '</div>';
-  }).join('');
+  }).join('');;
 }
 
 // System-generated tasks — called on dashboard load
