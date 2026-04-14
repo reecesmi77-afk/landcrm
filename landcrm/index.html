@@ -6909,7 +6909,7 @@ function createAgentOutreachTasks(agent) {
   var tasks = [
     {
       id: uid(),
-      title: 'Agent SMS 1 — ' + agent.name,
+      title: 'Agent SMS 1  -  ' + agent.name,
       contactId: agent.id,
       contactName: agent.name,
       contactType: 'agent',
@@ -6918,11 +6918,11 @@ function createAgentOutreachTasks(agent) {
       priority: 'high',
       done: false,
       created: today_date,
-      note: 'SEND THIS TEXT:\n\n"Hey ' + first + ' — William with Coldwater Property Group. I'm a cash land buyer in AR focusing on 2–20 acre rural tracts. Close in 2–3 weeks, no contingencies. Just wanted to get on your radar."\n\nPhone: ' + agent.phone
+      note: 'SEND THIS TEXT:\n\n"Hey ' + first + '  -  William with Coldwater Property Group. I'm a cash land buyer in AR focusing on 2-20 acre rural tracts. Close in 2-3 weeks, no contingencies. Just wanted to get on your radar."\n\nPhone: ' + agent.phone
     },
     {
       id: uid(),
-      title: 'Agent SMS 2 — ' + agent.name,
+      title: 'Agent SMS 2  -  ' + agent.name,
       contactId: agent.id,
       contactName: agent.name,
       contactType: 'agent',
@@ -6931,11 +6931,11 @@ function createAgentOutreachTasks(agent) {
       priority: 'normal',
       done: false,
       created: today_date,
-      note: 'SEND THIS TEXT:\n\n"Hey ' + first + ' — following up. If you have any rural acreage listings that have been sitting 60+ days, those are exactly what I look for. Happy to move fast if the numbers work."\n\nPhone: ' + agent.phone
+      note: 'SEND THIS TEXT:\n\n"Hey ' + first + '  -  following up. If you have any rural acreage listings that have been sitting 60+ days, those are exactly what I look for. Happy to move fast if the numbers work."\n\nPhone: ' + agent.phone
     },
     {
       id: uid(),
-      title: 'Agent SMS 3 — ' + agent.name,
+      title: 'Agent SMS 3  -  ' + agent.name,
       contactId: agent.id,
       contactName: agent.name,
       contactType: 'agent',
@@ -6944,11 +6944,11 @@ function createAgentOutreachTasks(agent) {
       priority: 'normal',
       done: false,
       created: today_date,
-      note: 'SEND THIS TEXT:\n\n"' + first + ' — last message from me for now. If you ever have a seller who needs a fast cash close on rural land, I'm your guy. — William, Coldwater Property Group"\n\nPhone: ' + agent.phone
+      note: 'SEND THIS TEXT:\n\n"' + first + '  -  last message from me for now. If you ever have a seller who needs a fast cash close on rural land, I'm your guy.  -  William, Coldwater Property Group"\n\nPhone: ' + agent.phone
     },
     {
       id: uid(),
-      title: 'Agent CALL — ' + agent.name + ' (no reply to texts)',
+      title: 'Agent CALL  -  ' + agent.name + ' (no reply to texts)',
       contactId: agent.id,
       contactName: agent.name,
       contactType: 'agent',
@@ -6957,7 +6957,7 @@ function createAgentOutreachTasks(agent) {
       priority: 'high',
       done: false,
       created: today_date,
-      note: 'CALL SCRIPT:\n\n"Hey ' + first + ', this is William with Coldwater Property Group. I'm a cash land buyer — I buy rural acreage in the 2–20 acre range in Arkansas. I close in 2–3 weeks, no financing, no contingencies. I'm specifically looking for properties that have been sitting a while or sellers who need to move quickly. Do you have anything like that right now or coming up?"\n\nPhone: ' + agent.phone
+      note: 'CALL SCRIPT:\n\n"Hey ' + first + ', this is William with Coldwater Property Group. I'm a cash land buyer  -  I buy rural acreage in the 2-20 acre range in Arkansas. I close in 2-3 weeks, no financing, no contingencies. I'm specifically looking for properties that have been sitting a while or sellers who need to move quickly. Do you have anything like that right now or coming up?"\n\nPhone: ' + agent.phone
     }
   ];
 
@@ -6965,7 +6965,7 @@ function createAgentOutreachTasks(agent) {
   tasks.forEach(function(t) { db.tasks.push(t); });
   save();
   updateTaskBadge();
-  toast('Outreach sequence created for ' + agent.name + ' — 3 texts + call reminder added to Tasks', 'success');
+  toast('Outreach sequence created for ' + agent.name + '  -  3 texts + call reminder added to Tasks', 'success');
 }
 
 function moveAgentStage(id, stage) {
@@ -8021,7 +8021,7 @@ function copyAgentTaskMsg(taskId) {
   var msgMatch = task.note.match(/"([^"]+)"/);
   if (!msgMatch) return;
   navigator.clipboard.writeText(msgMatch[1]).then(function() {
-    toast('Message copied — paste into OpenPhone', 'success');
+    toast('Message copied  -  paste into OpenPhone', 'success');
   }).catch(function() {
     var ta = document.createElement('textarea');
     ta.value = msgMatch[1];
@@ -8029,7 +8029,7 @@ function copyAgentTaskMsg(taskId) {
     ta.select();
     document.execCommand('copy');
     document.body.removeChild(ta);
-    toast('Message copied — paste into OpenPhone', 'success');
+    toast('Message copied  -  paste into OpenPhone', 'success');
   });
 }
 
