@@ -1165,7 +1165,12 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;" id="agent-stats"></div>
 
       <!-- Agent list -->
-      <div id="agent-grid"></div>
+      <div class="card">
+        <table>
+          <thead><tr><th>Name</th><th>Brokerage</th><th>Counties</th><th>Phone</th><th>Last Contact</th><th>Status</th><th></th></tr></thead>
+          <tbody id="agent-tbody"></tbody>
+        </table>
+      </div>
     </div>
 
     <!-- TASKS -->
@@ -6444,119 +6449,52 @@ function filterAgents(filter) {
 }
 
 function renderAgents() {
-  var el = document.getElementById('agent-grid');
-  if (!el) return;
+  var tbody = document.getElementById('agent-tbody');
+  if (!tbody) return;
   var agents = db.agents || [];
 
-  el.innerHTML = '';
-
   if (!agents.length) {
-    el.innerHTML = '<div style="text-align:center;padding:60px 20px;color:var(--text3);font-size:13px;">No agents yet<br><br><button class="btn btn-primary btn-sm" onclick="openAddAgent()">+ Add First Agent</button></div>';
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text3);">No agents yet</td></tr>';
     return;
   }
 
-  // Group by state
   var byState = {};
   agents.forEach(function(a) {
-    var state = 'Unknown';
     var ctys = getAgentCounties(a);
+    var state = 'Unknown';
     if (ctys.length) {
-      var parts = ctys[0].split(/[,\s]+/);
-      if (parts.length >= 2) state = parts[parts.length - 1].trim();
+      var words = ctys[0].trim().split(' ');
+      if (words.length >= 2) state = words[words.length - 1];
     }
     if (state === 'Unknown' && a.state) state = a.state.trim();
     if (!byState[state]) byState[state] = [];
     byState[state].push(a);
   });
 
-  var stageColor = {
-    'Identified': 'var(--text3)', 'Outreach Active': 'var(--accent)',
-    'Contacted': 'var(--accent)', 'Building': 'var(--amber)',
-    'Active Partner': 'var(--teal)', 'Sent Deal': 'var(--purple)', 'Pass': 'var(--coral)'
-  };
-
-  // Column headers
-  var hdr = document.createElement('div');
-  hdr.style.cssText = 'display:grid;grid-template-columns:200px 1fr 160px 130px 110px 70px;gap:8px;padding:0 8px 8px;border-bottom:1px solid var(--border);margin-bottom:4px;';
-  ['Agent', 'Counties', 'Phone', 'Last Contact', 'Status', ''].forEach(function(col) {
-    var th = document.createElement('div');
-    th.style.cssText = 'font-size:10px;color:var(--text3);font-weight:500;text-transform:uppercase;letter-spacing:.06em;';
-    th.textContent = col;
-    hdr.appendChild(th);
-  });
-  el.appendChild(hdr);
+  var sc = {'Identified':'tag-neutral','Outreach Active':'tag-ai','Contacted':'tag-ai','Building':'tag-review','Active Partner':'tag-human','Sent Deal':'tag-hot','Pass':'tag-neutral'};
+  var rows = '';
 
   Object.keys(byState).sort().forEach(function(state) {
-    var list = byState[state].sort(function(a, b) { return (a.name || '').localeCompare(b.name || ''); });
-
-    // State header
-    var sh = document.createElement('div');
-    sh.style.cssText = 'font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;padding:14px 8px 6px;border-bottom:1px solid var(--border);';
-    sh.textContent = state + ' (' + list.length + ')';
-    el.appendChild(sh);
-
+    var list = byState[state].sort(function(a,b){ return (a.name||'').localeCompare(b.name||''); });
+    rows += '<tr><td colspan="7" style="padding:12px 8px 4px;font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;border-bottom:1px solid var(--border);">' + state + ' (' + list.length + ')</td></tr>';
     list.forEach(function(agent) {
       var nt = agentNeedsTouch(agent);
       var days = agent.lastContact ? daysSince(agent.lastContact) : null;
-      var lastStr = days === null ? 'Never' : days === 0 ? 'Today' : days + 'd ago';
+      var lastStr = days === null ? '&mdash;' : days === 0 ? 'Today' : days + 'd ago';
       var ctys = getAgentCounties(agent);
-      var sc = stageColor[agent.stage] || 'var(--text3)';
-
-      var row = document.createElement('div');
-      row.style.cssText = 'display:grid;grid-template-columns:200px 1fr 160px 130px 110px 70px;gap:8px;align-items:center;padding:10px 8px;border-bottom:0.5px solid var(--border);cursor:pointer;';
-      row.addEventListener('mouseenter', function() { this.style.background = 'var(--bg3)'; });
-      row.addEventListener('mouseleave', function() { this.style.background = ''; });
-      row.addEventListener('click', function() { openAgentDetail(agent.id); });
-
-      // Name + brokerage
-      var nameCell = document.createElement('div');
-      var nameDiv = document.createElement('div');
-      nameDiv.style.cssText = 'font-size:13px;font-weight:600;color:var(--text1);';
-      nameDiv.textContent = (agent.name || 'Unknown') + (nt ? ' ⚡' : '');
-      var brokerDiv = document.createElement('div');
-      brokerDiv.style.cssText = 'font-size:11px;color:var(--text3);margin-top:2px;';
-      brokerDiv.textContent = agent.brokerage || 'Independent';
-      nameCell.appendChild(nameDiv);
-      nameCell.appendChild(brokerDiv);
-
-      // Counties
-      var ctyCell = document.createElement('div');
-      ctyCell.style.cssText = 'font-size:12px;color:var(--text2);';
-      ctyCell.textContent = ctys.length ? ctys.join(', ') : '—';
-
-      // Phone
-      var phoneCell = document.createElement('div');
-      phoneCell.style.cssText = 'font-size:12px;color:var(--text2);';
-      phoneCell.textContent = agent.phone || '—';
-
-      // Last contact
-      var lcCell = document.createElement('div');
-      lcCell.style.cssText = 'font-size:12px;color:' + (nt ? 'var(--amber)' : 'var(--text3)') + ';';
-      lcCell.textContent = lastStr;
-
-      // Status badge
-      var stCell = document.createElement('div');
-      var badge = document.createElement('span');
-      badge.style.cssText = 'font-size:11px;padding:2px 8px;border-radius:4px;color:' + sc + ';background:' + sc + '18;';
-      badge.textContent = agent.stage || 'Identified';
-      stCell.appendChild(badge);
-
-      // Touch button
-      var btnCell = document.createElement('div');
-      btnCell.style.textAlign = 'right';
-      var btn = document.createElement('button');
-      btn.className = 'btn btn-ghost btn-sm';
-      btn.style.fontSize = '10px';
-      btn.textContent = 'Touch';
-      btn.addEventListener('click', function(e) { e.stopPropagation(); logAgentTouch(agent.id); });
-      btnCell.appendChild(btn);
-
-      [nameCell, ctyCell, phoneCell, lcCell, stCell, btnCell].forEach(function(cell) {
-        row.appendChild(cell);
-      });
-      el.appendChild(row);
+      var aid = agent.id;
+      rows += '<tr onclick="openAgentDetail(\'' + aid + '\')" style="cursor:pointer;">';
+      rows += '<td style="font-weight:500;">' + (agent.name||'&mdash;') + (nt ? ' <span style="color:var(--amber)">&#9889;</span>' : '') + '</td>';
+      rows += '<td style="color:var(--text2);">' + (agent.brokerage||'&mdash;') + '</td>';
+      rows += '<td style="color:var(--text2);">' + (ctys.length ? ctys.join(', ') : '&mdash;') + '</td>';
+      rows += '<td style="font-family:\'DM Mono\',monospace;font-size:12px;">' + (agent.phone||'&mdash;') + '</td>';
+      rows += '<td style="font-family:\'DM Mono\',monospace;font-size:12px;color:' + (nt?'var(--amber)':'var(--text3)') + ';">' + lastStr + '</td>';
+      rows += '<td><span class="tag ' + (sc[agent.stage]||'tag-neutral') + '">' + (agent.stage||'Identified') + '</span></td>';
+      rows += '<td><button class="btn btn-ghost btn-sm" style="font-size:10px;" onclick="event.stopPropagation();logAgentTouch(\'' + aid + '\')">Touch</button></td>';
+      rows += '</tr>';
     });
   });
+  tbody.innerHTML = rows;
 }
 
 function openAddAgent(id) {
