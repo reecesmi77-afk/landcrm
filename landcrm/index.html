@@ -6403,10 +6403,6 @@ async function openContactEmail(contactId) {
 
 var _agentFilter = 'all';
 
-function daysSince(dateStr) {
-  if (!dateStr) return 999;
-  return Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000);
-}
 
 function agentNeedsTouch(agent) {
   var threshold = AGENT_TOUCH_DAYS[agent.stage] || 30;
@@ -6465,7 +6461,7 @@ function renderAgents() {
     var state = 'Unknown';
     var ctys = getAgentCounties(a);
     if (ctys.length) {
-      var parts = ctys[0].split(',');
+      var parts = ctys[0].split(/[,\s]+/);
       if (parts.length >= 2) state = parts[parts.length - 1].trim();
     }
     if (state === 'Unknown' && a.state) state = a.state.trim();
