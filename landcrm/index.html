@@ -9053,13 +9053,18 @@ syncFromQuo();
 setInterval(syncFromQuo,60000);
 
 function renderAgents() {
+  const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  const agentNotes = a => Array.isArray(a.notes) ? a.notes.map(n => n.text||'').join(' ') : (a.notes||'');
+  const agentLocation = a => a.cityState || a.markets || '';
+
   const search = (document.getElementById('agent-search')?.value||'').toLowerCase();
   const stateF = document.getElementById('agent-state-filter')?.value || '';
 
   let agents = (db.agents||[]).filter(function(a) {
-    if (stateF && (a.cityState||'').toUpperCase().indexOf(stateF.toUpperCase()) === -1) return false;
+    const loc = agentLocation(a);
+    if (stateF && loc.toUpperCase().indexOf(stateF.toUpperCase()) === -1) return false;
     if (search) {
-      const hay = ((a.name||'')+(a.phone||'')+(a.email||'')+(a.cityState||'')+(a.notes||'')).toLowerCase();
+      const hay = ((a.name||'')+(a.phone||'')+(a.email||'')+loc+(agentNotes(a))).toLowerCase();
       if (!hay.includes(search)) return false;
     }
     return true;
@@ -9069,7 +9074,7 @@ function renderAgents() {
   const stateEl = document.getElementById('agent-state-filter');
   if (stateEl && stateEl.options.length <= 1) {
     const states = [...new Set((db.agents||[]).map(a => {
-      const parts = (a.cityState||'').trim().split(',');
+      const parts = agentLocation(a).trim().split(',');
       return parts.length > 1 ? parts[parts.length-1].trim() : '';
     }).filter(Boolean))].sort();
     states.forEach(function(s) {
@@ -9093,12 +9098,12 @@ function renderAgents() {
     const days = a.lastContact ? Math.floor((Date.now() - new Date(a.lastContact).getTime()) / 86400000) : null;
     const lastStr = days === null ? '—' : days === 0 ? 'Today' : days + 'd ago';
     return `<tr onclick="openAgentDetail('${a.id}')">
-      <td style="font-weight:500">${a.name||'—'}</td>
-      <td style="font-family:'DM Mono',monospace;font-size:11px">${a.phone||'—'}</td>
-      <td style="font-size:12px;color:var(--text2)">${a.email||'—'}</td>
-      <td style="color:var(--text2)">${a.cityState||'—'}</td>
+      <td style="font-weight:500">${esc(a.name)||'—'}</td>
+      <td style="font-family:'DM Mono',monospace;font-size:11px">${esc(a.phone)||'—'}</td>
+      <td style="font-size:12px;color:var(--text2)">${esc(a.email)||'—'}</td>
+      <td style="color:var(--text2)">${esc(agentLocation(a))||'—'}</td>
       <td style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text3)">${lastStr}</td>
-      <td style="font-size:11px;color:var(--text2);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${a.notes||'—'}</td>
+      <td style="font-size:11px;color:var(--text2);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(agentNotes(a))||'—'}</td>
     </tr>`;
   }).join('');
 }
