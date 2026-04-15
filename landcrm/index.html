@@ -1501,6 +1501,7 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
 <script>
 
 
+
 // ══════════════════════════════════
 // CONSTANTS
 // ══════════════════════════════════
@@ -6450,9 +6451,13 @@ function filterAgents(filter) {
 }
 
 function renderAgents() {
+  console.log('[RA] renderAgents called');
   var tbody = document.getElementById('agent-tbody');
-  if (!tbody) return;
+  console.log('[RA] tbody:', tbody);
+  if (!tbody) { console.log('[RA] NO TBODY - returning'); return; }
   var agents = db.agents || [];
+  console.log('[RA] agents count:', agents.length);
+  console.log('[RA] agents data:', JSON.stringify(agents.slice(0,2)));
 
   if (!agents.length) {
     tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text3);">No agents yet</td></tr>';
@@ -6472,6 +6477,8 @@ function renderAgents() {
     byState[state].push(a);
   });
 
+  console.log('[RA] byState keys:', Object.keys(byState));
+
   var sc = {'Identified':'tag-neutral','Outreach Active':'tag-ai','Contacted':'tag-ai','Building':'tag-review','Active Partner':'tag-human','Sent Deal':'tag-hot','Pass':'tag-neutral'};
   var rows = '';
 
@@ -6485,17 +6492,21 @@ function renderAgents() {
       var ctys = getAgentCounties(agent);
       var aid = agent.id;
       rows += '<tr onclick="openAgentDetail(\'' + aid + '\')" style="cursor:pointer;">';
-      rows += '<td style="font-weight:500;">' + (agent.name||'&mdash;') + (nt ? ' <span style="color:var(--amber)">&#9889;</span>' : '') + '</td>';
-      rows += '<td style="color:var(--text2);">' + (agent.brokerage||'&mdash;') + '</td>';
-      rows += '<td style="color:var(--text2);">' + (ctys.length ? ctys.join(', ') : '&mdash;') + '</td>';
-      rows += '<td style="font-family:\'DM Mono\',monospace;font-size:12px;">' + (agent.phone||'&mdash;') + '</td>';
-      rows += '<td style="font-family:\'DM Mono\',monospace;font-size:12px;color:' + (nt?'var(--amber)':'var(--text3)') + ';">' + lastStr + '</td>';
+      rows += '<td style="font-weight:500;">' + (agent.name||'&mdash;') + '</td>';
+      rows += '<td>' + (agent.brokerage||'&mdash;') + '</td>';
+      rows += '<td>' + (ctys.length ? ctys.join(', ') : '&mdash;') + '</td>';
+      rows += '<td>' + (agent.phone||'&mdash;') + '</td>';
+      rows += '<td>' + lastStr + '</td>';
       rows += '<td><span class="tag ' + (sc[agent.stage]||'tag-neutral') + '">' + (agent.stage||'Identified') + '</span></td>';
-      rows += '<td><button class="btn btn-ghost btn-sm" style="font-size:10px;" onclick="event.stopPropagation();logAgentTouch(\'' + aid + '\')">Touch</button></td>';
+      rows += '<td></td>';
       rows += '</tr>';
     });
   });
+
+  console.log('[RA] rows length:', rows.length);
+  console.log('[RA] first 200 of rows:', rows.slice(0,200));
   tbody.innerHTML = rows;
+  console.log('[RA] tbody.innerHTML set, length:', tbody.innerHTML.length);
 }
 
 function openAddAgent(id) {
