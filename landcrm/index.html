@@ -1500,6 +1500,7 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
 
 <script>
 
+
 // ══════════════════════════════════
 // CONSTANTS
 // ══════════════════════════════════
@@ -7186,11 +7187,6 @@ function callTitleCo(id) {
   window.location = 'openphone://call?number=' + (tc.phone||'').replace(/[^0-9+]/g,'');
 }
 
-function callBuyerFromCard(id) {
-  var b = db.buyers.find(function(x){ return x.id===id; });
-  if (!b || !b.phone) return;
-  window.location = 'openphone://call?number=' + (b.phone||'').replace(/[^0-9+]/g,'');
-}
 
 function openAddTitleModal(editId) {
   var tc = editId ? (db.titleCos||[]).find(function(x){ return x.id===editId; }) : null;
