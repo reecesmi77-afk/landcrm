@@ -6412,8 +6412,8 @@ async function openContactEmail(contactId) {
 // ══════════════════════════════════════════════════════
 
 var _agentFilter = 'all';
-const AGENT_STAGES = ['Identified','Outreach Active','Contacted','Building','Active Partner','Sent Deal','Pass'];
-const AGENT_TOUCH_DAYS = { 'Identified':7, 'Outreach Active':3, 'Contacted':14, 'Building':30, 'Active Partner':45, 'Sent Deal':21 };
+var AGENT_STAGES = ['Identified','Outreach Active','Contacted','Building','Active Partner','Sent Deal','Pass'];
+var AGENT_TOUCH_DAYS = { 'Identified':7, 'Outreach Active':3, 'Contacted':14, 'Building':30, 'Active Partner':45, 'Sent Deal':21 };
 
 function daysSince(dateStr) {
   if (!dateStr) return 999;
