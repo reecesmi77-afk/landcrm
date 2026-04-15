@@ -475,7 +475,12 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
         Buyers
         <span class="nb" id="nb-buyers" style="display:none;background:var(--accent)">0</span>
       </button>
-<button class="nav-item" onclick="showView('title')" id="nav-title">
+      <button class="nav-item" onclick="showView('agents')" id="nav-agents">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="5" r="2.5"/><path d="M1 13c0-2.76 2.24-5 5-5s5 2.24 5 5"/><path d="M11 7l1.5 1.5L15 6"/></svg>
+        RE Agents
+        <span class="nb" id="nb-agents" style="display:none;background:var(--purple)">0</span>
+      </button>
+      <button class="nav-item" onclick="showView('title')" id="nav-title">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="1.5"/><path d="M5 6h6M5 8.5h4M5 11h3"/></svg>
         Title & Closing
         <span class="nb" id="nb-title" style="display:none;background:var(--teal)">0</span>
@@ -660,6 +665,8 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
       <!-- hidden elements kept for JS compatibility -->
       <div style="display:none;">
         <span id="s-fu">0</span>
+        <div id="lane-agent-touch"></div>
+        <span id="agent-touch-count">0</span>
       </div>
 
     </div>
@@ -746,31 +753,40 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
     <!-- BUYERS -->
     <div id="view-buyers" class="view">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
-        <div>
-          <div style="font-size:11px;font-family:'DM Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Buyer Network</div>
-          <div style="font-size:13px;color:var(--text2)">Your cash buyers — match deals to buyers instantly.</div>
-        </div>
-        <select class="form-select" id="buyer-county-filter" onchange="renderBuyers()" style="font-size:12px;padding:6px 10px;min-width:180px;">
-          <option value="">All counties</option>
-        </select>
+        <h1 style="font-size:22px;font-weight:600;">Buyers</h1>
+        <button class="btn btn-primary" onclick="openAddBuyer()">+ Add Buyer</button>
       </div>
 
-      <!-- Buyer stats -->
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;" id="buyer-stats"></div>
-
-      <!-- Filter tabs -->
       <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center;">
-        <input class="search-input" type="text" placeholder="Search buyers..." id="buyer-search" oninput="renderBuyers()" style="max-width:200px;">
-        <button class="btn btn-ghost btn-sm buyer-type-btn active" onclick="filterBuyerType('')" id="bt-all">All</button>
-        <button class="btn btn-ghost btn-sm buyer-type-btn" onclick="filterBuyerType('land-banker')" id="bt-land-banker">Land Bankers</button>
-        <button class="btn btn-ghost btn-sm buyer-type-btn" onclick="filterBuyerType('builder')" id="bt-builder">Builders</button>
-        <button class="btn btn-ghost btn-sm buyer-type-btn" onclick="filterBuyerType('retail')" id="bt-retail">Retail</button>
-        <button class="btn btn-ghost btn-sm buyer-type-btn" onclick="filterBuyerType('wholesaler')" id="bt-wholesaler">Wholesalers</button>
-        <button class="btn btn-ghost btn-sm buyer-type-btn" onclick="filterBuyerType('recreational')" id="bt-recreational">Recreational</button>
-        <button class="btn btn-ghost btn-sm buyer-type-btn" onclick="filterBuyerType('farmer')" id="bt-farmer">Farmers</button>
+        <input class="search-input" type="text" placeholder="Search buyers..." id="buyer-search" oninput="renderBuyers()" style="max-width:220px;">
+        <select class="form-select" id="buyer-type-filter" onchange="renderBuyers()" style="font-size:12px;padding:6px 10px;">
+          <option value="">All types</option>
+          <option value="land-banker">Land Banker</option>
+          <option value="builder">Builder</option>
+          <option value="retail">Retail</option>
+          <option value="wholesaler">Wholesaler</option>
+          <option value="recreational">Recreational</option>
+          <option value="farmer">Farmer</option>
+        </select>
+        <select class="form-select" id="buyer-state-filter" onchange="renderBuyers()" style="font-size:12px;padding:6px 10px;">
+          <option value="">All states</option>
+        </select>
+        <span id="buyer-count" style="font-size:11px;color:var(--text3);margin-left:4px;"></span>
       </div>
 
-      <div class="buyer-grid" id="buyer-grid"></div>
+      <div class="card" style="padding:0;overflow:hidden;">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>County / State</th>
+              <th>Type</th>
+              <th>Buy Box</th>
+            </tr>
+          </thead>
+          <tbody id="buyers-tbody"></tbody>
+        </table>
+      </div>
     </div>
 
     <!-- AI QUALIFIED LEADS -->
@@ -1145,8 +1161,37 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
       </div>
     </div>
 
-    <!-- TASKS -->
-    
+    <!-- AGENTS -->
+    <div id="view-agents" class="view">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+        <h1 style="font-size:22px;font-weight:600;">RE Agents</h1>
+        <button class="btn btn-primary" onclick="openAddAgent()">+ Add Agent</button>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center;">
+        <input class="search-input" type="text" placeholder="Search agents..." id="agent-search" oninput="renderAgents()" style="max-width:220px;">
+        <select class="form-select" id="agent-state-filter" onchange="renderAgents()" style="font-size:12px;padding:6px 10px;">
+          <option value="">All states</option>
+        </select>
+        <span id="agent-count" style="font-size:11px;color:var(--text3);margin-left:4px;"></span>
+      </div>
+
+      <div class="card" style="padding:0;overflow:hidden;">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Phone</th>
+              <th>Email</th>
+              <th>City, State</th>
+              <th>Last Contact</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody id="agent-tbody"></tbody>
+        </table>
+      </div>
+    </div>
 
     <!-- TASKS -->
     <div id="view-tasks" class="view">
@@ -1486,14 +1531,14 @@ const SOURCES = ['Lead Gen Agency','Cold SMS','Cold call','Direct mail','Referra
 const CHANNELS = ['SMS','Call','Voicemail','Mail','Email','Agent'];
 const OUTCOMES = ['No response','Voicemail left','Replied','Answered — not interested','Opted out','Wrong number','Callback requested'];
 const HANDOFF_STATES = ['AI handling','Needs human review','Human active'];
-
-
+var AGENT_STAGES = ['Identified','Contacted','Building','Active Partner','Sent Deal'];
+var AGENT_TOUCH_DAYS = { 'Identified':7, 'Contacted':14, 'Building':30, 'Active Partner':45, 'Sent Deal':21 };
 
 // ══════════════════════════════════
 // DATA
 // ══════════════════════════════════
 const KEY = 'landcrm_v2';
-function load(){try{const r=localStorage.getItem(KEY);const d=r?JSON.parse(r):{contacts:[],buyers:[],titleCos:[],tasks:[],lenders:[],referrals:[]};if(!d.titleCos)d.titleCos=[];if(!d.tasks)d.tasks=[];if(!d.lenders)d.lenders=[];if(!d.referrals)d.referrals=[];return d;}catch(e){return{contacts:[],buyers:[],titleCos:[],tasks:[],lenders:[],referrals:[]};}
+function load(){try{const r=localStorage.getItem(KEY);const d=r?JSON.parse(r):{contacts:[],buyers:[],agents:[],titleCos:[],tasks:[],lenders:[],referrals:[]};if(!d.agents)d.agents=[];if(!d.titleCos)d.titleCos=[];if(!d.tasks)d.tasks=[];if(!d.lenders)d.lenders=[];if(!d.referrals)d.referrals=[];return d;}catch(e){return{contacts:[],buyers:[],agents:[],titleCos:[],tasks:[],lenders:[],referrals:[]};}
 }
 function save(){
   localStorage.setItem(KEY,JSON.stringify(db));
@@ -1590,13 +1635,13 @@ function showView(v){
   if(v==='dis-pipeline')renderPipeline('dis');
   if(v==='ai-queue')renderAIQueue();
   if(v==='sellers')renderSellers();
-  if(v==='buyers'){renderBuyers();renderBuyerStats();}
+  if(v==='buyers'){renderBuyers();}
   if(v==='sequences')renderSequences();
   if(v==='settings')renderSettings();
   if(v==='ai-qualified')loadQualifiedLeads();
   if(v==='reporting')renderReporting();
   if(v==='gmail')loadGmailInbox();
-
+  if(v==='agents'){renderAgents();}
 }
 
 // ══════════════════════════════════
@@ -1730,6 +1775,46 @@ function renderCockpit(){
   generateSystemTasks();
   renderTaskCockpitLane();
   updateTaskBadge();
+
+  // Agent touch lane
+  var agentsDue = (db.agents||[]).filter(agentNeedsTouch);
+  var atCount = document.getElementById('agent-touch-count');
+  if (atCount) atCount.textContent = agentsDue.length;
+  var ln4 = document.getElementById('lane-agent-touch');
+  if (ln4) {
+    if (!agentsDue.length) {
+      ln4.innerHTML = '<div style="font-size:13px;color:var(--text3);padding:4px 0;">All agents touched recently</div>';
+    } else {
+      ln4.innerHTML = agentsDue.map(function(agent) {
+        var days = daysSince(agent.lastContact);
+        var aid = agent.id, aname = agent.name||'Unknown';
+        var aphone = (agent.phone||'').replace(/[^0-9+]/g,'');
+        var card = '<div class="cockpit-card" onclick="openAgentDetail(\'' + aid + '\')" style="border-left:3px solid var(--purple);">';
+        card += '<div class="cockpit-name">' + aname + '</div>';
+        card += '<div class="cockpit-sub">' + (agent.brokerage||'Independent') + ' &middot; ' + (agent.markets||'') + '</div>';
+        card += '<div class="cockpit-sub" style="color:var(--amber);">' + days + 'd since last touch &middot; ' + (agent.stage||'') + '</div>';
+        card += '<div class="cockpit-actions">';
+        if (aphone) {
+          card += '<button class="btn btn-primary btn-sm" onclick="event.stopPropagation();window.location=\'openphone://call?number=' + aphone + '\';saveAgentQuickTouch(\'' + aid + '\')">&#128222; Call</button>';
+        }
+        card += '<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();logAgentTouch(\'' + aid + '\')">Log Touch</button>';
+        card += '<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();sendAgentDealAlert(\'' + aid + '\')">Alert</button>';
+        card += '</div></div>';
+        return card;
+      }).join('');
+    }
+  }
+
+function saveAgentQuickTouch(id) {
+  var agent = db.agents ? db.agents.find(function(a){ return a.id === id; }) : null;
+  if (!agent) return;
+  if (!agent.touches) agent.touches = [];
+  agent.touches.push({ date: today(), channel: 'Call', note: 'Called from cockpit' });
+  agent.lastContact = today();
+  if (agent.stage === 'Identified') agent.stage = 'Contacted';
+  save();
+  renderAgentStats();
+}
 
 function logCockpitCall(id){
   var c=db.contacts.find(function(x){return x.id===id;});
@@ -2415,7 +2500,7 @@ function deleteContact(id){
 function openAddContact(editId, prefillType) {
   var c = editId ? db.contacts.find(function(x){return x.id===editId;}) : null;
   var ctype = (c && c.contactType) || prefillType || 'seller';
-  openCustomModal('<div class="modal-header"><div class="modal-title">'+(c?'Edit contact':'Add contact')+'</div><button class="modal-close" onclick="closeModal()">&#x2715;</button></div><div class="modal-body">'+(!c?'<div style="margin-bottom:16px;padding:12px 14px;background:var(--bg3);border-radius:8px;border:1px solid var(--border2);"><div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Quick Import</div><textarea id="f-paste-lead" class="form-textarea" rows="4" placeholder="Paste lead info from email here — CRM will auto-fill the form..."></textarea><button class="btn btn-ghost btn-sm" style="margin-top:6px;" onclick="parsePastedLead()">&#x26A1; Parse &amp; Auto-Fill</button></div>':'')+' <div class="form-group" style="margin-bottom:16px"><label class="form-label">Contact type</label><select class="form-select" id="f-ctype" onchange="updateAddContactFields(this.value,\''+(editId||'')+'\')"><option value="seller" '+(ctype==='seller'?'selected':'')+'>Seller</option><option value="buyer" '+(ctype==='buyer'?'selected':'')+'>Buyer</option><option value="title" '+(ctype==='title'?'selected':'')+'>Title &amp; Closing</option><option value="referral" '+(ctype==='referral'?'selected':'')+'>Referral Partner</option><option value="lender" '+(ctype==='lender'?'selected':'')+'>Lender / Private Money</option><option value="referral" '+(ctype==='referral'?'selected':'')+'>Referral Partner</option></select></div><div id="add-contact-fields"></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveUnifiedContact(\''+(editId||'')+'\')">'+(c?'Save changes':'Add contact')+'</button></div>');
+  openCustomModal('<div class="modal-header"><div class="modal-title">'+(c?'Edit contact':'Add contact')+'</div><button class="modal-close" onclick="closeModal()">&#x2715;</button></div><div class="modal-body">'+(!c?'<div style="margin-bottom:16px;padding:12px 14px;background:var(--bg3);border-radius:8px;border:1px solid var(--border2);"><div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Quick Import</div><textarea id="f-paste-lead" class="form-textarea" rows="4" placeholder="Paste lead info from email here — CRM will auto-fill the form..."></textarea><button class="btn btn-ghost btn-sm" style="margin-top:6px;" onclick="parsePastedLead()">&#x26A1; Parse &amp; Auto-Fill</button></div>':'')+' <div class="form-group" style="margin-bottom:16px"><label class="form-label">Contact type</label><select class="form-select" id="f-ctype" onchange="updateAddContactFields(this.value,\''+(editId||'')+'\')"><option value="seller" '+(ctype==='seller'?'selected':'')+'>Seller</option><option value="buyer" '+(ctype==='buyer'?'selected':'')+'>Buyer</option><option value="title" '+(ctype==='title'?'selected':'')+'>Title &amp; Closing</option><option value="agent" '+(ctype==='agent'?'selected':'')+'>RE Agent</option><option value="referral" '+(ctype==='referral'?'selected':'')+'>Referral Partner</option><option value="lender" '+(ctype==='lender'?'selected':'')+'>Lender / Private Money</option><option value="referral" '+(ctype==='referral'?'selected':'')+'>Referral Partner</option></select></div><div id="add-contact-fields"></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveUnifiedContact(\''+(editId||'')+'\')">'+(c?'Save changes':'Add contact')+'</button></div>');
   updateAddContactFields(ctype, editId||'');
 }
 
@@ -2467,8 +2552,8 @@ function updateAddContactFields(type, editId) {
       '</div>';
 
   } else if(type === 'agent') {
-    toast('RE Agent section is being rebuilt — check back soon', 'info');
     closeModal();
+    setTimeout(function(){ openAddAgent(editId||''); }, 150);
     return;
   } else if(type === 'buyer') {
     closeModal();
@@ -2845,72 +2930,63 @@ function renderBuyerStats() {
   ].map(function(s){ return '<div style="'+statStyle+'"><div style="font-size:11px;color:var(--text3);font-family:monospace;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">'+s[0]+'</div><div style="font-size:24px;font-weight:700;color:'+s[2]+'">'+s[1]+'</div></div>'; }).join('');
 }
 
-function rebuildBuyerCountyFilter() {
-  var sel = document.getElementById('buyer-county-filter');
-  if (!sel) return;
-  var allCounties = new Set();
-  (db.buyers||[]).forEach(function(b) {
-    (b.counties||[]).forEach(function(c){ allCounties.add(c); });
-  });
-  var current = sel.value;
-  var sorted = Array.from(allCounties).sort();
-  sel.innerHTML = '<option value="">All counties</option>' +
-    sorted.map(function(c){ return '<option value="'+c+'"'+(c===current?' selected':'')+'>'+c+'</option>'; }).join('');
-}
+function rebuildBuyerCountyFilter() { /* replaced by buyer-state-filter */ }
 
 function renderBuyers() {
-  var grid = document.getElementById('buyer-grid');
-  if (!grid) return;
-  rebuildBuyerCountyFilter();
+  const search = (document.getElementById('buyer-search')?.value||'').toLowerCase();
+  const typeF = document.getElementById('buyer-type-filter')?.value || '';
+  const stateF = document.getElementById('buyer-state-filter')?.value || '';
 
-  var search = (document.getElementById('buyer-search')?.value||'').toLowerCase();
-  var countyF = document.getElementById('buyer-county-filter')?.value || '';
-
-  var buyers = (db.buyers||[]).filter(function(b) {
-    if (_buyerTypeFilter && b.type !== _buyerTypeFilter) return false;
-    if (countyF && !(b.counties||[]).includes(countyF)) return false;
+  let buyers = (db.buyers||[]).filter(function(b) {
+    if (typeF && b.type !== typeF) return false;
+    if (stateF) {
+      const states = (b.counties||[]).map(c => c.trim().split(' ').pop());
+      if (!states.includes(stateF)) return false;
+    }
     if (search) {
-      var hay = ((b.name||'') + (b.email||'') + (b.phone||'') + (b.type||'')).toLowerCase();
+      const hay = ((b.name||'')+(b.company||'')+(b.phone||'')+(b.type||'')+(b.counties||[]).join(' ')).toLowerCase();
       if (!hay.includes(search)) return false;
     }
     return true;
   });
 
+  // Populate state filter
+  const stateEl = document.getElementById('buyer-state-filter');
+  if (stateEl && stateEl.options.length <= 1) {
+    const allStates = [...new Set((db.buyers||[]).flatMap(b => (b.counties||[]).map(c => c.trim().split(' ').pop())))].sort();
+    allStates.forEach(function(s) {
+      const o = document.createElement('option'); o.value = s; o.textContent = s;
+      stateEl.appendChild(o);
+    });
+  }
+
+  const countEl = document.getElementById('buyer-count');
+  if (countEl) countEl.textContent = buyers.length + ' buyer' + (buyers.length !== 1 ? 's' : '');
+
+  const tbody = document.getElementById('buyers-tbody');
+  if (!tbody) return;
+
   if (!buyers.length) {
-    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--text3);"><div style="font-size:28px;margin-bottom:12px;">💰</div><div style="font-size:13px;margin-bottom:16px;">No buyers found — add your first buyer contact</div></div>';
+    tbody.innerHTML = '<tr><td colspan="4"><div class="empty"><div class="empty-title">No buyers found</div></div></td></tr>';
     return;
   }
 
-  var typeColor = getBuyerTypeColor;
-  var typeLabel = getBuyerTypeLabel;
+  const typeLabels = {'land-banker':'Land Banker','builder':'Builder','retail':'Retail','wholesaler':'Wholesaler','recreational':'Recreational','farmer':'Farmer'};
 
-  grid.innerHTML = buyers.map(function(b) {
-    var color = typeColor(b.type);
-    var lastDays = b.lastContact ? Math.floor((Date.now() - new Date(b.lastContact).getTime())/86400000) : null;
-    var pof = b.proofOfFunds ? '✓ POF' : '';
-    return '<div class="buyer-card" onclick="openBuyerDetail(\'' + b.id + '\')">'+
-      '<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px;">'+
-        '<div style="display:flex;align-items:center;gap:8px;">'+
-          '<div style="width:34px;height:34px;border-radius:50%;background:'+color+'22;border:1px solid '+color+'44;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:13px;color:'+color+';flex-shrink:0;">'+(b.name||'?')[0].toUpperCase()+'</div>'+
-          '<div><div style="font-weight:600;font-size:14px;">'+(b.name||'Unknown')+'</div>'+
-          '<div style="font-size:11px;color:var(--text3);">'+(b.company||'')+'</div></div>'+
-        '</div>'+
-        '<span style="font-size:10px;font-family:monospace;color:'+color+';text-transform:uppercase;letter-spacing:.05em;padding:2px 7px;border-radius:4px;background:'+color+'18;">'+typeLabel(b.type)+'</span>'+
-      '</div>'+
-      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11px;color:var(--text3);margin-bottom:8px;">'+
-        '<span>📐 '+(b.minAcres||0)+'–'+(b.maxAcres||'any')+' acres</span>'+
-        '<span>💵 up to $'+((b.maxPrice||0).toLocaleString())+'</span>'+
-        (b.closeSpeed ? '<span>⚡ '+b.closeSpeed+'</span>' : '')+
-        (pof ? '<span style="color:var(--teal)">'+pof+'</span>' : '')+
-      '</div>'+
-      ((b.counties||[]).length ? '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;">'+
-        (b.counties||[]).map(function(c){ return '<span style="background:var(--adim);border:1px solid var(--border2);border-radius:4px;padding:1px 6px;font-size:10px;color:var(--accent);">'+c+'</span>'; }).join('')+
-      '</div>' : '')+
-      '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;">'+
-        '<span style="font-size:11px;color:var(--text3);">'+(lastDays!==null ? lastDays+'d since contact' : 'Never contacted')+'</span>'+
-        (b.phone ? '<button onclick="event.stopPropagation();callBuyerFromCard(\'' + b.id + '\')\'" class="btn btn-ghost btn-sm" style="font-size:10px;padding:2px 8px;color:var(--accent);">📞 Call</button>' : '')+
-      '</div>'+
-    '</div>';
+  tbody.innerHTML = buyers.map(b => {
+    const counties = (b.counties||[]).join(', ') || '—';
+    const typeLabel = typeLabels[b.type] || b.type || '—';
+    const buyBox = [
+      (b.minAcres||b.maxAcres) ? (b.minAcres||0) + '–' + (b.maxAcres||'∞') + ' ac' : null,
+      b.maxPrice ? 'up to $' + Number(b.maxPrice).toLocaleString() : null,
+      b.closeSpeed || null
+    ].filter(Boolean).join(' · ') || '—';
+    return `<tr onclick="openBuyerDetail('${b.id}')">
+      <td style="font-weight:500">${b.name||'—'}${b.company ? '<div style="font-size:11px;color:var(--text3)">'+b.company+'</div>' : ''}</td>
+      <td style="color:var(--text2)">${counties}</td>
+      <td><span class="tag tag-neutral">${typeLabel}</span></td>
+      <td style="font-size:11px;color:var(--text2)">${buyBox}</td>
+    </tr>`;
   }).join('');
 }
 
@@ -6344,7 +6420,650 @@ async function openContactEmail(contactId) {
 var _agentFilter = 'all';
 
 
+function agentNeedsTouch(agent) {
+  var threshold = AGENT_TOUCH_DAYS[agent.stage] || 30;
+  return daysSince(agent.lastContact) >= threshold;
+}
+
+function renderAgentStats() {}
+
+function filterAgents(filter) {
+  _agentFilter = filter;
+  document.querySelectorAll('.agent-filter-btn').forEach(b => b.classList.remove('active'));
+  var btn = document.getElementById('af-' + (filter === 'Active Partner' ? 'active' : filter === 'needs-touch' ? 'touch' : filter === 'Building' ? 'building' : filter));
+  if (btn) btn.classList.add('active');
+  renderAgents();
+}
+
+function renderAgents() {
+  var tbody = document.getElementById('agent-tbody');
+  if (!tbody) return;
+  var agents = db.agents || [];
+
+  if (!agents.length) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text3);">No agents yet</td></tr>';
+    return;
+  }
+
+  var byState = {};
+  agents.forEach(function(a) {
+    var ctys = getAgentCounties(a);
+    var state = 'Unknown';
+    if (ctys.length) {
+      var words = ctys[0].trim().split(' ');
+      if (words.length >= 2) state = words[words.length - 1];
+    }
+    if (state === 'Unknown' && a.state) state = a.state.trim();
+    if (!byState[state]) byState[state] = [];
+    byState[state].push(a);
+  });
+
+  var sc = {'Identified':'tag-neutral','Outreach Active':'tag-ai','Contacted':'tag-ai','Building':'tag-review','Active Partner':'tag-human','Sent Deal':'tag-hot','Pass':'tag-neutral'};
+  var rows = '';
+
+  Object.keys(byState).sort().forEach(function(state) {
+    var list = byState[state].sort(function(a,b){ return (a.name||'').localeCompare(b.name||''); });
+    rows += '<tr><td colspan="7" style="padding:12px 8px 4px;font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;border-bottom:1px solid var(--border);">' + state + ' (' + list.length + ')</td></tr>';
+    list.forEach(function(agent) {
+      var nt = agentNeedsTouch(agent);
+      var days = agent.lastContact ? daysSince(agent.lastContact) : null;
+      var lastStr = days === null ? '&mdash;' : days === 0 ? 'Today' : days + 'd ago';
+      var ctys = getAgentCounties(agent);
+      var aid = agent.id;
+      rows += '<tr onclick="openAgentDetail(\'' + aid + '\')" style="cursor:pointer;">';
+      rows += '<td style="font-weight:500;">' + (agent.name||'&mdash;') + (nt ? ' <span style="color:var(--amber)">&#9889;</span>' : '') + '</td>';
+      rows += '<td style="color:var(--text2);">' + (agent.brokerage||'&mdash;') + '</td>';
+      rows += '<td style="color:var(--text2);">' + (ctys.length ? ctys.join(', ') : '&mdash;') + '</td>';
+      rows += '<td style="font-family:\'DM Mono\',monospace;font-size:12px;">' + (agent.phone||'&mdash;') + '</td>';
+      rows += '<td style="font-family:\'DM Mono\',monospace;font-size:12px;color:' + (nt?'var(--amber)':'var(--text3)') + ';">' + lastStr + '</td>';
+      rows += '<td><span class="tag ' + (sc[agent.stage]||'tag-neutral') + '">' + (agent.stage||'Identified') + '</span></td>';
+      rows += '<td><button class="btn btn-ghost btn-sm" style="font-size:10px;" onclick="event.stopPropagation();logAgentTouch(\'' + aid + '\')">Touch</button></td>';
+      rows += '</tr>';
+    });
+  });
+  tbody.innerHTML = rows;
+}
+
+function openAddAgent(id) {
+  var agent = id ? db.agents.find(a => a.id === id) : null;
+  var isEdit = !!agent;
+  var intel = agent && agent.intel ? agent.intel : {};
+
+  openCustomModal(`
+    <div class="modal-header">
+      <div class="modal-title">${isEdit ? 'Edit Agent — ' + (agent.name||'') : '+ Add RE Agent'}</div>
+      <button class="modal-close" onclick="closeModal()">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+
+      <!-- BASIC INFO -->
+      <div style="font-size:10px;color:var(--accent);font-family:monospace;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">Agent Info — from Zillow / online</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
+        <div class="form-group" style="grid-column:1/-1">
+          <label class="form-label">Full name *</label>
+          <input class="form-input" id="ag-name" value="${agent?.name||''}" placeholder="Jane Smith">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Phone</label>
+          <input class="form-input" id="ag-phone" value="${agent?.phone||''}" placeholder="901-555-0100">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input class="form-input" id="ag-email" value="${agent?.email||''}" placeholder="jane@realty.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Brokerage</label>
+          <input class="form-input" id="ag-brokerage" value="${agent?.brokerage||''}" placeholder="Coldwell Banker">
+        </div>
+        <div class="form-group" style="grid-column:1/-1">
+          <label class="form-label">Counties covered <span style="color:var(--text3);font-size:10px;font-weight:400">— click to add, click tag to remove</span></label>
+          <div style="display:flex;gap:6px;margin-bottom:8px;">
+            <input class="form-input" id="ag-county-input" placeholder="County name" style="flex:1;" onkeydown="if(event.key==='Enter'){event.preventDefault();addAgentCounty();}">
+            <select class="form-select" id="ag-county-state" style="width:80px;">
+              ${['TN','MS','AR','MO','AL','KY','GA','TX','OK','LA'].map(s => '<option>'+s+'</option>').join('')}
+            </select>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="addAgentCounty()">+ Add</button>
+          </div>
+          <div id="ag-county-tags" style="display:flex;flex-wrap:wrap;gap:6px;min-height:28px;">
+            ${(agent && agent.counties ? agent.counties : []).map(c => '<span style="background:var(--adim);border:1px solid var(--border2);border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer;color:var(--accent);" onclick="this.remove();syncAgentCounties()">' + c + ' ✕</span>').join('')}
+          </div>
+          <input type="hidden" id="ag-markets" value="${agent?.markets||''}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Stage</label>
+          <select class="form-input" id="ag-stage">
+            ${AGENT_STAGES.map(s => '<option value="'+s+'" '+(((agent&&agent.stage)||'Identified')===s?'selected':'')+'>'+s+'</option>').join('')}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Preferred contact</label>
+          <select class="form-input" id="ag-contact-pref">
+            <option value="" ${!intel.contactPref?'selected':''}>Not asked yet</option>
+            <option value="Call" ${intel.contactPref==='Call'?'selected':''}>Call</option>
+            <option value="Text" ${intel.contactPref==='Text'?'selected':''}>Text</option>
+            <option value="Email" ${intel.contactPref==='Email'?'selected':''}>Email</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Deals referred</label>
+          <input class="form-input" type="number" id="ag-deals" value="${agent?.dealsReferred||0}" min="0">
+        </div>
+      </div>
+
+      <!-- DISCOVERY SCRIPT -->
+      <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:14px 16px;margin-bottom:16px;">
+        <div style="font-size:10px;color:var(--amber);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px;">📞 Discovery Call Script — use on first call, fill as you go</div>
+
+        <div style="font-size:12px;color:var(--text2);background:var(--bg4);border-left:3px solid var(--accent);padding:8px 12px;border-radius:0 6px 6px 0;margin-bottom:14px;line-height:1.6;">
+          <strong style="color:var(--text)">Opener:</strong> "Hey ${agent?.name?.split(' ')[0]||'[Name]'}, this is William Smith with Coldwater Property Group. I buy vacant land across the mid-south and I came across your name — looks like you do some work out in [their market]. Do you have just two or three minutes? I'd love to introduce myself and honestly just pick your brain a little."
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:12px;">
+
+          <div style="border-bottom:1px solid var(--border);padding-bottom:12px;">
+            <div style="font-size:11px;color:var(--accent);font-family:monospace;margin-bottom:4px;">Q1 — What's selling</div>
+            <div style="font-size:12px;color:var(--text2);margin-bottom:6px;font-style:italic;">"What type of vacant land seems to be moving best in your market right now — are you seeing more demand for recreational stuff, residential lots, rural acreage?"</div>
+            <input class="form-input" id="ag-intel-selling" value="${intel.whatsSelling||''}" placeholder="Their answer — recreational, lots, pasture, etc." style="font-size:11px;">
+          </div>
+
+          <div style="border-bottom:1px solid var(--border);padding-bottom:12px;">
+            <div style="font-size:11px;color:var(--accent);font-family:monospace;margin-bottom:4px;">Q2 — Price range sweet spot</div>
+            <div style="font-size:12px;color:var(--text2);margin-bottom:6px;font-style:italic;">"What price range are buyers actually showing up for out there? Like where does it start feeling slow?"</div>
+            <input class="form-input" id="ag-intel-price" value="${intel.priceRange||''}" placeholder="e.g. Under $50k moves fast, $100k+ sits" style="font-size:11px;">
+          </div>
+
+          <div style="border-bottom:1px solid var(--border);padding-bottom:12px;">
+            <div style="font-size:11px;color:var(--accent);font-family:monospace;margin-bottom:4px;">Q3 — Seller pain points</div>
+            <div style="font-size:12px;color:var(--text2);margin-bottom:6px;font-style:italic;">"What's the biggest headache your land sellers run into — is it pricing, sitting on the market, title stuff?"</div>
+            <input class="form-input" id="ag-intel-pain" value="${intel.sellerPain||''}" placeholder="e.g. Unrealistic pricing, long days on market" style="font-size:11px;">
+          </div>
+
+          <div style="border-bottom:1px solid var(--border);padding-bottom:12px;">
+            <div style="font-size:11px;color:var(--accent);font-family:monospace;margin-bottom:4px;">Q4 — Cash buyer relationship</div>
+            <div style="font-size:12px;color:var(--text2);margin-bottom:6px;font-style:italic;">"Do you currently have a cash buyer you work with for land that just needs to move quick?"</div>
+            <select class="form-input" id="ag-intel-cashbuyer" style="font-size:11px;">
+              <option value="" ${!intel.hasCashBuyer?'selected':''}>Not asked yet</option>
+              <option value="no" ${intel.hasCashBuyer==='no'?'selected':''}>No — opening for us</option>
+              <option value="yes" ${intel.hasCashBuyer==='yes'?'selected':''}>Yes — has someone already</option>
+              <option value="sometimes" ${intel.hasCashBuyer==='sometimes'?'selected':''}>Sometimes — not consistent</option>
+            </select>
+          </div>
+
+          <div style="border-bottom:1px solid var(--border);padding-bottom:12px;">
+            <div style="font-size:11px;color:var(--accent);font-family:monospace;margin-bottom:4px;">Q5 — Days on market</div>
+            <div style="font-size:12px;color:var(--text2);margin-bottom:6px;font-style:italic;">"Roughly how long is land sitting before it moves out there right now?"</div>
+            <input class="form-input" id="ag-intel-dom" value="${intel.daysOnMarket||''}" placeholder="e.g. 60-90 days, 6+ months for larger parcels" style="font-size:11px;">
+          </div>
+
+          <div>
+            <div style="font-size:11px;color:var(--accent);font-family:monospace;margin-bottom:4px;">Q6 — How they prefer referrals</div>
+            <div style="font-size:12px;color:var(--text2);margin-bottom:6px;font-style:italic;">"If you ever came across a seller who just needed to move their land quickly and didn't want to go the MLS route — what's the best way to loop me in?"</div>
+            <input class="form-input" id="ag-intel-referral" value="${intel.referralProcess||''}" placeholder="e.g. Text me the address, email details, call first" style="font-size:11px;">
+          </div>
+
+        </div>
+
+        <div style="font-size:12px;color:var(--text2);background:var(--bg4);border-left:3px solid var(--teal);padding:8px 12px;border-radius:0 6px 6px 0;margin-top:14px;line-height:1.6;">
+          <strong style="color:var(--text)">Close:</strong> "This has been really helpful — I appreciate you taking a few minutes. We close in 2-3 weeks, all cash, cover all closing costs, no contingencies. If you ever have a seller who just needs it gone, I'd love to be your first call. I'll shoot you a quick email so you have my info."
+        </div>
+      </div>
+
+      <!-- NOTES -->
+      <div class="form-group">
+        <label class="form-label">Additional notes</label>
+        <textarea class="form-textarea" id="ag-note" style="min-height:60px;" placeholder="Anything else worth remembering...">${agent?.notes?.length ? agent.notes[agent.notes.length-1].text : ''}</textarea>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveAgent('${id||''}')">${isEdit ? 'Save Changes' : 'Add Agent'}</button>
+    </div>`);
+  setTimeout(() => document.getElementById('ag-name')?.focus(), 100);
+}
+
+function addAgentCounty() {
+  var county = document.getElementById('ag-county-input')?.value?.trim();
+  var state = document.getElementById('ag-county-state')?.value || 'TN';
+  if (!county) return;
+  var tag = county + ' ' + state;
+  var tagsEl = document.getElementById('ag-county-tags');
+  if (!tagsEl) return;
+  // Check for duplicate
+  var existing = Array.from(tagsEl.querySelectorAll('span')).map(s => s.textContent.replace(' ✕','').trim());
+  if (existing.includes(tag)) { toast('Already added', 'info'); return; }
+  var span = document.createElement('span');
+  span.style.cssText = 'background:var(--adim);border:1px solid var(--border2);border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer;color:var(--accent);';
+  span.textContent = tag + ' ✕';
+  span.onclick = function(){ this.remove(); syncAgentCounties(); };
+  tagsEl.appendChild(span);
+  document.getElementById('ag-county-input').value = '';
+  document.getElementById('ag-county-input').focus();
+  syncAgentCounties();
+}
+
+function syncAgentCounties() {
+  var tagsEl = document.getElementById('ag-county-tags');
+  if (!tagsEl) return;
+  var counties = Array.from(tagsEl.querySelectorAll('span')).map(s => s.textContent.replace(' ✕','').trim());
+  var hidden = document.getElementById('ag-markets');
+  if (hidden) hidden.value = counties.join(', ');
+}
+
+function getAgentCounties(agent) {
+  if (agent.counties && agent.counties.length) return agent.counties;
+  if (agent.markets) return agent.markets.split(',').map(m => m.trim()).filter(Boolean);
+  return [];
+}
+
 var _agentCountyFilter = '';
+
+function filterAgentsByCounty(county) {
+  _agentCountyFilter = county;
+  renderAgents();
+}
+
+function rebuildCountyFilter() {
+  var sel = document.getElementById('agent-county-filter');
+  if (!sel) return;
+  var allCounties = new Set();
+  (db.agents||[]).forEach(function(a) {
+    getAgentCounties(a).forEach(function(c) { allCounties.add(c); });
+  });
+  var sorted = Array.from(allCounties).sort();
+  sel.innerHTML = '<option value="">All counties</option>' +
+    sorted.map(c => '<option value="'+c+'"'+(c===_agentCountyFilter?' selected':'')+'>'+c+'</option>').join('');
+}
+
+function saveAgent(id) {
+  var name = document.getElementById('ag-name')?.value?.trim();
+  if (!name) { toast('Name required', 'error'); return; }
+  var noteText = document.getElementById('ag-note')?.value?.trim();
+
+  // Capture discovery intel
+  var intel = {
+    whatsSelling: document.getElementById('ag-intel-selling')?.value?.trim() || '',
+    priceRange: document.getElementById('ag-intel-price')?.value?.trim() || '',
+    sellerPain: document.getElementById('ag-intel-pain')?.value?.trim() || '',
+    hasCashBuyer: document.getElementById('ag-intel-cashbuyer')?.value || '',
+    daysOnMarket: document.getElementById('ag-intel-dom')?.value?.trim() || '',
+    referralProcess: document.getElementById('ag-intel-referral')?.value?.trim() || '',
+    contactPref: document.getElementById('ag-contact-pref')?.value || '',
+  };
+
+  if (id) {
+    var agent = db.agents.find(a => a.id === id);
+    if (!agent) return;
+    agent.name = name;
+    agent.phone = document.getElementById('ag-phone')?.value?.trim() || '';
+    agent.email = document.getElementById('ag-email')?.value?.trim() || '';
+    agent.brokerage = document.getElementById('ag-brokerage')?.value?.trim() || '';
+    agent.markets = document.getElementById('ag-markets')?.value?.trim() || '';
+    agent.stage = document.getElementById('ag-stage')?.value || 'Identified';
+    agent.dealsReferred = parseInt(document.getElementById('ag-deals')?.value||0);
+    agent.intel = intel;
+    // Capture counties from tag picker
+    var countiesRaw = document.getElementById('ag-markets')?.value?.trim() || '';
+    agent.counties = countiesRaw ? countiesRaw.split(',').map(c => c.trim()).filter(Boolean) : [];
+    agent.markets = agent.counties.join(', ');
+    if (noteText) { if(!agent.notes)agent.notes=[]; agent.notes.unshift({date:today(),text:noteText}); }
+    var intelFilled = intel.whatsSelling || intel.priceRange || intel.hasCashBuyer;
+    if (intelFilled && agent.stage === 'Identified') agent.stage = 'Contacted';
+  } else {
+    var intelFilled = intel.whatsSelling || intel.priceRange || intel.hasCashBuyer;
+    var countiesRaw = document.getElementById('ag-markets')?.value?.trim() || '';
+    var counties = countiesRaw ? countiesRaw.split(',').map(c => c.trim()).filter(Boolean) : [];
+    var newAgent = {
+      id: uid(),
+      name,
+      phone: document.getElementById('ag-phone')?.value?.trim() || '',
+      email: document.getElementById('ag-email')?.value?.trim() || '',
+      brokerage: document.getElementById('ag-brokerage')?.value?.trim() || '',
+      markets: counties.join(', '),
+      counties,
+      stage: intelFilled ? 'Contacted' : 'Identified',
+      dealsReferred: parseInt(document.getElementById('ag-deals')?.value||0),
+      intel,
+      lastContact: intelFilled ? today() : null,
+      created: today(),
+      notes: noteText ? [{date:today(), text:noteText}] : [],
+      touches: intelFilled ? [{date:today(), channel:'Call', note:'Discovery call — intel captured'}] : [],
+    };
+    db.agents.unshift(newAgent);
+    // Fire outreach sequence if added directly as Outreach Active
+    if (newAgent.stage === 'Outreach Active' && newAgent.phone) {
+      setTimeout(function(){ createAgentOutreachTasks(newAgent); }, 300);
+    }
+  }
+  save();
+  closeModal();
+  renderAgents();
+  renderAgentStats();
+  toast((id ? 'Agent updated — ' : 'Agent added — ') + name, 'success');
+}
+
+function openAgentDetail(id) {
+  var agent = db.agents.find(a => a.id === id);
+  if (!agent) return;
+  var needsTouch = agentNeedsTouch(agent);
+  var days = daysSince(agent.lastContact);
+
+  openCustomModal(`
+    <div class="modal-header">
+      <div class="modal-title">${agent.name}</div>
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-ghost btn-sm" onclick="closeModal();openAddAgent('${id}')">Edit</button>
+        <button class="modal-close" onclick="closeModal()">&#x2715;</button>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+        ${agent.phone ? `<button class="btn btn-primary btn-sm" onclick="window.location='openphone://call?number=${encodeURIComponent(agent.phone)}'">📞 Call ${agent.name.split(' ')[0]}</button>` : ''}
+        ${agent.phone ? `<button class="btn btn-ghost btn-sm" onclick="window.location='openphone://conversation?number=${encodeURIComponent(agent.phone)}'">💬 Text</button>` : ''}
+        ${agent.email ? `<button class="btn btn-ghost btn-sm" onclick="openContactEmailDirect('${agent.email}','${agent.name}')">✉️ Email</button>` : ''}
+        <button class="btn btn-ghost btn-sm" onclick="logAgentTouch('${id}')">✓ Log Touch</button>
+        <button class="btn btn-ghost btn-sm" style="color:var(--amber)" onclick="sendAgentDealAlert('${id}')">🤝 Send Deal Alert</button>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px;">
+        <div style="background:var(--bg3);border-radius:6px;padding:10px;">
+          <div style="font-size:10px;color:var(--text3);margin-bottom:3px;font-family:'DM Mono',monospace">STAGE</div>
+          <div style="font-size:13px;font-weight:600">${agent.stage}</div>
+        </div>
+        <div style="background:var(--bg3);border-radius:6px;padding:10px;">
+          <div style="font-size:10px;color:var(--text3);margin-bottom:3px;font-family:'DM Mono',monospace">LAST CONTACT</div>
+          <div style="font-size:13px;font-weight:600;color:${needsTouch?'var(--amber)':'var(--text)'}">${agent.lastContact ? days+'d ago' : 'Never'}</div>
+        </div>
+        <div style="background:var(--bg3);border-radius:6px;padding:10px;">
+          <div style="font-size:10px;color:var(--text3);margin-bottom:3px;font-family:'DM Mono',monospace">DEALS REFERRED</div>
+          <div style="font-size:13px;font-weight:600;color:var(--teal)">${agent.dealsReferred||0}</div>
+        </div>
+      </div>
+
+      ${agent.intel && (agent.intel.whatsSelling || agent.intel.priceRange || agent.intel.sellerPain || agent.intel.hasCashBuyer) ? `
+      <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:12px 14px;margin-bottom:14px;">
+        <div style="font-size:10px;color:var(--amber);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">📊 Market Intel — from discovery call</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:11px;">
+          ${agent.intel.whatsSelling ? '<div><span style="color:var(--text3)">What\'s selling:</span><br><span style="color:var(--text2)">' + agent.intel.whatsSelling + '</span></div>' : ''}
+          ${agent.intel.priceRange ? '<div><span style="color:var(--text3)">Price sweet spot:</span><br><span style="color:var(--text2)">' + agent.intel.priceRange + '</span></div>' : ''}
+          ${agent.intel.sellerPain ? '<div><span style="color:var(--text3)">Seller pain:</span><br><span style="color:var(--text2)">' + agent.intel.sellerPain + '</span></div>' : ''}
+          ${agent.intel.daysOnMarket ? '<div><span style="color:var(--text3)">Days on market:</span><br><span style="color:var(--text2)">' + agent.intel.daysOnMarket + '</span></div>' : ''}
+          ${agent.intel.hasCashBuyer ? '<div><span style="color:var(--text3)">Cash buyer:</span><br><span style="color:' + (agent.intel.hasCashBuyer==='no'?'var(--teal)':'var(--amber)') + '">' + (agent.intel.hasCashBuyer==='no'?'No — we have an opening':agent.intel.hasCashBuyer==='yes'?'Yes — has someone':'Sometimes — not consistent') + '</span></div>' : ''}
+          ${agent.intel.referralProcess ? '<div><span style="color:var(--text3)">Referral pref:</span><br><span style="color:var(--text2)">' + agent.intel.referralProcess + '</span></div>' : ''}
+        </div>
+      </div>` : ''}
+
+      <!-- Email Templates -->
+      <div style="margin-bottom:14px;">
+        <div style="font-size:10px;color:var(--text3);font-family:monospace;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">✉️ Email Templates</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="btn btn-ghost btn-sm" onclick="sendAgentEmail('${id}','intro')" style="font-size:11px;">Introduction</button>
+          <button class="btn btn-ghost btn-sm" onclick="sendAgentEmail('${id}','followup')" style="font-size:11px;">Follow-up</button>
+          <button class="btn btn-ghost btn-sm" onclick="sendAgentEmail('${id}','dealAlert')" style="font-size:11px;">Deal Alert</button>
+          <button class="btn btn-ghost btn-sm" onclick="sendAgentEmail('${id}','quarterly')" style="font-size:11px;">Quarterly Check-in</button>
+          <button class="btn btn-ghost btn-sm" onclick="sendAgentEmail('${id}','holiday')" style="font-size:11px;">Holiday Touch</button>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;font-size:12px;">
+        ${agent.brokerage ? `<div><span style="color:var(--text3)">Brokerage:</span> ${agent.brokerage}</div>` : ''}
+        ${agent.markets ? `<div><span style="color:var(--text3)">Markets:</span> ${agent.markets}</div>` : ''}
+        ${agent.specialty ? `<div><span style="color:var(--text3)">Specialty:</span> ${agent.specialty}</div>` : ''}
+        ${agent.email ? `<div><span style="color:var(--text3)">Email:</span> ${agent.email}</div>` : ''}
+      </div>
+
+      <!-- Stage progression -->
+      <div style="margin-bottom:14px;">
+        <div style="font-size:10px;color:var(--text3);font-family:monospace;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Move Stage</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          ${AGENT_STAGES.map(s => `<button class="btn btn-ghost btn-sm" onclick="moveAgentStage('${id}','${s}')" style="${s===agent.stage?'border-color:var(--accent);color:var(--accent);':''}font-size:11px;">${s}</button>`).join('')}
+        </div>
+      </div>
+
+      <!-- Touch history -->
+      <div style="margin-bottom:14px;">
+        <div style="font-size:10px;color:var(--text3);font-family:monospace;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Touch History</div>
+        ${(agent.touches||[]).length ? (agent.touches).slice().reverse().slice(0,5).map(t => `
+          <div style="display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:11px;">
+            <span style="color:var(--text3);min-width:70px">${t.date}</span>
+            <span style="color:var(--accent);min-width:50px">${t.channel}</span>
+            <span style="color:var(--text2)">${t.note||''}</span>
+          </div>`).join('') : '<div style="font-size:11px;color:var(--text3)">No touches logged yet</div>'}
+      </div>
+
+      <!-- Notes -->
+      <div>
+        <div style="font-size:10px;color:var(--text3);font-family:monospace;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Notes</div>
+        <textarea class="form-textarea" id="agent-note-input" style="min-height:60px;margin-bottom:8px;" placeholder="Add a note..."></textarea>
+        <button class="btn btn-ghost btn-sm" onclick="addAgentNote('${id}')">Save Note</button>
+        <div style="margin-top:10px;">
+          ${(agent.notes||[]).slice(0,4).map(n => `<div style="font-size:11px;color:var(--text2);padding:4px 0;border-bottom:1px solid var(--border);"><span style="color:var(--text3)">${n.date} — </span>${n.text}</div>`).join('')}
+        </div>
+      </div>
+    </div>`);
+}
+
+function createAgentOutreachTasks(agent) {
+  if (!agent || !agent.phone) return;
+  var first = agent.name ? agent.name.split(' ')[0] : 'there';
+  var today_date = today();
+
+  function addDays(d, n) {
+    var dt = new Date(d);
+    dt.setDate(dt.getDate() + n);
+    return dt.toISOString().slice(0,10);
+  }
+
+  var tasks = [
+    {
+      id: uid(),
+      title: 'Agent SMS 1  -  ' + agent.name,
+      contactId: agent.id,
+      contactName: agent.name,
+      contactType: 'agent',
+      dueDate: today_date,
+      type: 'SMS',
+      priority: 'high',
+      done: false,
+      created: today_date,
+      note: 'SEND THIS TEXT:\n\n"Hey ' + first + '  -  William with Coldwater Property Group. I\'m a cash land buyer in AR focusing on 2-20 acre rural tracts. Close in 2-3 weeks, no contingencies. Just wanted to get on your radar."\n\nPhone: ' + agent.phone
+    },
+    {
+      id: uid(),
+      title: 'Agent SMS 2  -  ' + agent.name,
+      contactId: agent.id,
+      contactName: agent.name,
+      contactType: 'agent',
+      dueDate: addDays(today_date, 4),
+      type: 'SMS',
+      priority: 'normal',
+      done: false,
+      created: today_date,
+      note: 'SEND THIS TEXT:\n\n"Hey ' + first + '  -  following up. If you have any rural acreage listings that have been sitting 60+ days, those are exactly what I look for. Happy to move fast if the numbers work."\n\nPhone: ' + agent.phone
+    },
+    {
+      id: uid(),
+      title: 'Agent SMS 3  -  ' + agent.name,
+      contactId: agent.id,
+      contactName: agent.name,
+      contactType: 'agent',
+      dueDate: addDays(today_date, 8),
+      type: 'SMS',
+      priority: 'normal',
+      done: false,
+      created: today_date,
+      note: 'SEND THIS TEXT:\n\n"' + first + '  -  last message from me for now. If you ever have a seller who needs a fast cash close on rural land, I\'m your guy.  -  William, Coldwater Property Group"\n\nPhone: ' + agent.phone
+    },
+    {
+      id: uid(),
+      title: 'Agent CALL  -  ' + agent.name + ' (no reply to texts)',
+      contactId: agent.id,
+      contactName: agent.name,
+      contactType: 'agent',
+      dueDate: addDays(today_date, 10),
+      type: 'Call',
+      priority: 'high',
+      done: false,
+      created: today_date,
+      note: 'CALL SCRIPT:\n\n"Hey ' + first + ', this is William with Coldwater Property Group. I\'m a cash land buyer  -  I buy rural acreage in the 2-20 acre range in Arkansas. I close in 2-3 weeks, no financing, no contingencies. I\'m specifically looking for properties that have been sitting a while or sellers who need to move quickly. Do you have anything like that right now or coming up?"\n\nPhone: ' + agent.phone
+    }
+  ];
+
+  if (!db.tasks) db.tasks = [];
+  tasks.forEach(function(t) { db.tasks.push(t); });
+  save();
+  updateTaskBadge();
+  toast('Outreach sequence created for ' + agent.name + '  -  3 texts + call reminder added to Tasks', 'success');
+}
+
+function moveAgentStage(id, stage) {
+  var agent = db.agents.find(a => a.id === id);
+  if (!agent) return;
+  var prevStage = agent.stage;
+  agent.stage = stage;
+  save();
+  // Fire outreach sequence when moved to Outreach Active
+  if (stage === 'Outreach Active' && prevStage !== 'Outreach Active') {
+    var alreadyHasTasks = (db.tasks||[]).some(function(t){
+      return t.contactId === agent.id && t.contactType === 'agent' && !t.done;
+    });
+    if (!alreadyHasTasks) {
+      createAgentOutreachTasks(agent);
+    } else {
+      toast(agent.name + ' → Outreach Active (tasks already exist)', 'info');
+    }
+  } else {
+    toast(agent.name + ' → ' + stage, 'success');
+  }
+  closeModal();
+  openAgentDetail(id);
+  renderAgents();
+  renderAgentStats();
+}
+
+function logAgentTouch(id) {
+  var agent = db.agents.find(a => a.id === id);
+  if (!agent) return;
+  openCustomModal(`
+    <div class="modal-header">
+      <div class="modal-title">Log touch — ${agent.name}</div>
+      <button class="modal-close" onclick="closeModal()">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group" style="margin-bottom:10px">
+        <label class="form-label">Channel</label>
+        <select class="form-input" id="touch-channel">
+          <option>Call</option><option>Text</option><option>Email</option><option>In person</option><option>Referral received</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes</label>
+        <textarea class="form-textarea" id="touch-note" style="min-height:70px;" placeholder="What was discussed..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveAgentTouch('${id}')">Log Touch</button>
+    </div>`);
+  setTimeout(() => document.getElementById('touch-note')?.focus(), 100);
+}
+
+function saveAgentTouch(id) {
+  var agent = db.agents.find(a => a.id === id);
+  if (!agent) return;
+  var channel = document.getElementById('touch-channel')?.value || 'Call';
+  var note = document.getElementById('touch-note')?.value?.trim() || '';
+  if (!agent.touches) agent.touches = [];
+  agent.touches.push({ date: today(), channel, note });
+  agent.lastContact = today();
+  // Auto-advance stage
+  if (agent.stage === 'Identified') agent.stage = 'Contacted';
+  save();
+  closeModal();
+  renderAgents();
+  renderAgentStats();
+  toast('Touch logged for ' + agent.name, 'success');
+}
+
+function addAgentNote(id) {
+  var agent = db.agents.find(a => a.id === id);
+  if (!agent) return;
+  var text = document.getElementById('agent-note-input')?.value?.trim();
+  if (!text) return;
+  if (!agent.notes) agent.notes = [];
+  agent.notes.unshift({ date: today(), text });
+  save();
+  closeModal();
+  openAgentDetail(id);
+  toast('Note saved', 'success');
+}
+
+function sendAgentDealAlert(id) {
+  var agent = db.agents.find(a => a.id === id);
+  if (!agent || !agent.email) { toast('Agent needs an email address', 'error'); return; }
+  var subject = 'Just closed a deal in your market — Coldwater Property Group';
+  var body = `Hi ${agent.name.split(' ')[0]},\n\nJust wanted to reach out — we recently closed on a vacant land deal in your market and are actively looking for more opportunities.\n\nIf you come across any sellers who need a quick, hassle-free solution for their land, we close in 2-3 weeks, all cash, no contingencies, and cover all closing costs.\n\nWould love to be a resource for you and your clients.\n\nBest,\nWilliam Smith\nColdwater Property Group`;
+  openCompose(agent.email, subject, body);
+}
+
+function sendAgentEmail(id, templateType) {
+  var agent = db.agents.find(a => a.id === id);
+  if (!agent) return;
+  if (!agent.email) { toast('Add an email address for ' + agent.name + ' first', 'error'); return; }
+
+  var first = agent.name ? agent.name.split(' ')[0] : 'there';
+  var market = agent.markets || 'your market';
+  var intel = agent.intel || {};
+
+  var templates = {
+
+    intro: {
+      subject: 'Coldwater Property Group — Quick Introduction',
+      body: 'Hi ' + first + ',\n\nGreat speaking with you earlier. Just wanted to follow up as promised with my contact info.\n\nI\'m William Smith with Coldwater Property Group. We buy vacant land across the mid-south — all cash, 2-3 week close, we cover all closing costs and there are no contingencies.\n\nFor sellers who need a quick, hassle-free solution and don\'t want to go the traditional listing route, we\'re usually a great fit.\n\nIf you ever come across someone in ' + market + ' who just needs their land gone — I\'d love to be your first call. No pressure at all, just wanted to make sure you had my number.\n\nThanks again for your time,\nWilliam Smith\nColdwater Property Group\n(901) 899-6698'
+    },
+
+    followup: {
+      subject: 'Following up — Coldwater Property Group',
+      body: 'Hi ' + first + ',\n\nHope things are going well out in ' + market + '. Just checking in to stay on your radar.\n\nWe\'re still actively buying vacant land in your area — all cash, quick close, no agent fees to your sellers.\n\nIf anything comes across your desk where a seller just needs to move it fast, I\'m always available.\n\nThanks,\nWilliam Smith\nColdwater Property Group\n(901) 899-6698'
+    },
+
+    dealAlert: {
+      subject: 'Just closed in ' + market + ' — Coldwater Property Group',
+      body: 'Hi ' + first + ',\n\nQuick update — we just closed on a vacant land deal in ' + market + ' and we\'re actively looking for more.\n\nWe move fast and we\'re serious buyers. If any of your clients are sitting on land and just want a quick, clean exit — that\'s exactly what we do.\n\nNo MLS, no contingencies, no waiting. Just a straightforward cash offer and a fast close.\n\nWould love to work together if the opportunity comes up.\n\nBest,\nWilliam Smith\nColdwater Property Group\n(901) 899-6698'
+    },
+
+    quarterly: {
+      subject: 'Checking in — Q' + Math.ceil((new Date().getMonth()+1)/3) + ' ' + new Date().getFullYear(),
+      body: 'Hi ' + first + ',\n\nJust a quick check-in — hope business is going well.\n\nWe\'ve been staying busy buying land across ' + market + ' and the surrounding area. Still closing fast, all cash, no contingencies.\n\nAnything interesting coming across your desk lately? Always happy to take a look if you have a seller who needs a different kind of solution.\n\nHope to hear from you,\nWilliam Smith\nColdwater Property Group\n(901) 899-6698'
+    },
+
+    holiday: {
+      subject: 'Happy Holidays from Coldwater Property Group',
+      body: 'Hi ' + first + ',\n\nJust wanted to reach out and wish you a great holiday season.\n\nThank you for being on my radar this year — I hope we get the chance to work together in ' + (new Date().getFullYear()+1) + '.\n\nAs always, if you ever have a land seller who needs a fast, simple solution — I\'m just a call away.\n\nHappy holidays,\nWilliam Smith\nColdwater Property Group\n(901) 899-6698'
+    }
+  };
+
+  var tmpl = templates[templateType];
+  if (!tmpl) return;
+
+  // Log a touch when sending an email template
+  if (!agent.touches) agent.touches = [];
+  agent.touches.push({ date: today(), channel: 'Email', note: 'Sent ' + templateType + ' template' });
+  agent.lastContact = today();
+  if (agent.stage === 'Identified') agent.stage = 'Contacted';
+  save();
+  renderAgents();
+  renderAgentStats();
+
+  closeModal();
+  openCompose(agent.email, tmpl.subject, tmpl.body);
+}
+
+function openContactEmailDirect(email, name) {
+  var first = name ? name.split(' ')[0] : '';
+  openCompose(email, 'Following up — Coldwater Property Group', 'Hi ' + first + ',');
+}
+
 
 // ══════════════════════════════════════════════════════
 // TITLE & CLOSING COMPANIES
@@ -7312,10 +8031,9 @@ function generateSystemTasks() {
   var existingKeys = existing.map(function(t){ return t.systemKey||''; });
   var newTasks = [];
 
-  // Agents overdue for touch — RE Agents section being rebuilt
+  // Agents overdue for touch
   (db.agents||[]).forEach(function(agent) {
-    var agentThreshold = 30;
-    if (daysSince(agent.lastContact) < agentThreshold) return;
+    if (!agentNeedsTouch(agent)) return;
     var key = 'agent-touch-'+agent.id;
     if (existingKeys.includes(key)) return;
     newTasks.push({
@@ -8380,6 +9098,148 @@ updateModeIcon(document.body.classList.contains('light'));
 renderDashboard();
 syncFromQuo();
 setInterval(syncFromQuo,60000);
+
+function renderAgents() {
+  const search = (document.getElementById('agent-search')?.value||'').toLowerCase();
+  const stateF = document.getElementById('agent-state-filter')?.value || '';
+
+  let agents = (db.agents||[]).filter(function(a) {
+    if (stateF && (a.cityState||'').toUpperCase().indexOf(stateF.toUpperCase()) === -1) return false;
+    if (search) {
+      const hay = ((a.name||'')+(a.phone||'')+(a.email||'')+(a.cityState||'')+(a.notes||'')).toLowerCase();
+      if (!hay.includes(search)) return false;
+    }
+    return true;
+  });
+
+  // Populate state filter once
+  const stateEl = document.getElementById('agent-state-filter');
+  if (stateEl && stateEl.options.length <= 1) {
+    const states = [...new Set((db.agents||[]).map(a => {
+      const parts = (a.cityState||'').trim().split(',');
+      return parts.length > 1 ? parts[parts.length-1].trim() : '';
+    }).filter(Boolean))].sort();
+    states.forEach(function(s) {
+      const o = document.createElement('option'); o.value = s; o.textContent = s;
+      stateEl.appendChild(o);
+    });
+  }
+
+  const countEl = document.getElementById('agent-count');
+  if (countEl) countEl.textContent = agents.length + ' agent' + (agents.length !== 1 ? 's' : '');
+
+  const tbody = document.getElementById('agent-tbody');
+  if (!tbody) return;
+
+  if (!agents.length) {
+    tbody.innerHTML = '<tr><td colspan="6"><div class="empty"><div class="empty-title">No agents yet — add your first</div></div></td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = agents.map(a => {
+    const days = a.lastContact ? Math.floor((Date.now() - new Date(a.lastContact).getTime()) / 86400000) : null;
+    const lastStr = days === null ? '—' : days === 0 ? 'Today' : days + 'd ago';
+    return `<tr onclick="openAgentDetail('${a.id}')">
+      <td style="font-weight:500">${a.name||'—'}</td>
+      <td style="font-family:'DM Mono',monospace;font-size:11px">${a.phone||'—'}</td>
+      <td style="font-size:12px;color:var(--text2)">${a.email||'—'}</td>
+      <td style="color:var(--text2)">${a.cityState||'—'}</td>
+      <td style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text3)">${lastStr}</td>
+      <td style="font-size:11px;color:var(--text2);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${a.notes||'—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+function openAddAgent() {
+  const id = 'ag' + Date.now().toString(36);
+  const html = `
+    <div class="modal-header"><div class="modal-title">Add RE Agent</div></div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">Name *</label><input class="form-input" id="ag-name" placeholder="Karen Kinder"></div>
+        <div class="form-group"><label class="form-label">Phone</label><input class="form-input" id="ag-phone" placeholder="419-266-7911"></div>
+        <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="ag-email" placeholder="karen@example.com"></div>
+        <div class="form-group"><label class="form-label">City, State</label><input class="form-input" id="ag-citystate" placeholder="Toledo, OH"></div>
+        <div class="form-group form-full"><label class="form-label">Notes</label><input class="form-input" id="ag-notes" placeholder="Lists 90+ day MLS land deals, prefers text..."></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveNewAgent('${id}')">Save Agent</button>
+    </div>`;
+  openModal(html);
+}
+
+function saveNewAgent(id) {
+  const name = document.getElementById('ag-name')?.value.trim();
+  if (!name) { toast('Name is required', 'error'); return; }
+  const agent = {
+    id: id,
+    name: name,
+    phone: document.getElementById('ag-phone')?.value.trim() || '',
+    email: document.getElementById('ag-email')?.value.trim() || '',
+    cityState: document.getElementById('ag-citystate')?.value.trim() || '',
+    notes: document.getElementById('ag-notes')?.value.trim() || '',
+    lastContact: null,
+    created: new Date().toISOString().slice(0,10)
+  };
+  if (!db.agents) db.agents = [];
+  db.agents.push(agent);
+  save();
+  closeModal();
+  renderAgents();
+  toast('Agent saved', 'success');
+}
+
+function openAgentDetail(id) {
+  const a = (db.agents||[]).find(x => x.id === id);
+  if (!a) return;
+  const html = `
+    <div class="modal-header">
+      <div class="modal-title">${a.name}</div>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">Name</label><input class="form-input" id="agd-name" value="${a.name||''}"></div>
+        <div class="form-group"><label class="form-label">Phone</label><input class="form-input" id="agd-phone" value="${a.phone||''}"></div>
+        <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="agd-email" value="${a.email||''}"></div>
+        <div class="form-group"><label class="form-label">City, State</label><input class="form-input" id="agd-citystate" value="${a.cityState||''}"></div>
+        <div class="form-group form-full"><label class="form-label">Notes</label><textarea class="form-input" id="agd-notes" rows="3" style="resize:vertical">${a.notes||''}</textarea></div>
+        <div class="form-group"><label class="form-label">Last Contact</label><input class="form-input" id="agd-lastcontact" type="date" value="${a.lastContact||''}"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost btn-sm" style="color:var(--coral)" onclick="deleteAgent('${a.id}')">Delete</button>
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveAgentDetail('${a.id}')">Save</button>
+    </div>`;
+  openModal(html);
+}
+
+function saveAgentDetail(id) {
+  const a = (db.agents||[]).find(x => x.id === id);
+  if (!a) return;
+  a.name = document.getElementById('agd-name')?.value.trim() || a.name;
+  a.phone = document.getElementById('agd-phone')?.value.trim() || '';
+  a.email = document.getElementById('agd-email')?.value.trim() || '';
+  a.cityState = document.getElementById('agd-citystate')?.value.trim() || '';
+  a.notes = document.getElementById('agd-notes')?.value.trim() || '';
+  a.lastContact = document.getElementById('agd-lastcontact')?.value || a.lastContact;
+  save();
+  closeModal();
+  renderAgents();
+  toast('Agent updated', 'success');
+}
+
+function deleteAgent(id) {
+  if (!confirm('Delete this agent?')) return;
+  db.agents = (db.agents||[]).filter(x => x.id !== id);
+  save();
+  closeModal();
+  renderAgents();
+  toast('Agent deleted', 'success');
+}
+
 </script>
 
 <!-- ══════════════════════════════════════════════════ -->
