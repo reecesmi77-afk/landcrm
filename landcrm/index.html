@@ -1180,7 +1180,7 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
       </div>
 
       <!-- Agent cards grid -->
-      <div id="agent-grid"></div>
+      <div id="agent-grid" style=""></div>
     </div>
 
     <!-- TASKS -->
@@ -1253,7 +1253,7 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
         <button class="btn btn-ghost btn-sm title-filter-btn" onclick="filterTitleCos('needs-touch')" id="tf-touch" style="border-color:rgba(251,191,36,0.4);color:var(--amber)">⚡ Needs Touch</button>
       </div>
 
-      <div id="title-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;"></div>
+      <div id="title-grid" style=""></div>
     </div>
 
     <!-- LENDERS & FUNDERS -->
@@ -1286,7 +1286,7 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
         <button class="btn btn-ghost btn-sm lender-filter-btn" onclick="filterLenders('land-funder')" id="lf-land" style="border-color:rgba(251,191,36,0.4);color:var(--amber)">Land Funders</button>
         <button class="btn btn-ghost btn-sm lender-filter-btn" onclick="filterLenders('needs-touch')" id="lf-touch" style="border-color:rgba(248,113,113,0.4);color:var(--coral)">⚡ Needs Touch</button>
       </div>
-      <div id="lender-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;"></div>
+      <div id="lender-grid" style=""></div>
     </div>
 
     <!-- REFERRAL PARTNERS -->
@@ -1320,7 +1320,7 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
         <button class="btn btn-ghost btn-sm referral-filter-btn" onclick="filterReferrals('other')" id="rf-other">Other</button>
         <button class="btn btn-ghost btn-sm referral-filter-btn" onclick="filterReferrals('needs-touch')" id="rf-touch" style="border-color:rgba(251,191,36,0.4);color:var(--amber)">⚡ Needs Touch</button>
       </div>
-      <div id="referral-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;"></div>
+      <div id="referral-grid" style=""></div>
     </div>
 
     <!-- GMAIL -->
@@ -1509,7 +1509,6 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
 <div id="toast"></div>
 
 <script>
-
 // ══════════════════════════════════
 // CONSTANTS
 // ══════════════════════════════════
@@ -6466,57 +6465,57 @@ function renderAgents() {
   var el = document.getElementById('agent-grid');
   if (!el) return;
   var agents = db.agents || [];
-
   if (!agents.length) {
-    el.innerHTML = '<div style="text-align:center;padding:60px 20px;color:var(--text3);"><div style="font-size:28px;margin-bottom:12px;">&#129309;</div><div style="font-size:13px;margin-bottom:16px;">No agents yet</div><button class="btn btn-primary btn-sm" onclick="openAddAgent()">+ Add First Agent</button></div>';
+    el.innerHTML = '<div style="text-align:center;padding:60px 20px;color:var(--text3);"><div style="font-size:13px;margin-bottom:16px;">No agents yet</div><button class="btn btn-primary btn-sm" onclick="openAddAgent()">+ Add First Agent</button></div>';
     return;
   }
-
   var byState = {};
   agents.forEach(function(a) {
     var state = 'Unknown';
-    var counties = getAgentCounties(a);
-    if (counties.length) {
-      var parts = counties[0].split(',');
-      if (parts.length >= 2) state = parts[parts.length-1].trim();
-    }
+    var ctys = getAgentCounties(a);
+    if (ctys.length) { var p = ctys[0].split(','); if (p.length >= 2) state = p[p.length-1].trim(); }
     if (state === 'Unknown' && a.state) state = a.state.trim();
     if (!byState[state]) byState[state] = [];
     byState[state].push(a);
   });
-
-  var stateKeys = Object.keys(byState).sort();
-  var sc = { 'Identified':'var(--text3)', 'Outreach Active':'var(--accent)', 'Contacted':'var(--accent)', 'Building':'var(--amber)', 'Active Partner':'var(--teal)', 'Sent Deal':'var(--purple)', 'Pass':'var(--coral)' };
-
-  var h = '<table style="width:100%;border-collapse:collapse;">';
-  h += '<thead><tr style="border-bottom:1px solid var(--border);">';
-  ['Agent','Counties','Phone','Last Contact','Status',''].forEach(function(col) {
-    h += '<th style="text-align:left;padding:8px;font-size:10px;color:var(--text3);font-weight:500;text-transform:uppercase;letter-spacing:.06em;">' + col + '</th>';
-  });
-  h += '</tr></thead><tbody>';
-
-  stateKeys.forEach(function(state) {
+  var sk = Object.keys(byState).sort();
+  var sc = {'Identified':'var(--text3)','Outreach Active':'var(--accent)','Contacted':'var(--accent)','Building':'var(--amber)','Active Partner':'var(--teal)','Sent Deal':'var(--purple)','Pass':'var(--coral)'};
+  var wrap = document.createElement('div');
+  sk.forEach(function(state) {
     var list = byState[state].sort(function(a,b){ return (a.name||'').localeCompare(b.name||''); });
-    h += '<tr><td colspan="6" style="padding:14px 8px 6px;font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;border-bottom:1px solid var(--border);">' + state + ' (' + list.length + ')</td></tr>';
+    var hdr = document.createElement('div');
+    hdr.style.cssText = 'padding:14px 8px 6px;font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;border-bottom:1px solid var(--border);';
+    hdr.textContent = state + ' (' + list.length + ')';
+    wrap.appendChild(hdr);
     list.forEach(function(agent) {
       var nt = agentNeedsTouch(agent);
       var days = agent.lastContact ? daysSince(agent.lastContact) : null;
       var ls = days === null ? 'Never' : days === 0 ? 'Today' : days + 'd ago';
       var color = sc[agent.stage] || 'var(--text3)';
       var ctys = getAgentCounties(agent);
-      var aid = agent.id;
-      h += '<tr style="border-bottom:0.5px solid var(--border);cursor:pointer;" onclick="openAgentDetail(\"' + aid + '\")">';
-      h += '<td style="padding:10px 8px;"><div style="font-size:13px;font-weight:600;color:var(--text1);">' + (agent.name||'Unknown') + (nt ? ' &#9889;' : '') + '</div><div style="font-size:11px;color:var(--text3);">' + (agent.brokerage||'Independent') + '</div></td>';
-      h += '<td style="padding:10px 8px;font-size:12px;color:var(--text2);">' + (ctys.length ? ctys.join(', ') : '&#8212;') + '</td>';
-      h += '<td style="padding:10px 8px;font-size:12px;color:var(--text2);">' + (agent.phone||'&#8212;') + '</td>';
-      h += '<td style="padding:10px 8px;font-size:12px;color:' + (nt ? 'var(--amber)' : 'var(--text3)') + ';">' + ls + '</td>';
-      h += '<td style="padding:10px 8px;"><span style="font-size:11px;padding:2px 8px;border-radius:4px;color:' + color + ';">' + (agent.stage||'Identified') + '</span></td>';
-      h += '<td style="padding:10px 8px;text-align:right;"><button onclick="event.stopPropagation();logAgentTouch(\"' + aid + '\")" class="btn btn-ghost btn-sm" style="font-size:10px;">Touch</button></td>';
-      h += '</tr>';
+      var row = document.createElement('div');
+      row.style.cssText = 'display:grid;grid-template-columns:200px 1fr 150px 120px 120px 70px;gap:8px;align-items:center;padding:10px 8px;border-bottom:0.5px solid var(--border);cursor:pointer;';
+      row.onmouseenter = function(){ this.style.background='var(--bg3)'; };
+      row.onmouseleave = function(){ this.style.background=''; };
+      row.onclick = function(){ openAgentDetail(agent.id); };
+      row.innerHTML =
+        '<div><div style="font-size:13px;font-weight:600;color:var(--text1);">' + (agent.name||'Unknown') + (nt?' &#9889;':'') + '</div><div style="font-size:11px;color:var(--text3);">' + (agent.brokerage||'Independent') + '</div></div>' +
+        '<div style="font-size:12px;color:var(--text2);">' + (ctys.length ? ctys.join(', ') : '&mdash;') + '</div>' +
+        '<div style="font-size:12px;color:var(--text2);">' + (agent.phone||'&mdash;') + '</div>' +
+        '<div style="font-size:12px;color:' + (nt?'var(--amber)':'var(--text3)') + ';">' + ls + '</div>' +
+        '<div><span style="font-size:11px;padding:2px 8px;border-radius:4px;color:' + color + ';">' + (agent.stage||'Identified') + '</span></div>' +
+        '<div style="text-align:right;"></div>';
+      var btn = document.createElement('button');
+      btn.className = 'btn btn-ghost btn-sm';
+      btn.style.fontSize = '10px';
+      btn.textContent = 'Touch';
+      btn.onclick = function(e){ e.stopPropagation(); logAgentTouch(agent.id); };
+      row.lastElementChild.appendChild(btn);
+      wrap.appendChild(row);
     });
   });
-  h += '</tbody></table>';
-  el.innerHTML = h;
+  el.innerHTML = '';
+  el.appendChild(wrap);
 }
 
 function openAddAgent(id) {
@@ -9210,3 +9209,4 @@ setInterval(syncFromQuo,60000);
 </style>
 
 </body>
+</html>
