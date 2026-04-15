@@ -1159,27 +1159,12 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
           <div style="font-size:11px;font-family:'DM Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">RE Agent Network</div>
           <div style="font-size:13px;color:var(--text2)">Build relationships. Get deal flow.</div>
         </div>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <select class="form-select" id="agent-county-filter" onchange="filterAgentsByCounty(this.value)" style="font-size:12px;padding:6px 10px;min-width:180px;">
-            <option value="">All counties</option>
-          </select>
-        </div>
       </div>
 
       <!-- Stats bar -->
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;" id="agent-stats"></div>
 
-      <!-- Filter tabs -->
-      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
-        <button class="btn btn-ghost btn-sm agent-filter-btn active" onclick="filterAgents('all')" id="af-all">All</button>
-        <button class="btn btn-ghost btn-sm agent-filter-btn" onclick="filterAgents('Identified')" id="af-identified">Identified</button>
-        <button class="btn btn-ghost btn-sm agent-filter-btn" onclick="filterAgents('Contacted')" id="af-contacted">Contacted</button>
-        <button class="btn btn-ghost btn-sm agent-filter-btn" onclick="filterAgents('Building')" id="af-building">Building</button>
-        <button class="btn btn-ghost btn-sm agent-filter-btn" onclick="filterAgents('Active Partner')" id="af-active">Active Partner</button>
-        <button class="btn btn-ghost btn-sm agent-filter-btn" onclick="filterAgents('needs-touch')" id="af-touch" style="border-color:rgba(251,191,36,0.4);color:var(--amber)">⚡ Needs Touch</button>
-      </div>
-
-      <!-- Agent cards grid -->
+      <!-- Agent list -->
       <div id="agent-grid"></div>
     </div>
 
