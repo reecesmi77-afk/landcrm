@@ -6416,11 +6416,6 @@ async function openContactEmail(contactId) {
 var _agentFilter = 'all';
 
 
-function daysSince(dateStr) {
-  if (!dateStr) return 999;
-  return Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000);
-}
-
 function agentNeedsTouch(agent) {
   var threshold = AGENT_TOUCH_DAYS[agent.stage] || 30;
   return daysSince(agent.lastContact) >= threshold;
