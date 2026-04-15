@@ -1180,7 +1180,7 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
       </div>
 
       <!-- Agent cards grid -->
-      <div id="agent-grid" style=""></div>
+      <div id="agent-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;"></div>
     </div>
 
     <!-- TASKS -->
@@ -1253,7 +1253,7 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
         <button class="btn btn-ghost btn-sm title-filter-btn" onclick="filterTitleCos('needs-touch')" id="tf-touch" style="border-color:rgba(251,191,36,0.4);color:var(--amber)">⚡ Needs Touch</button>
       </div>
 
-      <div id="title-grid" style=""></div>
+      <div id="title-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;"></div>
     </div>
 
     <!-- LENDERS & FUNDERS -->
@@ -1286,7 +1286,7 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
         <button class="btn btn-ghost btn-sm lender-filter-btn" onclick="filterLenders('land-funder')" id="lf-land" style="border-color:rgba(251,191,36,0.4);color:var(--amber)">Land Funders</button>
         <button class="btn btn-ghost btn-sm lender-filter-btn" onclick="filterLenders('needs-touch')" id="lf-touch" style="border-color:rgba(248,113,113,0.4);color:var(--coral)">⚡ Needs Touch</button>
       </div>
-      <div id="lender-grid" style=""></div>
+      <div id="lender-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;"></div>
     </div>
 
     <!-- REFERRAL PARTNERS -->
@@ -1320,7 +1320,7 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
         <button class="btn btn-ghost btn-sm referral-filter-btn" onclick="filterReferrals('other')" id="rf-other">Other</button>
         <button class="btn btn-ghost btn-sm referral-filter-btn" onclick="filterReferrals('needs-touch')" id="rf-touch" style="border-color:rgba(251,191,36,0.4);color:var(--amber)">⚡ Needs Touch</button>
       </div>
-      <div id="referral-grid" style=""></div>
+      <div id="referral-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;"></div>
     </div>
 
     <!-- GMAIL -->
@@ -1520,8 +1520,8 @@ const SOURCES = ['Lead Gen Agency','Cold SMS','Cold call','Direct mail','Referra
 const CHANNELS = ['SMS','Call','Voicemail','Mail','Email','Agent'];
 const OUTCOMES = ['No response','Voicemail left','Replied','Answered — not interested','Opted out','Wrong number','Callback requested'];
 const HANDOFF_STATES = ['AI handling','Needs human review','Human active'];
-var AGENT_STAGES = ['Identified','Outreach Active','Contacted','Building','Active Partner','Sent Deal','Pass'];
-var AGENT_TOUCH_DAYS = { 'Identified':7, 'Outreach Active':3, 'Contacted':14, 'Building':30, 'Active Partner':45, 'Sent Deal':21 };
+var AGENT_STAGES = ['Identified','Contacted','Building','Active Partner','Sent Deal'];
+var AGENT_TOUCH_DAYS = { 'Identified':7, 'Contacted':14, 'Building':30, 'Active Partner':45, 'Sent Deal':21 };
 
 // ══════════════════════════════════
 // DATA
@@ -6465,57 +6465,75 @@ function renderAgents() {
   var el = document.getElementById('agent-grid');
   if (!el) return;
   var agents = db.agents || [];
-  if (!agents.length) {
-    el.innerHTML = '<div style="text-align:center;padding:60px 20px;color:var(--text3);"><div style="font-size:13px;margin-bottom:16px;">No agents yet</div><button class="btn btn-primary btn-sm" onclick="openAddAgent()">+ Add First Agent</button></div>';
+  rebuildCountyFilter();
+
+  var filtered = agents.filter(a => {
+    var stageOk = _agentFilter === 'all' ? true : _agentFilter === 'needs-touch' ? agentNeedsTouch(a) : a.stage === _agentFilter;
+    var countyOk = !_agentCountyFilter || getAgentCounties(a).some(c => c === _agentCountyFilter);
+    return stageOk && countyOk;
+  });
+
+  // Sort: needs touch first, then by last contact
+  filtered.sort((a, b) => {
+    var an = agentNeedsTouch(a), bn = agentNeedsTouch(b);
+    if (an && !bn) return -1;
+    if (!an && bn) return 1;
+    return daysSince(a.lastContact) - daysSince(b.lastContact);
+  });
+
+  if (!filtered.length) {
+    el.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--text3);">
+      <div style="font-size:28px;margin-bottom:12px;">🤝</div>
+      <div style="font-size:13px;margin-bottom:16px;">${_agentFilter === 'all' ? 'No agents yet — add your first RE agent contact' : 'No agents in this category'}</div>
+      ${_agentFilter === 'all' ? '<button class="btn btn-primary btn-sm" onclick="openAddAgent()">+ Add First Agent</button>' : ''}
+    </div>`;
     return;
   }
-  var byState = {};
-  agents.forEach(function(a) {
-    var state = 'Unknown';
-    var ctys = getAgentCounties(a);
-    if (ctys.length) { var p = ctys[0].split(','); if (p.length >= 2) state = p[p.length-1].trim(); }
-    if (state === 'Unknown' && a.state) state = a.state.trim();
-    if (!byState[state]) byState[state] = [];
-    byState[state].push(a);
-  });
-  var sk = Object.keys(byState).sort();
-  var sc = {'Identified':'var(--text3)','Outreach Active':'var(--accent)','Contacted':'var(--accent)','Building':'var(--amber)','Active Partner':'var(--teal)','Sent Deal':'var(--purple)','Pass':'var(--coral)'};
-  var wrap = document.createElement('div');
-  sk.forEach(function(state) {
-    var list = byState[state].sort(function(a,b){ return (a.name||'').localeCompare(b.name||''); });
-    var hdr = document.createElement('div');
-    hdr.style.cssText = 'padding:14px 8px 6px;font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;border-bottom:1px solid var(--border);';
-    hdr.textContent = state + ' (' + list.length + ')';
-    wrap.appendChild(hdr);
-    list.forEach(function(agent) {
-      var nt = agentNeedsTouch(agent);
-      var days = agent.lastContact ? daysSince(agent.lastContact) : null;
-      var ls = days === null ? 'Never' : days === 0 ? 'Today' : days + 'd ago';
-      var color = sc[agent.stage] || 'var(--text3)';
-      var ctys = getAgentCounties(agent);
-      var row = document.createElement('div');
-      row.style.cssText = 'display:grid;grid-template-columns:200px 1fr 150px 120px 120px 70px;gap:8px;align-items:center;padding:10px 8px;border-bottom:0.5px solid var(--border);cursor:pointer;';
-      row.onmouseenter = function(){ this.style.background='var(--bg3)'; };
-      row.onmouseleave = function(){ this.style.background=''; };
-      row.onclick = function(){ openAgentDetail(agent.id); };
-      row.innerHTML =
-        '<div><div style="font-size:13px;font-weight:600;color:var(--text1);">' + (agent.name||'Unknown') + (nt?' &#9889;':'') + '</div><div style="font-size:11px;color:var(--text3);">' + (agent.brokerage||'Independent') + '</div></div>' +
-        '<div style="font-size:12px;color:var(--text2);">' + (ctys.length ? ctys.join(', ') : '&mdash;') + '</div>' +
-        '<div style="font-size:12px;color:var(--text2);">' + (agent.phone||'&mdash;') + '</div>' +
-        '<div style="font-size:12px;color:' + (nt?'var(--amber)':'var(--text3)') + ';">' + ls + '</div>' +
-        '<div><span style="font-size:11px;padding:2px 8px;border-radius:4px;color:' + color + ';">' + (agent.stage||'Identified') + '</span></div>' +
-        '<div style="text-align:right;"></div>';
-      var btn = document.createElement('button');
-      btn.className = 'btn btn-ghost btn-sm';
-      btn.style.fontSize = '10px';
-      btn.textContent = 'Touch';
-      btn.onclick = function(e){ e.stopPropagation(); logAgentTouch(agent.id); };
-      row.lastElementChild.appendChild(btn);
-      wrap.appendChild(row);
-    });
-  });
-  el.innerHTML = '';
-  el.appendChild(wrap);
+
+  el.innerHTML = filtered.map(agent => {
+    var needsTouch = agentNeedsTouch(agent);
+    var days = daysSince(agent.lastContact);
+    var stageColor = {
+      'Identified':'var(--text3)',
+      'Contacted':'var(--accent)',
+      'Building':'var(--amber)',
+      'Active Partner':'var(--teal)',
+      'Sent Deal':'var(--purple)'
+    }[agent.stage] || 'var(--text3)';
+
+    return `<div style="background:var(--bg2);border:1px solid ${needsTouch ? 'rgba(251,191,36,0.35)' : 'var(--border)'};border-radius:var(--rl);padding:16px;cursor:pointer;transition:border-color 0.15s;" onclick="openAgentDetail('${agent.id}')">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:36px;height:36px;border-radius:50%;background:var(--adim);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:13px;color:var(--accent);flex-shrink:0;">${(agent.name||'?')[0].toUpperCase()}</div>
+          <div>
+            <div style="font-weight:600;font-size:14px;">${agent.name||'Unknown'}</div>
+            <div style="font-size:11px;color:var(--text3);">${agent.brokerage||'Independent'}</div>
+          </div>
+        </div>
+        <div style="font-size:10px;font-family:'DM Mono',monospace;color:${stageColor};text-transform:uppercase;letter-spacing:.05em;padding:2px 7px;border-radius:4px;background:${stageColor}18;">${agent.stage||'Identified'}</div>
+      </div>
+      <div style="display:flex;gap:14px;font-size:11px;color:var(--text3);margin-bottom:10px;flex-wrap:wrap;">
+        ${agent.phone ? `<span>📞 ${agent.phone}</span>` : ''}
+        ${agent.dealsReferred ? `<span style="color:var(--teal)">🤝 ${agent.dealsReferred} deal${agent.dealsReferred>1?'s':''}</span>` : ''}
+      </div>
+      ${getAgentCounties(agent).length ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;">
+        ${getAgentCounties(agent).map(c => '<span style="background:var(--adim);border:1px solid var(--border2);border-radius:4px;padding:1px 6px;font-size:10px;color:var(--accent);">'+c+'</span>').join('')}
+      </div>` : ''}
+      <div style="display:flex;gap:14px;font-size:11px;color:var(--text3);margin-bottom:10px;flex-wrap:wrap;">
+        <span style="display:none"></span>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div style="font-size:11px;color:${needsTouch ? 'var(--amber)' : 'var(--text3)'}">
+          ${needsTouch ? '⚡ Needs touch — ' : ''}${agent.lastContact ? days + 'd since last contact' : 'Never contacted'}
+        </div>
+        <div style="display:flex;gap:6px;">
+          <button onclick="event.stopPropagation();logAgentTouch('${agent.id}')" class="btn btn-ghost btn-sm" style="font-size:10px;padding:2px 8px;">Log touch</button>
+          ${agent.phone ? `<button onclick="event.stopPropagation();window.location='openphone://call?number=${encodeURIComponent(agent.phone)}'" class="btn btn-ghost btn-sm" style="font-size:10px;padding:2px 8px;color:var(--accent);">📞 Call</button>` : ''}
+        </div>
+      </div>
+      ${agent.notes && agent.notes.length ? `<div style="margin-top:8px;font-size:11px;color:var(--text3);border-top:1px solid var(--border);padding-top:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${agent.notes[agent.notes.length-1].text}</div>` : ''}
+    </div>`;
+  }).join('');
 }
 
 function openAddAgent(id) {
@@ -9209,4 +9227,3 @@ setInterval(syncFromQuo,60000);
 </style>
 
 </body>
-</html>
