@@ -1628,7 +1628,7 @@ function showView(v){
   document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
   currentView=v;
   const _ve=document.getElementById('view-'+v);if(_ve)_ve.classList.add('active');
-  const titles={dashboard:'Dashboard','acq-pipeline':'Acquisitions Pipeline','dis-pipeline':'Dispositions Pipeline','ai-queue':'AI Handoff Queue',sellers:'All Leads',buyers:'Buyer Network',calculator:'Offer Calculator',sequences:'SMS Sequences',settings:'Settings','ai-qualified':'AI Qualified Leads',reporting:'Reporting',gmail:'Email',agents:'Agent Network',title:'Title & Closing',tasks:'Tasks',lenders:'Lenders & Funders',referrals:'Referral Partners'};
+  const titles={dashboard:'Dashboard','acq-pipeline':'Acquisitions Pipeline','dis-pipeline':'Dispositions Pipeline','ai-queue':'AI Handoff Queue',sellers:'All Leads',buyers:'Buyer Network',calculator:'Offer Calculator',sequences:'SMS Sequences',settings:'Settings','ai-qualified':'AI Qualified Leads',reporting:'Reporting',gmail:'Email',agents:'RE Agents',title:'Title & Closing',tasks:'Tasks',lenders:'Lenders & Funders',referrals:'Referral Partners'};
   document.getElementById('page-title').textContent=titles[v]||v;
   if(v==='dashboard')renderDashboard();
   if(v==='acq-pipeline')renderPipeline('acq');
@@ -2553,7 +2553,7 @@ function updateAddContactFields(type, editId) {
 
   } else if(type === 'agent') {
     closeModal();
-    setTimeout(function(){ openAddAgent(editId||''); }, 150);
+    setTimeout(function(){ openAddAgent(); }, 150);
     return;
   } else if(type === 'buyer') {
     closeModal();
@@ -6435,54 +6435,7 @@ function filterAgents(filter) {
   renderAgents();
 }
 
-function renderAgents() {
-  var tbody = document.getElementById('agent-tbody');
-  if (!tbody) return;
-  var agents = db.agents || [];
 
-  if (!agents.length) {
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text3);">No agents yet</td></tr>';
-    return;
-  }
-
-  var byState = {};
-  agents.forEach(function(a) {
-    var ctys = getAgentCounties(a);
-    var state = 'Unknown';
-    if (ctys.length) {
-      var words = ctys[0].trim().split(' ');
-      if (words.length >= 2) state = words[words.length - 1];
-    }
-    if (state === 'Unknown' && a.state) state = a.state.trim();
-    if (!byState[state]) byState[state] = [];
-    byState[state].push(a);
-  });
-
-  var sc = {'Identified':'tag-neutral','Outreach Active':'tag-ai','Contacted':'tag-ai','Building':'tag-review','Active Partner':'tag-human','Sent Deal':'tag-hot','Pass':'tag-neutral'};
-  var rows = '';
-
-  Object.keys(byState).sort().forEach(function(state) {
-    var list = byState[state].sort(function(a,b){ return (a.name||'').localeCompare(b.name||''); });
-    rows += '<tr><td colspan="7" style="padding:12px 8px 4px;font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;border-bottom:1px solid var(--border);">' + state + ' (' + list.length + ')</td></tr>';
-    list.forEach(function(agent) {
-      var nt = agentNeedsTouch(agent);
-      var days = agent.lastContact ? daysSince(agent.lastContact) : null;
-      var lastStr = days === null ? '&mdash;' : days === 0 ? 'Today' : days + 'd ago';
-      var ctys = getAgentCounties(agent);
-      var aid = agent.id;
-      rows += '<tr onclick="openAgentDetail(\'' + aid + '\')" style="cursor:pointer;">';
-      rows += '<td style="font-weight:500;">' + (agent.name||'&mdash;') + (nt ? ' <span style="color:var(--amber)">&#9889;</span>' : '') + '</td>';
-      rows += '<td style="color:var(--text2);">' + (agent.brokerage||'&mdash;') + '</td>';
-      rows += '<td style="color:var(--text2);">' + (ctys.length ? ctys.join(', ') : '&mdash;') + '</td>';
-      rows += '<td style="font-family:\'DM Mono\',monospace;font-size:12px;">' + (agent.phone||'&mdash;') + '</td>';
-      rows += '<td style="font-family:\'DM Mono\',monospace;font-size:12px;color:' + (nt?'var(--amber)':'var(--text3)') + ';">' + lastStr + '</td>';
-      rows += '<td><span class="tag ' + (sc[agent.stage]||'tag-neutral') + '">' + (agent.stage||'Identified') + '</span></td>';
-      rows += '<td><button class="btn btn-ghost btn-sm" style="font-size:10px;" onclick="event.stopPropagation();logAgentTouch(\'' + aid + '\')">Touch</button></td>';
-      rows += '</tr>';
-    });
-  });
-  tbody.innerHTML = rows;
-}
 
 function openAddAgent(id) {
   var agent = id ? db.agents.find(a => a.id === id) : null;
@@ -9167,7 +9120,7 @@ function openAddAgent() {
       <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
       <button class="btn btn-primary" onclick="saveNewAgent('${id}')">Save Agent</button>
     </div>`;
-  openModal(html);
+  openCustomModal(html);
 }
 
 function saveNewAgent(id) {
@@ -9187,7 +9140,7 @@ function saveNewAgent(id) {
   db.agents.push(agent);
   save();
   closeModal();
-  renderAgents();
+  showView('agents');
   toast('Agent saved', 'success');
 }
 
@@ -9213,7 +9166,7 @@ function openAgentDetail(id) {
       <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
       <button class="btn btn-primary" onclick="saveAgentDetail('${a.id}')">Save</button>
     </div>`;
-  openModal(html);
+  openCustomModal(html);
 }
 
 function saveAgentDetail(id) {
