@@ -1518,6 +1518,8 @@ const SOURCES = ['Lead Gen Agency','Cold SMS','Cold call','Direct mail','Referra
 const CHANNELS = ['SMS','Call','Voicemail','Mail','Email','Agent'];
 const OUTCOMES = ['No response','Voicemail left','Replied','Answered — not interested','Opted out','Wrong number','Callback requested'];
 const HANDOFF_STATES = ['AI handling','Needs human review','Human active'];
+const AGENT_STAGES = ['Identified','Outreach Active','Contacted','Building','Active Partner','Sent Deal','Pass'];
+const AGENT_TOUCH_DAYS = { 'Identified':7, 'Outreach Active':3, 'Contacted':14, 'Building':30, 'Active Partner':45, 'Sent Deal':21 };
 
 // ══════════════════════════════════
 // DATA
@@ -6412,8 +6414,7 @@ async function openContactEmail(contactId) {
 // ══════════════════════════════════════════════════════
 
 var _agentFilter = 'all';
-var AGENT_STAGES = ['Identified','Outreach Active','Contacted','Building','Active Partner','Sent Deal','Pass'];
-var AGENT_TOUCH_DAYS = { 'Identified':7, 'Outreach Active':3, 'Contacted':14, 'Building':30, 'Active Partner':45, 'Sent Deal':21 };
+
 
 function daysSince(dateStr) {
   if (!dateStr) return 999;
