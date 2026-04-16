@@ -9049,14 +9049,16 @@ syncFromQuo();
 setInterval(syncFromQuo,60000);
 
 function renderAgents() {
-  // Schema helpers — support both old (markets/counties/stage) and new (cityState/notes string)
+  // Schema helpers — new schema uses county/state fields; fall back to legacy cityState/markets
   const agentNotes = a => Array.isArray(a.notes) ? a.notes.map(n => n.text||'').join(' ') : (a.notes||'');
   const agentState = a => {
+    if (a.state) return a.state;
     const src = a.cityState || a.markets || '';
     const parts = src.split(',');
     return parts.length > 1 ? parts[parts.length-1].trim() : '';
   };
   const agentCounties = a => {
+    if (a.county) return a.county;
     if (a.counties && a.counties.length) return a.counties.join(', ');
     if (a.markets) return a.markets;
     if (a.cityState) return a.cityState.split(',')[0].trim();
@@ -9136,6 +9138,11 @@ function renderAgents() {
   }).join('');
 }
 
+function stateOptions(selected) {
+  const states = [['AL','Alabama'],['AK','Alaska'],['AZ','Arizona'],['AR','Arkansas'],['CA','California'],['CO','Colorado'],['CT','Connecticut'],['DE','Delaware'],['FL','Florida'],['GA','Georgia'],['HI','Hawaii'],['ID','Idaho'],['IL','Illinois'],['IN','Indiana'],['IA','Iowa'],['KS','Kansas'],['KY','Kentucky'],['LA','Louisiana'],['ME','Maine'],['MD','Maryland'],['MA','Massachusetts'],['MI','Michigan'],['MN','Minnesota'],['MS','Mississippi'],['MO','Missouri'],['MT','Montana'],['NE','Nebraska'],['NV','Nevada'],['NH','New Hampshire'],['NJ','New Jersey'],['NM','New Mexico'],['NY','New York'],['NC','North Carolina'],['ND','North Dakota'],['OH','Ohio'],['OK','Oklahoma'],['OR','Oregon'],['PA','Pennsylvania'],['RI','Rhode Island'],['SC','South Carolina'],['SD','South Dakota'],['TN','Tennessee'],['TX','Texas'],['UT','Utah'],['VT','Vermont'],['VA','Virginia'],['WA','Washington'],['WV','West Virginia'],['WI','Wisconsin'],['WY','Wyoming']];
+  return '<option value="">— Select state —</option>'+states.map(([v,n])=>`<option value="${v}"${v===selected?' selected':''}>${n}</option>`).join('');
+}
+
 function openAddAgent() {
   const id = 'ag' + Date.now().toString(36);
   const html = `
@@ -9145,7 +9152,8 @@ function openAddAgent() {
         <div class="form-group"><label class="form-label">Name *</label><input class="form-input" id="ag-name" placeholder="Karen Kinder"></div>
         <div class="form-group"><label class="form-label">Phone</label><input class="form-input" id="ag-phone" placeholder="419-266-7911"></div>
         <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="ag-email" placeholder="karen@example.com"></div>
-        <div class="form-group"><label class="form-label">City, State</label><input class="form-input" id="ag-citystate" placeholder="Toledo, OH"></div>
+        <div class="form-group"><label class="form-label">County</label><input class="form-input" id="ag-county" placeholder="Shelby"></div>
+        <div class="form-group"><label class="form-label">State</label><select class="form-input" id="ag-state">${stateOptions('')}</select></div>
         <div class="form-group form-full"><label class="form-label">Notes</label><input class="form-input" id="ag-notes" placeholder="Lists 90+ day MLS land deals, prefers text..."></div>
       </div>
     </div>
@@ -9164,7 +9172,8 @@ function saveNewAgent(id) {
     name: name,
     phone: document.getElementById('ag-phone')?.value.trim() || '',
     email: document.getElementById('ag-email')?.value.trim() || '',
-    cityState: document.getElementById('ag-citystate')?.value.trim() || '',
+    county: document.getElementById('ag-county')?.value.trim() || '',
+    state: document.getElementById('ag-state')?.value || '',
     notes: document.getElementById('ag-notes')?.value.trim() || '',
     lastContact: null,
     created: new Date().toISOString().slice(0,10)
@@ -9189,7 +9198,8 @@ function openAgentDetail(id) {
         <div class="form-group"><label class="form-label">Name</label><input class="form-input" id="agd-name" value="${a.name||''}"></div>
         <div class="form-group"><label class="form-label">Phone</label><input class="form-input" id="agd-phone" value="${a.phone||''}"></div>
         <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="agd-email" value="${a.email||''}"></div>
-        <div class="form-group"><label class="form-label">City, State</label><input class="form-input" id="agd-citystate" value="${a.cityState||''}"></div>
+        <div class="form-group"><label class="form-label">County</label><input class="form-input" id="agd-county" value="${a.county||''}"></div>
+        <div class="form-group"><label class="form-label">State</label><select class="form-input" id="agd-state">${stateOptions(a.state||'')}</select></div>
         <div class="form-group form-full"><label class="form-label">Notes</label><textarea class="form-input" id="agd-notes" rows="3" style="resize:vertical">${a.notes||''}</textarea></div>
         <div class="form-group"><label class="form-label">Last Contact</label><input class="form-input" id="agd-lastcontact" type="date" value="${a.lastContact||''}"></div>
       </div>
@@ -9208,7 +9218,8 @@ function saveAgentDetail(id) {
   a.name = document.getElementById('agd-name')?.value.trim() || a.name;
   a.phone = document.getElementById('agd-phone')?.value.trim() || '';
   a.email = document.getElementById('agd-email')?.value.trim() || '';
-  a.cityState = document.getElementById('agd-citystate')?.value.trim() || '';
+  a.county = document.getElementById('agd-county')?.value.trim() || '';
+  a.state = document.getElementById('agd-state')?.value || '';
   a.notes = document.getElementById('agd-notes')?.value.trim() || '';
   a.lastContact = document.getElementById('agd-lastcontact')?.value || a.lastContact;
   save();
