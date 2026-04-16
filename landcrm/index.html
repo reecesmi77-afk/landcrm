@@ -1160,6 +1160,7 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
         </div>
       </div>
     </div>
+  </div>
 
     <!-- AGENTS -->
     <div id="view-agents" class="view">
@@ -1628,6 +1629,7 @@ function showView(v){
   document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
   currentView=v;
   const _ve=document.getElementById('view-'+v);if(_ve)_ve.classList.add('active');
+  const _ne=document.getElementById('nav-'+v);if(_ne)_ne.classList.add('active');
   const titles={dashboard:'Dashboard','acq-pipeline':'Acquisitions Pipeline','dis-pipeline':'Dispositions Pipeline','ai-queue':'AI Handoff Queue',sellers:'All Leads',buyers:'Buyer Network',calculator:'Offer Calculator',sequences:'SMS Sequences',settings:'Settings','ai-qualified':'AI Qualified Leads',reporting:'Reporting',gmail:'Email',agents:'RE Agents',title:'Title & Closing',tasks:'Tasks',lenders:'Lenders & Funders',referrals:'Referral Partners'};
   document.getElementById('page-title').textContent=titles[v]||v;
   if(v==='dashboard')renderDashboard();
