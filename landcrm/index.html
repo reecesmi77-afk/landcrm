@@ -1164,31 +1164,25 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
 
     <!-- AGENTS -->
     <div id="view-agents" class="view">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
-        <h1 style="font-size:22px;font-weight:600;">RE Agents</h1>
-        <button class="btn btn-primary" onclick="openAddAgent()">+ Add Agent</button>
-      </div>
-
-      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center;">
-        <input class="search-input" type="text" placeholder="Search agents..." id="agent-search" oninput="renderAgents()" style="max-width:220px;">
-        <select class="form-select" id="agent-state-filter" onchange="renderAgents()" style="font-size:12px;padding:6px 10px;">
+      <div class="filter-bar">
+        <input class="search-input" type="text" placeholder="Search agents..." id="agent-search" oninput="renderAgents()">
+        <select class="filter-select" id="agent-state-filter" onchange="renderAgents()">
           <option value="">All states</option>
         </select>
-        <span id="agent-count" style="font-size:11px;color:var(--text3);margin-left:4px;"></span>
+        <select class="filter-select" id="agent-stage-filter" onchange="renderAgents()">
+          <option value="">All stages</option>
+          <option>Identified</option>
+          <option>Contacted</option>
+          <option>Building</option>
+          <option>Active Partner</option>
+          <option>Sent Deal</option>
+        </select>
+        <span id="agent-count" style="font-size:11px;color:var(--text3)"></span>
+        <button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="openAddAgent()">+ Add Agent</button>
       </div>
-
       <div class="card" style="padding:0;overflow:hidden;">
         <table>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Phone</th>
-              <th>Email</th>
-              <th>City, State</th>
-              <th>Last Contact</th>
-              <th>Notes</th>
-            </tr>
-          </thead>
+          <thead><tr><th>Name</th><th>Brokerage</th><th>Counties</th><th>Last Contact</th><th>Status</th></tr></thead>
           <tbody id="agent-tbody"></tbody>
         </table>
       </div>
@@ -9055,81 +9049,91 @@ syncFromQuo();
 setInterval(syncFromQuo,60000);
 
 function renderAgents() {
-  // Normalize agents that may use old schema (notes as array, location as markets)
-  const agentNotes    = a => Array.isArray(a.notes) ? a.notes.map(n => n.text||'').join(' ') : (a.notes||'');
-  const agentLocation = a => a.cityState || a.markets || '';
+  // Schema helpers — support both old (markets/counties/stage) and new (cityState/notes string)
+  const agentNotes = a => Array.isArray(a.notes) ? a.notes.map(n => n.text||'').join(' ') : (a.notes||'');
+  const agentState = a => {
+    const src = a.cityState || a.markets || '';
+    const parts = src.split(',');
+    return parts.length > 1 ? parts[parts.length-1].trim() : '';
+  };
+  const agentCounties = a => {
+    if (a.counties && a.counties.length) return a.counties.join(', ');
+    if (a.markets) return a.markets;
+    if (a.cityState) return a.cityState.split(',')[0].trim();
+    return '—';
+  };
 
   const search = (document.getElementById('agent-search')?.value||'').toLowerCase();
   const stateF = document.getElementById('agent-state-filter')?.value || '';
+  const stageF = document.getElementById('agent-stage-filter')?.value || '';
 
-  let agents = (db.agents||[]).filter(function(a) {
-    const loc = agentLocation(a);
-    if (stateF && loc.toUpperCase().indexOf(stateF.toUpperCase()) === -1) return false;
+  const agents = (db.agents||[]).filter(a => {
+    if (stateF && agentState(a) !== stateF) return false;
+    if (stageF && (a.stage||'Identified') !== stageF) return false;
     if (search) {
-      const hay = ((a.name||'')+(a.phone||'')+(a.email||'')+loc+(agentNotes(a))).toLowerCase();
+      const hay = ((a.name||'')+(a.brokerage||'')+agentCounties(a)+(agentNotes(a))).toLowerCase();
       if (!hay.includes(search)) return false;
     }
     return true;
   });
 
-  // Populate state filter once
+  // Rebuild state dropdown from full agent list (so filter persists across searches)
   const stateEl = document.getElementById('agent-state-filter');
-  if (stateEl && stateEl.options.length <= 1) {
-    const states = [...new Set((db.agents||[]).map(a => {
-      const parts = agentLocation(a).trim().split(',');
-      return parts.length > 1 ? parts[parts.length-1].trim() : '';
-    }).filter(Boolean))].sort();
-    states.forEach(function(s) {
-      const o = document.createElement('option'); o.value = s; o.textContent = s;
-      stateEl.appendChild(o);
-    });
+  if (stateEl) {
+    const cur = stateEl.value;
+    const allStates = [...new Set((db.agents||[]).map(agentState).filter(Boolean))].sort();
+    stateEl.innerHTML = '<option value="">All states</option>' +
+      allStates.map(s => `<option${s===cur?' selected':''}>${s}</option>`).join('');
   }
 
   const countEl = document.getElementById('agent-count');
-  if (countEl) countEl.textContent = agents.length + ' agent' + (agents.length !== 1 ? 's' : '');
+  if (countEl) countEl.textContent = agents.length + ' agent' + (agents.length!==1?'s':'');
 
   const tbody = document.getElementById('agent-tbody');
   if (!tbody) return;
 
-  // Clear existing rows
-  tbody.innerHTML = '';
-
   if (!agents.length) {
-    const tr = document.createElement('tr');
-    const td = document.createElement('td');
-    td.colSpan = 6;
-    td.innerHTML = '<div class="empty"><div class="empty-title">No agents yet — add your first</div></div>';
-    tr.appendChild(td);
-    tbody.appendChild(tr);
+    tbody.innerHTML = `<tr><td colspan="5"><div class="empty"><div class="empty-title">${
+      stateF||stageF||search ? 'No agents match this filter' : 'No agents yet — add your first'
+    }</div></div></td></tr>`;
     return;
   }
 
-  // Build rows with createElement so user content can never break the table HTML
-  agents.forEach(function(a) {
-    const days = a.lastContact ? Math.floor((Date.now() - new Date(a.lastContact).getTime()) / 86400000) : null;
-    const lastStr = days === null ? '—' : days === 0 ? 'Today' : days + 'd ago';
-
-    const tr = document.createElement('tr');
-    tr.style.cursor = 'pointer';
-    tr.addEventListener('click', function() { openAgentDetail(a.id); });
-
-    var cols = [
-      { text: a.name||'—',            style: 'font-weight:500' },
-      { text: a.phone||'—',           style: "font-family:'DM Mono',monospace;font-size:11px" },
-      { text: a.email||'—',           style: 'font-size:12px;color:var(--text2)' },
-      { text: agentLocation(a)||'—',  style: 'color:var(--text2)' },
-      { text: lastStr,                 style: "font-family:'DM Mono',monospace;font-size:11px;color:var(--text3)" },
-      { text: agentNotes(a)||'—',     style: 'font-size:11px;color:var(--text2);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' }
-    ];
-    cols.forEach(function(c) {
-      const td = document.createElement('td');
-      if (c.style) td.style.cssText = c.style;
-      td.textContent = c.text;
-      tr.appendChild(td);
-    });
-
-    tbody.appendChild(tr);
+  // Group by state, alphabetically
+  const byState = {};
+  agents.forEach(a => {
+    const s = agentState(a) || 'Other';
+    if (!byState[s]) byState[s] = [];
+    byState[s].push(a);
   });
+
+  const stageTag = {
+    'Identified':     'tag-neutral',
+    'Contacted':      'tag-ai',
+    'Building':       'tag-warm',
+    'Active Partner': 'tag-human',
+    'Sent Deal':      'tag-dis',
+  };
+
+  tbody.innerHTML = Object.keys(byState).sort().map(state => {
+    const rows = byState[state].map(a => {
+      const days = a.lastContact
+        ? Math.floor((Date.now()-new Date(a.lastContact).getTime())/86400000)
+        : null;
+      const lastStr = days===null ? '—' : days===0 ? 'Today' : days+'d ago';
+      const stage = a.stage || 'Identified';
+      return `<tr style="cursor:pointer" onclick="openAgentDetail('${a.id}')">
+        <td style="font-weight:500">${a.name||'—'}</td>
+        <td style="color:var(--text2)">${a.brokerage||'—'}</td>
+        <td style="color:var(--text2)">${agentCounties(a)}</td>
+        <td style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text3)">${lastStr}</td>
+        <td><span class="tag ${stageTag[stage]||'tag-neutral'}">${stage}</span></td>
+      </tr>`;
+    }).join('');
+    return `<tr style="background:var(--bg3);pointer-events:none">
+        <td colspan="5" style="font-family:'DM Mono',monospace;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);padding:8px 14px;">${state}</td>
+      </tr>${rows}`;
+  }).join('');
 }
 
 function openAddAgent() {
