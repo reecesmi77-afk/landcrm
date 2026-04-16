@@ -2623,6 +2623,7 @@ function saveUnifiedContact(editId) {
         var prevStage = c.stage;
         Object.assign(c, fields);
         if(noteText) c.notes.unshift({date:today(), text:noteText});
+        if(c.phone) pushContactToQuo(c);
         // If stage was just changed to Outreach Active via edit, fire sequence — any source
         if(fields.stage === 'Outreach Active' && prevStage !== 'Outreach Active') {
           var noPrior = !c.touches || !c.touches.some(function(t){ return t.by === 'AI' && t.channel === 'SMS'; });
@@ -2670,9 +2671,10 @@ function saveUnifiedContact(editId) {
     if(editId) {
       var idx2 = db.allContacts.findIndex(function(x){return x.id===editId;});
       if(idx2>=0) db.allContacts[idx2] = entry; else db.allContacts.unshift(entry);
+      if(entry.phone) pushContactToQuo(entry);
     } else {
       db.allContacts.unshift(entry);
-      if(entry.phone) pushContactToQuo({name:entry.name, phone:entry.phone});
+      if(entry.phone) pushContactToQuo(entry);
     }
   }
   save();
