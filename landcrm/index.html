@@ -480,6 +480,11 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
         RE Agents
         <span class="nb" id="nb-agents" style="display:none;background:var(--purple)">0</span>
       </button>
+      <button class="nav-item" onclick="showView('dispo-partners')" id="nav-dispo-partners">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12l4-4 3 3 5-6"/><circle cx="13" cy="4" r="2"/></svg>
+        Dispo Partners
+        <span class="nb" id="nb-dispo-partners" style="display:none;background:var(--teal)">0</span>
+      </button>
       <button class="nav-item" onclick="showView('title')" id="nav-title">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="1.5"/><path d="M5 6h6M5 8.5h4M5 11h3"/></svg>
         Title & Closing
@@ -1188,6 +1193,39 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
       </div>
     </div>
 
+    <!-- DISPO PARTNERS -->
+    <div id="view-dispo-partners" class="view">
+      <div class="filter-bar">
+        <input class="search-input" type="text" placeholder="Search dispo partners..." id="dp-search" oninput="renderDispoPartners()">
+        <select class="filter-select" id="dp-state-filter" onchange="renderDispoPartners()">
+          <option value="">All states</option>
+        </select>
+        <select class="filter-select" id="dp-stage-filter" onchange="renderDispoPartners()">
+          <option value="">All stages</option>
+          <option>Identified</option>
+          <option>Contacted</option>
+          <option>Building</option>
+          <option>Active Partner</option>
+          <option>Sent Deal</option>
+        </select>
+        <select class="filter-select" id="dp-type-filter" onchange="renderDispoPartners()">
+          <option value="">All buyer types</option>
+          <option>Wholesaler</option>
+          <option>Cash Buyer</option>
+          <option>JV Partner</option>
+          <option>Land Investor</option>
+        </select>
+        <span id="dp-count" style="font-size:11px;color:var(--text3)"></span>
+        <button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="openAddDispoPartner()">+ Add Partner</button>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden;">
+        <table>
+          <thead><tr><th>Name</th><th>Company</th><th>Counties</th><th>Buyer Type</th><th>Last Contact</th><th>Status</th></tr></thead>
+          <tbody id="dp-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
     <!-- TASKS -->
     <div id="view-tasks" class="view">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
@@ -1533,7 +1571,7 @@ var AGENT_TOUCH_DAYS = { 'Identified':7, 'Contacted':14, 'Building':30, 'Active 
 // DATA
 // ══════════════════════════════════
 const KEY = 'landcrm_v2';
-function load(){try{const r=localStorage.getItem(KEY);const d=r?JSON.parse(r):{contacts:[],buyers:[],agents:[],titleCos:[],tasks:[],lenders:[],referrals:[]};if(!d.agents)d.agents=[];if(!d.titleCos)d.titleCos=[];if(!d.tasks)d.tasks=[];if(!d.lenders)d.lenders=[];if(!d.referrals)d.referrals=[];return d;}catch(e){return{contacts:[],buyers:[],agents:[],titleCos:[],tasks:[],lenders:[],referrals:[]};}
+function load(){try{const r=localStorage.getItem(KEY);const d=r?JSON.parse(r):{contacts:[],buyers:[],agents:[],titleCos:[],tasks:[],lenders:[],referrals:[]};if(!d.agents)d.agents=[];if(!d.dispoPartners)d.dispoPartners=[];if(!d.titleCos)d.titleCos=[];if(!d.tasks)d.tasks=[];if(!d.lenders)d.lenders=[];if(!d.referrals)d.referrals=[];return d;}catch(e){return{contacts:[],buyers:[],agents:[],dispoPartners:[],titleCos:[],tasks:[],lenders:[],referrals:[]};}
 }
 function save(){
   localStorage.setItem(KEY,JSON.stringify(db));
@@ -1624,7 +1662,7 @@ function showView(v){
   currentView=v;
   const _ve=document.getElementById('view-'+v);if(_ve)_ve.classList.add('active');
   const _ne=document.getElementById('nav-'+v);if(_ne)_ne.classList.add('active');
-  const titles={dashboard:'Dashboard','acq-pipeline':'Acquisitions Pipeline','dis-pipeline':'Dispositions Pipeline','ai-queue':'AI Handoff Queue',sellers:'All Leads',buyers:'Buyer Network',calculator:'Offer Calculator',sequences:'SMS Sequences',settings:'Settings','ai-qualified':'AI Qualified Leads',reporting:'Reporting',gmail:'Email',agents:'RE Agents',title:'Title & Closing',tasks:'Tasks',lenders:'Lenders & Funders',referrals:'Referral Partners'};
+  const titles={dashboard:'Dashboard','acq-pipeline':'Acquisitions Pipeline','dis-pipeline':'Dispositions Pipeline','ai-queue':'AI Handoff Queue',sellers:'All Leads',buyers:'Buyer Network',calculator:'Offer Calculator',sequences:'SMS Sequences',settings:'Settings','ai-qualified':'AI Qualified Leads',reporting:'Reporting',gmail:'Email',agents:'RE Agents','dispo-partners':'Dispo Partners',title:'Title & Closing',tasks:'Tasks',lenders:'Lenders & Funders',referrals:'Referral Partners'};
   document.getElementById('page-title').textContent=titles[v]||v;
   if(v==='dashboard')renderDashboard();
   if(v==='acq-pipeline')renderPipeline('acq');
@@ -1638,6 +1676,7 @@ function showView(v){
   if(v==='reporting')renderReporting();
   if(v==='gmail')loadGmailInbox();
   if(v==='agents'){renderAgents();}
+  if(v==='dispo-partners'){renderDispoPartners();}
 }
 
 // ══════════════════════════════════
@@ -9296,6 +9335,201 @@ function deleteAgent(id) {
   closeModal();
   renderAgents();
   toast('Agent deleted', 'success');
+}
+
+// ══════════════════════════════════════════════════
+// DISPO PARTNERS
+// ══════════════════════════════════════════════════
+
+function renderDispoPartners() {
+  const search  = (document.getElementById('dp-search')?.value||'').toLowerCase();
+  const stateF  = document.getElementById('dp-state-filter')?.value || '';
+  const stageF  = document.getElementById('dp-stage-filter')?.value || '';
+  const typeF   = document.getElementById('dp-type-filter')?.value  || '';
+
+  const dpCounties = p => p.counties && p.counties.length ? p.counties : (p.county ? [p.county] : []);
+  const dpState    = p => p.state || '';
+
+  const partners = (db.dispoPartners||[]).filter(p => {
+    if (stateF && dpState(p) !== stateF) return false;
+    if (stageF && (p.stage||'Identified') !== stageF) return false;
+    if (typeF  && (p.buyerType||'') !== typeF) return false;
+    if (search) {
+      const hay = ((p.name||'')+(p.company||'')+dpCounties(p).join(' ')+(p.buyBox||'')+(p.notes||'')).toLowerCase();
+      if (!hay.includes(search)) return false;
+    }
+    return true;
+  });
+
+  // Rebuild state dropdown from full list
+  const stateEl = document.getElementById('dp-state-filter');
+  if (stateEl) {
+    const cur = stateEl.value;
+    const allStates = [...new Set((db.dispoPartners||[]).map(dpState).filter(Boolean))].sort();
+    stateEl.innerHTML = '<option value="">All states</option>' +
+      allStates.map(s => `<option${s===cur?' selected':''}>${s}</option>`).join('');
+  }
+
+  const countEl = document.getElementById('dp-count');
+  if (countEl) countEl.textContent = partners.length + ' partner' + (partners.length!==1?'s':'');
+
+  const tbody = document.getElementById('dp-tbody');
+  if (!tbody) return;
+
+  if (!partners.length) {
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty"><div class="empty-title">${
+      stateF||stageF||typeF||search ? 'No partners match this filter' : 'No dispo partners yet — add your first'
+    }</div></div></td></tr>`;
+    return;
+  }
+
+  // Group by state alphabetically
+  const byState = {};
+  partners.forEach(p => {
+    const s = dpState(p) || 'Other';
+    if (!byState[s]) byState[s] = [];
+    byState[s].push(p);
+  });
+
+  const stageTag = {
+    'Identified':     'tag-neutral',
+    'Contacted':      'tag-ai',
+    'Building':       'tag-warm',
+    'Active Partner': 'tag-human',
+    'Sent Deal':      'tag-dis',
+  };
+
+  tbody.innerHTML = Object.keys(byState).sort().map(state => {
+    const rows = byState[state].map(p => {
+      const days = p.lastContact
+        ? Math.floor((Date.now()-new Date(p.lastContact).getTime())/86400000)
+        : null;
+      const lastStr = days===null ? '—' : days===0 ? 'Today' : days+'d ago';
+      const stage = p.stage || 'Identified';
+      const counties = dpCounties(p);
+      const countiesHtml = counties.length
+        ? counties.map(c=>`<span style="display:inline-block;background:var(--adim);border:1px solid rgba(14,165,233,0.25);border-radius:4px;padding:1px 7px;font-size:10px;color:var(--accent);white-space:nowrap;">${c}</span>`).join(' ')
+        : '<span style="color:var(--text3)">—</span>';
+      return `<tr style="cursor:pointer" onclick="openDispoPartnerDetail('${p.id}')">
+        <td style="font-weight:500">${p.name||'—'}</td>
+        <td style="color:var(--text2)">${p.company||'—'}</td>
+        <td>${countiesHtml}</td>
+        <td><span class="tag tag-neutral">${p.buyerType||'—'}</span></td>
+        <td style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text3)">${lastStr}</td>
+        <td><span class="tag ${stageTag[stage]||'tag-neutral'}">${stage}</span></td>
+      </tr>`;
+    }).join('');
+    return `<tr style="background:var(--bg3);pointer-events:none">
+        <td colspan="6" style="font-family:'DM Mono',monospace;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);padding:8px 14px;">${state}</td>
+      </tr>${rows}`;
+  }).join('');
+}
+
+function dpModalHtml(p) {
+  // p is null for Add, populated for Edit
+  const todayStr = new Date().toISOString().slice(0,10);
+  const existing = p ? (p.counties && p.counties.length ? p.counties : (p.county ? [p.county] : [])) : [];
+  const isEdit = !!p;
+  const title = isEdit ? (p.name||'Edit Partner') : 'Add Dispo Partner';
+  const saveCall = isEdit ? `saveDispoPartnerDetail('${p?.id}')` : `saveNewDispoPartner()`;
+
+  const buyerTypes = ['Wholesaler','Cash Buyer','JV Partner','Land Investor'];
+  const stages     = ['Identified','Contacted','Building','Active Partner','Sent Deal'];
+
+  return `
+    <div class="modal-header"><div class="modal-title">${title}</div><button class="modal-close" onclick="closeModal()">&#x2715;</button></div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">Name *</label><input class="form-input" id="dp-name" value="${p?.name||''}" placeholder="John Buyer"></div>
+        <div class="form-group"><label class="form-label">Company</label><input class="form-input" id="dp-company" value="${p?.company||''}" placeholder="Acme Land LLC"></div>
+        <div class="form-group"><label class="form-label">Phone</label><input class="form-input" id="dp-phone" value="${p?.phone||''}" placeholder="901-555-0100"></div>
+        <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="dp-email" value="${p?.email||''}" placeholder="john@example.com"></div>
+        <div class="form-group"><label class="form-label">State</label><select class="form-input" id="dp-state">${stateOptions(p?.state||'')}</select></div>
+        <div class="form-group"><label class="form-label">Last Contact</label><input class="form-input" id="dp-lastcontact" type="date" value="${p?.lastContact||todayStr}"></div>
+        <div class="form-group"><label class="form-label">Buyer Type</label><select class="form-input" id="dp-buyertype">
+          <option value="">— Select —</option>
+          ${buyerTypes.map(t=>`<option${(p?.buyerType||'')=== t?' selected':''}>${t}</option>`).join('')}
+        </select></div>
+        <div class="form-group"><label class="form-label">Stage</label><select class="form-input" id="dp-stage">
+          ${stages.map(s=>`<option${(p?.stage||'Identified')===s?' selected':''}>${s}</option>`).join('')}
+        </select></div>
+        <div class="form-group form-full"><label class="form-label">Counties <span style="font-size:10px;color:var(--text3);font-weight:400">— type and press Enter or comma to add</span></label>${countyTagWidget('dp-county-inp','dp-county-tags',existing)}</div>
+        <div class="form-group form-full"><label class="form-label">Buy Box <span style="font-size:10px;color:var(--text3);font-weight:400">— what they're looking for</span></label><input class="form-input" id="dp-buybox" value="${p?.buyBox||''}" placeholder="5–50 ac, TN/MS, no flood, cash close in 14d"></div>
+        <div class="form-group form-full"><label class="form-label">Notes</label><textarea class="form-input" id="dp-notes" rows="3" style="resize:vertical">${p?.notes||''}</textarea></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      ${isEdit ? `<button class="btn btn-ghost btn-sm" style="color:var(--coral)" onclick="deleteDispoPartner('${p.id}')">Delete</button>` : ''}
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="${saveCall}">Save</button>
+    </div>`;
+}
+
+function openAddDispoPartner() {
+  openCustomModal(dpModalHtml(null));
+}
+
+function saveNewDispoPartner() {
+  const name = document.getElementById('dp-name')?.value.trim();
+  if (!name) { toast('Name is required', 'error'); return; }
+  const partner = {
+    id: 'dp' + Date.now().toString(36),
+    name,
+    company:     document.getElementById('dp-company')?.value.trim()     || '',
+    phone:       document.getElementById('dp-phone')?.value.trim()       || '',
+    email:       document.getElementById('dp-email')?.value.trim()       || '',
+    counties:    agentTagsRead('dp-county-tags'),
+    state:       document.getElementById('dp-state')?.value              || '',
+    buyerType:   document.getElementById('dp-buyertype')?.value          || '',
+    stage:       document.getElementById('dp-stage')?.value              || 'Identified',
+    buyBox:      document.getElementById('dp-buybox')?.value.trim()      || '',
+    notes:       document.getElementById('dp-notes')?.value.trim()       || '',
+    lastContact: document.getElementById('dp-lastcontact')?.value        || new Date().toISOString().slice(0,10),
+    created:     new Date().toISOString().slice(0,10),
+  };
+  if (!db.dispoPartners) db.dispoPartners = [];
+  db.dispoPartners.unshift(partner);
+  save();
+  closeModal();
+  renderDispoPartners();
+  toast('Partner saved — ' + name, 'success');
+}
+
+function openDispoPartnerDetail(id) {
+  const p = (db.dispoPartners||[]).find(x => x.id === id);
+  if (!p) return;
+  openCustomModal(dpModalHtml(p));
+}
+
+function saveDispoPartnerDetail(id) {
+  const p = (db.dispoPartners||[]).find(x => x.id === id);
+  if (!p) return;
+  const name = document.getElementById('dp-name')?.value.trim();
+  if (!name) { toast('Name is required', 'error'); return; }
+  p.name        = name;
+  p.company     = document.getElementById('dp-company')?.value.trim()     || '';
+  p.phone       = document.getElementById('dp-phone')?.value.trim()       || '';
+  p.email       = document.getElementById('dp-email')?.value.trim()       || '';
+  p.counties    = agentTagsRead('dp-county-tags');
+  p.state       = document.getElementById('dp-state')?.value              || '';
+  p.buyerType   = document.getElementById('dp-buyertype')?.value          || '';
+  p.stage       = document.getElementById('dp-stage')?.value              || p.stage;
+  p.buyBox      = document.getElementById('dp-buybox')?.value.trim()      || '';
+  p.notes       = document.getElementById('dp-notes')?.value.trim()       || '';
+  p.lastContact = document.getElementById('dp-lastcontact')?.value        || p.lastContact;
+  save();
+  closeModal();
+  renderDispoPartners();
+  toast('Partner updated — ' + name, 'success');
+}
+
+function deleteDispoPartner(id) {
+  if (!confirm('Delete this partner?')) return;
+  db.dispoPartners = (db.dispoPartners||[]).filter(x => x.id !== id);
+  save();
+  closeModal();
+  renderDispoPartners();
+  toast('Partner deleted', 'success');
 }
 
 </script>
