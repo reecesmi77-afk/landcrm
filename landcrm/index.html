@@ -9060,11 +9060,11 @@ function renderAgents() {
     return parts.length > 1 ? parts[parts.length-1].trim() : '';
   };
   const agentCounties = a => {
-    if (a.county) return a.county;
-    if (a.counties && a.counties.length) return a.counties.join(', ');
-    if (a.markets) return a.markets;
-    if (a.cityState) return a.cityState.split(',')[0].trim();
-    return '—';
+    if (a.counties && a.counties.length) return a.counties;
+    if (a.county) return [a.county];
+    if (a.markets) return a.markets.split(',').map(s=>s.trim()).filter(Boolean);
+    if (a.cityState) return [a.cityState.split(',')[0].trim()];
+    return [];
   };
 
   const search = (document.getElementById('agent-search')?.value||'').toLowerCase();
@@ -9075,7 +9075,7 @@ function renderAgents() {
     if (stateF && agentState(a) !== stateF) return false;
     if (stageF && (a.stage||'Identified') !== stageF) return false;
     if (search) {
-      const hay = ((a.name||'')+(a.brokerage||'')+agentCounties(a)+(agentNotes(a))).toLowerCase();
+      const hay = ((a.name||'')+(a.brokerage||'')+agentCounties(a).join(' ')+(agentNotes(a))).toLowerCase();
       if (!hay.includes(search)) return false;
     }
     return true;
@@ -9126,10 +9126,14 @@ function renderAgents() {
         : null;
       const lastStr = days===null ? '—' : days===0 ? 'Today' : days+'d ago';
       const stage = a.stage || 'Identified';
+      const counties = agentCounties(a);
+      const countiesHtml = counties.length
+        ? counties.map(c=>`<span style="display:inline-block;background:var(--adim);border:1px solid rgba(14,165,233,0.25);border-radius:4px;padding:1px 7px;font-size:10px;color:var(--accent);white-space:nowrap;">${c}</span>`).join(' ')
+        : '<span style="color:var(--text3)">—</span>';
       return `<tr style="cursor:pointer" onclick="openAgentDetail('${a.id}')">
         <td style="font-weight:500">${a.name||'—'}</td>
         <td style="color:var(--text2)">${a.brokerage||'—'}</td>
-        <td style="color:var(--text2)">${agentCounties(a)}</td>
+        <td>${countiesHtml}</td>
         <td style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text3)">${lastStr}</td>
         <td><span class="tag ${stageTag[stage]||'tag-neutral'}">${stage}</span></td>
       </tr>`;
@@ -9140,6 +9144,52 @@ function renderAgents() {
   }).join('');
 }
 
+// ── Agent county tag helpers ─────────────────────────────────────────
+function agentTagsAdd(inputId, tagsId) {
+  const inp = document.getElementById(inputId);
+  if (!inp) return;
+  const raw = inp.value.trim().replace(/,+$/, '');
+  if (!raw) return;
+  raw.split(',').map(s => s.trim()).filter(Boolean).forEach(county => {
+    const container = document.getElementById(tagsId);
+    if (!container) return;
+    // avoid duplicates (case-insensitive)
+    const existing = Array.from(container.querySelectorAll('span')).map(s => s.dataset.val.toLowerCase());
+    if (existing.includes(county.toLowerCase())) return;
+    const tag = document.createElement('span');
+    tag.dataset.val = county;
+    tag.style.cssText = 'display:inline-flex;align-items:center;gap:4px;background:var(--adim);border:1px solid rgba(14,165,233,0.25);border-radius:4px;padding:2px 8px;font-size:11px;color:var(--accent);cursor:default;';
+    tag.innerHTML = `${county} <span onclick="this.parentNode.remove()" style="cursor:pointer;opacity:0.6;font-size:13px;line-height:1;">&times;</span>`;
+    container.appendChild(tag);
+  });
+  inp.value = '';
+}
+
+function agentTagsRead(tagsId) {
+  const container = document.getElementById(tagsId);
+  if (!container) return [];
+  return Array.from(container.querySelectorAll('span[data-val]')).map(s => s.dataset.val);
+}
+
+function agentTagsHtml(counties) {
+  if (!counties || !counties.length) return '';
+  return counties.map(c =>
+    `<span style="display:inline-flex;align-items:center;gap:4px;background:var(--adim);border:1px solid rgba(14,165,233,0.25);border-radius:4px;padding:2px 8px;font-size:11px;color:var(--accent);">${c}</span>`
+  ).join(' ');
+}
+
+function countyTagWidget(inputId, tagsId, existing) {
+  const tags = (existing||[]).map(c =>
+    `<span data-val="${c}" style="display:inline-flex;align-items:center;gap:4px;background:var(--adim);border:1px solid rgba(14,165,233,0.25);border-radius:4px;padding:2px 8px;font-size:11px;color:var(--accent);cursor:default;">${c} <span onclick="this.parentNode.remove()" style="cursor:pointer;opacity:0.6;font-size:13px;line-height:1;">&times;</span></span>`
+  ).join('');
+  return `<div style="display:flex;gap:6px;margin-bottom:6px;">
+    <input class="form-input" id="${inputId}" placeholder="Shelby, Tipton…" style="flex:1;"
+      onkeydown="if(event.key==='Enter'||event.key===','){event.preventDefault();agentTagsAdd('${inputId}','${tagsId}');}">
+    <button type="button" class="btn btn-ghost btn-sm" onclick="agentTagsAdd('${inputId}','${tagsId}')">+ Add</button>
+  </div>
+  <div id="${tagsId}" style="display:flex;flex-wrap:wrap;gap:6px;min-height:24px;">${tags}</div>`;
+}
+
 function stateOptions(selected) {
   const states = [['AL','Alabama'],['AK','Alaska'],['AZ','Arizona'],['AR','Arkansas'],['CA','California'],['CO','Colorado'],['CT','Connecticut'],['DE','Delaware'],['FL','Florida'],['GA','Georgia'],['HI','Hawaii'],['ID','Idaho'],['IL','Illinois'],['IN','Indiana'],['IA','Iowa'],['KS','Kansas'],['KY','Kentucky'],['LA','Louisiana'],['ME','Maine'],['MD','Maryland'],['MA','Massachusetts'],['MI','Michigan'],['MN','Minnesota'],['MS','Mississippi'],['MO','Missouri'],['MT','Montana'],['NE','Nebraska'],['NV','Nevada'],['NH','New Hampshire'],['NJ','New Jersey'],['NM','New Mexico'],['NY','New York'],['NC','North Carolina'],['ND','North Dakota'],['OH','Ohio'],['OK','Oklahoma'],['OR','Oregon'],['PA','Pennsylvania'],['RI','Rhode Island'],['SC','South Carolina'],['SD','South Dakota'],['TN','Tennessee'],['TX','Texas'],['UT','Utah'],['VT','Vermont'],['VA','Virginia'],['WA','Washington'],['WV','West Virginia'],['WI','Wisconsin'],['WY','Wyoming']];
   return '<option value="">— Select state —</option>'+states.map(([v,n])=>`<option value="${v}"${v===selected?' selected':''}>${n}</option>`).join('');
@@ -9147,15 +9197,18 @@ function stateOptions(selected) {
 
 function openAddAgent() {
   const id = 'ag' + Date.now().toString(36);
+  const todayStr = new Date().toISOString().slice(0,10);
   const html = `
     <div class="modal-header"><div class="modal-title">Add RE Agent</div></div>
     <div class="modal-body">
       <div class="form-grid">
         <div class="form-group"><label class="form-label">Name *</label><input class="form-input" id="ag-name" placeholder="Karen Kinder"></div>
+        <div class="form-group"><label class="form-label">Brokerage</label><input class="form-input" id="ag-brokerage" placeholder="Coldwell Banker"></div>
         <div class="form-group"><label class="form-label">Phone</label><input class="form-input" id="ag-phone" placeholder="419-266-7911"></div>
         <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="ag-email" placeholder="karen@example.com"></div>
-        <div class="form-group"><label class="form-label">County</label><input class="form-input" id="ag-county" placeholder="Shelby"></div>
         <div class="form-group"><label class="form-label">State</label><select class="form-input" id="ag-state">${stateOptions('')}</select></div>
+        <div class="form-group"><label class="form-label">Last Contact</label><input class="form-input" id="ag-lastcontact" type="date" value="${todayStr}"></div>
+        <div class="form-group form-full"><label class="form-label">Counties <span style="font-size:10px;color:var(--text3);font-weight:400">— type and press Enter or comma to add</span></label>${countyTagWidget('ag-county-inp','ag-county-tags',[])}</div>
         <div class="form-group form-full"><label class="form-label">Notes</label><input class="form-input" id="ag-notes" placeholder="Lists 90+ day MLS land deals, prefers text..."></div>
       </div>
     </div>
@@ -9172,12 +9225,13 @@ function saveNewAgent(id) {
   const agent = {
     id: id,
     name: name,
+    brokerage: document.getElementById('ag-brokerage')?.value.trim() || '',
     phone: document.getElementById('ag-phone')?.value.trim() || '',
     email: document.getElementById('ag-email')?.value.trim() || '',
-    county: document.getElementById('ag-county')?.value.trim() || '',
+    counties: agentTagsRead('ag-county-tags'),
     state: document.getElementById('ag-state')?.value || '',
     notes: document.getElementById('ag-notes')?.value.trim() || '',
-    lastContact: null,
+    lastContact: document.getElementById('ag-lastcontact')?.value || new Date().toISOString().slice(0,10),
     created: new Date().toISOString().slice(0,10)
   };
   if (!db.agents) db.agents = [];
@@ -9191,6 +9245,9 @@ function saveNewAgent(id) {
 function openAgentDetail(id) {
   const a = (db.agents||[]).find(x => x.id === id);
   if (!a) return;
+  // Normalise counties — may be array (new) or legacy string field
+  const existingCounties = a.counties && a.counties.length ? a.counties
+    : (a.county ? [a.county] : []);
   const html = `
     <div class="modal-header">
       <div class="modal-title">${a.name}</div>
@@ -9198,12 +9255,13 @@ function openAgentDetail(id) {
     <div class="modal-body">
       <div class="form-grid">
         <div class="form-group"><label class="form-label">Name</label><input class="form-input" id="agd-name" value="${a.name||''}"></div>
+        <div class="form-group"><label class="form-label">Brokerage</label><input class="form-input" id="agd-brokerage" value="${a.brokerage||''}"></div>
         <div class="form-group"><label class="form-label">Phone</label><input class="form-input" id="agd-phone" value="${a.phone||''}"></div>
         <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="agd-email" value="${a.email||''}"></div>
-        <div class="form-group"><label class="form-label">County</label><input class="form-input" id="agd-county" value="${a.county||''}"></div>
         <div class="form-group"><label class="form-label">State</label><select class="form-input" id="agd-state">${stateOptions(a.state||'')}</select></div>
-        <div class="form-group form-full"><label class="form-label">Notes</label><textarea class="form-input" id="agd-notes" rows="3" style="resize:vertical">${a.notes||''}</textarea></div>
         <div class="form-group"><label class="form-label">Last Contact</label><input class="form-input" id="agd-lastcontact" type="date" value="${a.lastContact||''}"></div>
+        <div class="form-group form-full"><label class="form-label">Counties <span style="font-size:10px;color:var(--text3);font-weight:400">— type and press Enter or comma to add</span></label>${countyTagWidget('agd-county-inp','agd-county-tags',existingCounties)}</div>
+        <div class="form-group form-full"><label class="form-label">Notes</label><textarea class="form-input" id="agd-notes" rows="3" style="resize:vertical">${a.notes||''}</textarea></div>
       </div>
     </div>
     <div class="modal-footer">
@@ -9218,9 +9276,10 @@ function saveAgentDetail(id) {
   const a = (db.agents||[]).find(x => x.id === id);
   if (!a) return;
   a.name = document.getElementById('agd-name')?.value.trim() || a.name;
+  a.brokerage = document.getElementById('agd-brokerage')?.value.trim() || '';
   a.phone = document.getElementById('agd-phone')?.value.trim() || '';
   a.email = document.getElementById('agd-email')?.value.trim() || '';
-  a.county = document.getElementById('agd-county')?.value.trim() || '';
+  a.counties = agentTagsRead('agd-county-tags');
   a.state = document.getElementById('agd-state')?.value || '';
   a.notes = document.getElementById('agd-notes')?.value.trim() || '';
   a.lastContact = document.getElementById('agd-lastcontact')?.value || a.lastContact;
