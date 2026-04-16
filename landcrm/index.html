@@ -9053,8 +9053,8 @@ syncFromQuo();
 setInterval(syncFromQuo,60000);
 
 function renderAgents() {
-  const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  const agentNotes = a => Array.isArray(a.notes) ? a.notes.map(n => n.text||'').join(' ') : (a.notes||'');
+  // Normalize agents that may use old schema (notes as array, location as markets)
+  const agentNotes    = a => Array.isArray(a.notes) ? a.notes.map(n => n.text||'').join(' ') : (a.notes||'');
   const agentLocation = a => a.cityState || a.markets || '';
 
   const search = (document.getElementById('agent-search')?.value||'').toLowerCase();
@@ -9089,23 +9089,45 @@ function renderAgents() {
   const tbody = document.getElementById('agent-tbody');
   if (!tbody) return;
 
+  // Clear existing rows
+  tbody.innerHTML = '';
+
   if (!agents.length) {
-    tbody.innerHTML = '<tr><td colspan="6"><div class="empty"><div class="empty-title">No agents yet — add your first</div></div></td></tr>';
+    const tr = document.createElement('tr');
+    const td = document.createElement('td');
+    td.colSpan = 6;
+    td.innerHTML = '<div class="empty"><div class="empty-title">No agents yet — add your first</div></div>';
+    tr.appendChild(td);
+    tbody.appendChild(tr);
     return;
   }
 
-  tbody.innerHTML = agents.map(a => {
+  // Build rows with createElement so user content can never break the table HTML
+  agents.forEach(function(a) {
     const days = a.lastContact ? Math.floor((Date.now() - new Date(a.lastContact).getTime()) / 86400000) : null;
     const lastStr = days === null ? '—' : days === 0 ? 'Today' : days + 'd ago';
-    return `<tr onclick="openAgentDetail('${a.id}')">
-      <td style="font-weight:500">${esc(a.name)||'—'}</td>
-      <td style="font-family:'DM Mono',monospace;font-size:11px">${esc(a.phone)||'—'}</td>
-      <td style="font-size:12px;color:var(--text2)">${esc(a.email)||'—'}</td>
-      <td style="color:var(--text2)">${esc(agentLocation(a))||'—'}</td>
-      <td style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text3)">${lastStr}</td>
-      <td style="font-size:11px;color:var(--text2);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(agentNotes(a))||'—'}</td>
-    </tr>`;
-  }).join('');
+
+    const tr = document.createElement('tr');
+    tr.style.cursor = 'pointer';
+    tr.addEventListener('click', function() { openAgentDetail(a.id); });
+
+    var cols = [
+      { text: a.name||'—',            style: 'font-weight:500' },
+      { text: a.phone||'—',           style: "font-family:'DM Mono',monospace;font-size:11px" },
+      { text: a.email||'—',           style: 'font-size:12px;color:var(--text2)' },
+      { text: agentLocation(a)||'—',  style: 'color:var(--text2)' },
+      { text: lastStr,                 style: "font-family:'DM Mono',monospace;font-size:11px;color:var(--text3)" },
+      { text: agentNotes(a)||'—',     style: 'font-size:11px;color:var(--text2);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' }
+    ];
+    cols.forEach(function(c) {
+      const td = document.createElement('td');
+      if (c.style) td.style.cssText = c.style;
+      td.textContent = c.text;
+      tr.appendChild(td);
+    });
+
+    tbody.appendChild(tr);
+  });
 }
 
 function openAddAgent() {
