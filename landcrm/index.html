@@ -9193,7 +9193,7 @@ function agentTagsAdd(inputId, tagsId) {
     const container = document.getElementById(tagsId);
     if (!container) return;
     // avoid duplicates (case-insensitive)
-    const existing = Array.from(container.querySelectorAll('span')).map(s => s.dataset.val.toLowerCase());
+    const existing = Array.from(container.querySelectorAll('span[data-val]')).map(s => s.dataset.val.toLowerCase());
     if (existing.includes(county.toLowerCase())) return;
     const tag = document.createElement('span');
     tag.dataset.val = county;
