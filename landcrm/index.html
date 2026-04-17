@@ -9652,6 +9652,13 @@ function markAgentSMSSent(agentId) {
   a.lastSmsText = preview.value.trim();
   a.lastContact = sentDate;
 
+  // Seed the conversation history with Will's opening message so Claude has
+  // the full thread from message one when the agent replies.
+  // Reset the array — a new outreach starts a fresh conversation.
+  a.conversation = [{ role: 'will', text: a.lastSmsText, ts: new Date().toISOString() }];
+  a.lastGeneratedReply = '';
+  a.lastStageLabel     = '';
+
   // Create follow-up call task due in 2 days
   const dueDate = (() => { const d = new Date(); d.setDate(d.getDate() + 2); return d.toISOString().slice(0,10); })();
   const taskTitle = `Call ${a.name} — no reply to SMS about ${address}`;
