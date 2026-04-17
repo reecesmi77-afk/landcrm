@@ -9379,28 +9379,45 @@ function generateAgentSMS(agentId) {
   const address = document.getElementById('agd-listing-address')?.value.trim() || '';
   const price   = document.getElementById('agd-listing-price')?.value.trim()   || '';
   const acreage = document.getElementById('agd-listing-acreage')?.value.trim() || '';
-  const dom     = document.getElementById('agd-listing-dom')?.value.trim()     || '';
+  const dom     = parseInt(document.getElementById('agd-listing-dom')?.value.trim() || '0', 10);
   const lnotes  = document.getElementById('agd-listing-notes')?.value.trim()   || '';
   const tpl     = document.getElementById('agd-sms-template')?.value || '';
 
-  const acreStr  = acreage ? `${acreage}-acre ` : '';
-  const priceStr = price   ? ` listed at ${price}` : '';
-  const domStr   = dom     ? ` (${dom} days on market)` : '';
   const addrStr  = address || 'your listing';
-  const notesStr = lnotes  ? ` — ${lnotes}` : '';
+  const acreStr  = acreage ? `${acreage} acres` : '';
+  const priceStr = price   ? ` at ${price}` : '';
+
+  // DOM phrasing — never show the raw number if over 60
+  const domPhrase = dom > 60 ? "looks like it's been sitting a while" : dom > 0 ? `been on the market for a bit` : '';
+
+  // Weave in listing notes naturally as a casual observation
+  const notesPhrase = lnotes ? `I did notice ${lnotes.charAt(0).toLowerCase() + lnotes.slice(1)} — figured that's probably keeping some buyers away.` : '';
+
+  // Build casual property reference
+  const propRef = [addrStr, acreStr ? `(${acreStr})` : ''].filter(Boolean).join(' ');
 
   let msg = '';
   if (tpl === 'first') {
-    msg = `Hey ${firstName}, saw your ${acreStr}listing at ${addrStr}${priceStr}${domStr}. We buy land for cash, no contingencies, quick close. Would you be open to a brief conversation about what your seller's situation looks like? — Will`;
+    const sitting = domPhrase ? `, and it ${domPhrase}` : '';
+    const notes = notesPhrase ? ` ${notesPhrase}` : '';
+    msg = `Hey ${firstName}, came across your listing at ${propRef}${priceStr}${sitting}.${notes} We buy land cash, no contingencies — mind if I ask a little about where the seller's at? — Will`;
   } else if (tpl === 'followup') {
-    msg = `Hey ${firstName}, just circling back on ${addrStr}${domStr}. Still showing active — wanted to see if there's any flexibility on terms or timeline. We can close cash, usually within 2–3 weeks. Let me know if that's worth a quick call. — Will`;
+    const sitting = domPhrase ? ` — ${domPhrase}` : '';
+    const notes = notesPhrase ? ` ${notesPhrase}` : '';
+    msg = `Hey ${firstName}, just checking back in on ${propRef}${sitting}.${notes} Still happy to come in cash and close quick if the timing ever makes sense — just lmk. — Will`;
   } else if (tpl === 'relationship') {
-    msg = `Hey ${firstName}, the numbers on ${addrStr} don't quite work for us today but I wanted to pass that along rather than ghost you. We buy land in this market regularly — cash, no contingencies. Would love to be on your radar for future listings. — Will`;
+    const notes = notesPhrase ? ` ${notesPhrase}` : '';
+    msg = `Hey ${firstName}, the numbers on ${propRef} just aren't quite there for us right now, wanted to be straight with you rather than disappear.${notes} We're active in this market though — would love to stay on your radar for future stuff. — Will`;
   } else if (tpl === 'offer') {
-    msg = `Hey ${firstName}, we've done our homework on ${addrStr}${priceStr}${domStr}${notesStr} and we're interested in making a cash offer. No contingencies, flexible close date, straightforward contract. Can we jump on a quick call this week? — Will`;
+    const sitting = domPhrase ? `, and it ${domPhrase}` : '';
+    const notes = notesPhrase ? ` ${notesPhrase}` : '';
+    msg = `Hey ${firstName}, did some digging on ${propRef}${priceStr}${sitting}${notes ? ' —' : ''} ${notes}We'd like to make a cash offer, no contingencies, flexible on close date — would it make sense to get on a quick call? — Will`;
   } else {
     msg = '';
   }
+
+  // Clean up any double spaces that can appear when optional parts are empty
+  msg = msg.replace(/  +/g, ' ').replace(/ —\s*\./g, '.').replace(/\.\s*\./g, '.').trim();
 
   const preview = document.getElementById('agd-sms-preview');
   if (preview) preview.value = msg;
