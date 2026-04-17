@@ -3744,9 +3744,17 @@ async function syncTranscriptToJSONbin(parsed, contact) {
   }
 }
 
+// In-progress guard — keyed by normalised phone digits to block concurrent calls
+// for the same number (prevents duplicate creates from rapid double-saves).
+const _quoPushBusy = new Set();
+
 async function pushContactToQuo(contact){
+  const phoneDigits = String(contact.phone||'').replace(/\D/g,'');
+  if(!phoneDigits){console.warn('Quo push skipped — no phone:',contact.name);return null;}
+  if(_quoPushBusy.has(phoneDigits)){console.warn('Quo push already in-flight for',contact.name,phoneDigits);return null;}
+  _quoPushBusy.add(phoneDigits);
   try{
-    const res=await fetch(`${FUNCTIONS_BASE}/push-contact`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+    const payload={
       name:contact.name,
       phone:contact.phone,
       county:contact.county||'',
@@ -3754,11 +3762,15 @@ async function pushContactToQuo(contact){
       acreage:contact.acreage||'',
       notes:contact.notes||'',
       email:contact.email||'',
-    })});
+    };
+    // Pass stored OpenPhone ID for direct PATCH (skips search, prevents duplicate create)
+    if(contact.quoContactId) payload.quoContactId=contact.quoContactId;
+    const res=await fetch(`${FUNCTIONS_BASE}/push-contact`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
     const d=await res.json();
-    if(d.ok)console.log('Quo contact '+d.action+':',contact.name);
-    else console.warn('Quo push failed:',contact.name,d);
-  }catch(e){console.warn('Quo push error:',e.message);}
+    if(d.ok){console.log('Quo contact '+d.action+':',contact.name,'id:',d.id);return d.id||null;}
+    else{console.warn('Quo push failed:',contact.name,d);return null;}
+  }catch(e){console.warn('Quo push error:',e.message);return null;}
+  finally{_quoPushBusy.delete(phoneDigits);}
 }
 async function syncFromQuo(){
   try{
@@ -9289,14 +9301,19 @@ function saveNewAgent(id) {
   if (!db.agents) db.agents = [];
   db.agents.push(agent);
   save();
-  if (agent.phone) pushContactToQuo({
-    name:   agent.name,
-    phone:  agent.phone,
-    county: (agent.counties||[]).join(', ') || agent.county || '',
-    state:  agent.state || '',
-    notes:  [agent.brokerage, 'RE Agent'].filter(Boolean).join(' | '),
-    email:  agent.email || '',
-  });
+  if (agent.phone) {
+    pushContactToQuo({
+      name:   agent.name,
+      phone:  agent.phone,
+      county: (agent.counties||[]).join(', ') || agent.county || '',
+      state:  agent.state || '',
+      notes:  [agent.brokerage, 'RE Agent'].filter(Boolean).join(' | '),
+      email:  agent.email || '',
+      quoContactId: agent.quoContactId || null,
+    }).then(quoId => {
+      if (quoId && quoId !== agent.quoContactId) { agent.quoContactId = quoId; save(); }
+    });
+  }
   closeModal();
   showView('agents');
   toast('Agent saved', 'success');
@@ -9434,14 +9451,19 @@ function saveAgentDetail(id) {
     propType: (document.getElementById('agd-pt-sfh')?.dataset.active === '1') ? 'sfh' : 'land',
   };
   save();
-  if (a.phone) pushContactToQuo({
-    name:   a.name,
-    phone:  a.phone,
-    county: (a.counties||[]).join(', ') || a.county || '',
-    state:  a.state || '',
-    notes:  [a.brokerage, 'RE Agent'].filter(Boolean).join(' | '),
-    email:  a.email || '',
-  });
+  if (a.phone) {
+    pushContactToQuo({
+      name:   a.name,
+      phone:  a.phone,
+      county: (a.counties||[]).join(', ') || a.county || '',
+      state:  a.state || '',
+      notes:  [a.brokerage, 'RE Agent'].filter(Boolean).join(' | '),
+      email:  a.email || '',
+      quoContactId: a.quoContactId || null,
+    }).then(quoId => {
+      if (quoId && quoId !== a.quoContactId) { a.quoContactId = quoId; save(); }
+    });
+  }
   closeModal();
   renderAgents();
   toast('Agent updated', 'success');
@@ -9798,14 +9820,19 @@ function saveNewDispoPartner() {
   if (!db.dispoPartners) db.dispoPartners = [];
   db.dispoPartners.unshift(partner);
   save();
-  if (partner.phone) pushContactToQuo({
-    name:   partner.name,
-    phone:  partner.phone,
-    county: (partner.counties||[]).join(', ') || partner.county || '',
-    state:  partner.state || '',
-    notes:  [partner.company, partner.buyerType, 'Dispo Partner'].filter(Boolean).join(' | '),
-    email:  partner.email || '',
-  });
+  if (partner.phone) {
+    pushContactToQuo({
+      name:   partner.name,
+      phone:  partner.phone,
+      county: (partner.counties||[]).join(', ') || partner.county || '',
+      state:  partner.state || '',
+      notes:  [partner.company, partner.buyerType, 'Dispo Partner'].filter(Boolean).join(' | '),
+      email:  partner.email || '',
+      quoContactId: partner.quoContactId || null,
+    }).then(quoId => {
+      if (quoId && quoId !== partner.quoContactId) { partner.quoContactId = quoId; save(); }
+    });
+  }
   closeModal();
   renderDispoPartners();
   toast('Partner saved — ' + name, 'success');
@@ -9834,14 +9861,19 @@ function saveDispoPartnerDetail(id) {
   p.notes       = document.getElementById('dp-notes')?.value.trim()       || '';
   p.lastContact = document.getElementById('dp-lastcontact')?.value        || p.lastContact;
   save();
-  if (p.phone) pushContactToQuo({
-    name:   p.name,
-    phone:  p.phone,
-    county: (p.counties||[]).join(', ') || p.county || '',
-    state:  p.state || '',
-    notes:  [p.company, p.buyerType, 'Dispo Partner'].filter(Boolean).join(' | '),
-    email:  p.email || '',
-  });
+  if (p.phone) {
+    pushContactToQuo({
+      name:   p.name,
+      phone:  p.phone,
+      county: (p.counties||[]).join(', ') || p.county || '',
+      state:  p.state || '',
+      notes:  [p.company, p.buyerType, 'Dispo Partner'].filter(Boolean).join(' | '),
+      email:  p.email || '',
+      quoContactId: p.quoContactId || null,
+    }).then(quoId => {
+      if (quoId && quoId !== p.quoContactId) { p.quoContactId = quoId; save(); }
+    });
+  }
   closeModal();
   renderDispoPartners();
   toast('Partner updated — ' + name, 'success');

@@ -1,4 +1,4 @@
-// push-contact.js — fixed name parsing + phone matching
+// push-contact.js — search-before-create + direct PATCH via quoContactId
 const QUO_BASE = 'https://api.openphone.com/v1';
 
 exports.handler = async (event) => {
@@ -18,7 +18,7 @@ exports.handler = async (event) => {
   try { body = JSON.parse(event.body); }
   catch (e) { return { statusCode: 400, headers, body: JSON.stringify({ error: 'Invalid JSON' }) }; }
 
-  const { name, phone, notes, county, state, acreage, email, contactId } = body;
+  const { name, phone, notes, county, state, acreage, email, contactId, quoContactId } = body;
   if (!name || !phone) return { statusCode: 400, headers, body: JSON.stringify({ error: 'name and phone required' }) };
 
   // Normalise to E.164 — strip everything non-digit
@@ -28,16 +28,13 @@ exports.handler = async (event) => {
   else if (digits.length === 11 && digits[0] === '1') e164 = `+${digits}`;
   else e164 = `+${digits}`;
 
-  // Fix name parsing — only split on FIRST space to get first/last
-  // "Test Lead" → firstName: "Test", lastName: "Lead"
-  // "William" → firstName: "William", lastName: ""
-  // "Mary Jane Watson" → firstName: "Mary", lastName: "Jane Watson"
+  // Name parsing — split on FIRST space only
   const trimmedName = name.trim();
   const spaceIdx = trimmedName.indexOf(' ');
   const firstName = spaceIdx > 0 ? trimmedName.slice(0, spaceIdx) : trimmedName;
   const lastName = spaceIdx > 0 ? trimmedName.slice(spaceIdx + 1) : '';
 
-  // Build company/notes field
+  // Build company field from county + state | notes
   const details = [];
   if (county && state) details.push(`${county}, ${state}`);
   if (acreage) details.push(`${acreage} acres`);
@@ -49,10 +46,35 @@ exports.handler = async (event) => {
     'Content-Type': 'application/json',
   };
 
-  console.log(`push-contact: "${firstName} ${lastName}" → ${e164}`);
+  const contactFields = {
+    defaultFields: {
+      firstName,
+      lastName,
+      ...(company ? { company } : {}),
+      ...(email ? { emails: [{ name: 'email', value: email }] } : {}),
+    }
+  };
+
+  console.log(`push-contact: "${firstName} ${lastName}" → ${e164}${quoContactId ? ` (quoId: ${quoContactId})` : ''}`);
 
   try {
-    // Search for existing contact by phone number
+    // ── Fast path: if caller already knows the OpenPhone contact ID, PATCH directly ──
+    if (quoContactId) {
+      const patchRes = await fetch(`${QUO_BASE}/contacts/${quoContactId}`, {
+        method: 'PATCH',
+        headers: quoHeaders,
+        body: JSON.stringify(contactFields),
+      });
+      const patchData = await patchRes.json();
+      if (patchData?.data?.id) {
+        console.log('Direct PATCH succeeded:', quoContactId);
+        return { statusCode: 200, headers, body: JSON.stringify({ ok: true, action: 'updated', id: quoContactId, name: `${firstName} ${lastName}` }) };
+      }
+      // Contact no longer exists in OpenPhone — fall through to search/create
+      console.log(`Direct PATCH failed for ${quoContactId} — falling back to search`);
+    }
+
+    // ── Search for existing contact by phone number ──
     const searchRes = await fetch(
       `${QUO_BASE}/contacts?phoneNumber=${encodeURIComponent(e164)}&maxResults=1`,
       { headers: quoHeaders }
@@ -60,9 +82,7 @@ exports.handler = async (event) => {
     const searchData = await searchRes.json();
     console.log('Search result:', JSON.stringify(searchData?.data?.length), 'contacts found');
 
-    // Verify the returned contact actually owns this phone number — the OpenPhone
-    // search API can return a stale/unrelated contact when no real match exists.
-    // Normalise both sides to digits-only for comparison.
+    // Verify the returned contact actually owns this phone number
     const toDigits = s => String(s || '').replace(/\D/g, '');
     const e164Digits = toDigits(e164);
     const candidate = searchData?.data?.[0];
@@ -72,31 +92,22 @@ exports.handler = async (event) => {
     const existing = phoneMatch ? candidate : null;
 
     if (!existing && candidate) {
-      console.log(`Search returned contact ${candidate.id} but its phone numbers do not match ${e164} — will create new contact instead`);
+      console.log(`Search returned contact ${candidate.id} but phone numbers do not match ${e164} — creating new`);
     }
-
-    const contactFields = {
-      defaultFields: {
-        firstName,
-        lastName,
-        ...(company ? { company } : {}),
-        ...(email ? { emails: [{ name: 'email', value: email }] } : {}),
-      }
-    };
 
     if (existing) {
       // Update existing — confirmed phone number match
       const patchRes = await fetch(`${QUO_BASE}/contacts/${existing.id}`, {
         method: 'PATCH',
         headers: quoHeaders,
-        body: JSON.stringify(contactFields)
+        body: JSON.stringify(contactFields),
       });
       const patchData = await patchRes.json();
       console.log('Updated contact:', existing.id, JSON.stringify(patchData).slice(0, 200));
       return { statusCode: 200, headers, body: JSON.stringify({ ok: true, action: 'updated', id: existing.id, name: `${firstName} ${lastName}` }) };
 
     } else {
-      // Create new — must include phoneNumbers in defaultFields
+      // Create new — include phoneNumbers in defaultFields
       const createBody = {
         defaultFields: {
           firstName,
@@ -113,7 +124,7 @@ exports.handler = async (event) => {
       const createRes = await fetch(`${QUO_BASE}/contacts`, {
         method: 'POST',
         headers: quoHeaders,
-        body: JSON.stringify(createBody)
+        body: JSON.stringify(createBody),
       });
       const createData = await createRes.json();
       console.log('Create result:', JSON.stringify(createData).slice(0, 300));
@@ -121,7 +132,6 @@ exports.handler = async (event) => {
       if (createData?.data?.id) {
         return { statusCode: 201, headers, body: JSON.stringify({ ok: true, action: 'created', id: createData.data.id, name: `${firstName} ${lastName}` }) };
       } else {
-        // Return full error so we can debug
         return { statusCode: 200, headers, body: JSON.stringify({ ok: false, quoError: createData, sentBody: createBody }) };
       }
     }
