@@ -9407,6 +9407,25 @@ function agentSetPropType(agentId, type, silent) {
   if (!silent) generateAgentSMS(agentId);
 }
 
+// Read listing notes and return a short casual clause — never paste raw text.
+// Returns empty string if nothing notable is detected.
+function interpretNotesHint(notes) {
+  if (!notes) return '';
+  const n = notes.toLowerCase();
+  if (/fire.*(dam|burn)|burn(ed|t)|smoke.*(dam)/.test(n))           return 'noticed it looks like it needs some work';
+  if (/distress|probate|divorce|foreclos|bank.?own|reo/.test(n))    return 'sounds like a distressed situation';
+  if (/as.?is|sold.?as/.test(n) && /dam|issue|problem|work/.test(n)) return 'being sold as-is, looks like it has some quirks';
+  if (/landlocked|no.{0,8}(road|access)|access.*(issue|problem)/.test(n)) return 'noticed access could be tricky';
+  if (/gravel.*(road|access)|dirt.*(road|access)|no.{0,8}paved/.test(n))  return 'road access is gravel';
+  if (/no.{0,8}(perc|perk)|perc.*(fail|not|no )/.test(n))          return 'no perc test done yet';
+  if (/no.{0,8}(well|water)|no.{0,8}(septic|sewer|util)/.test(n))  return 'no utilities in place';
+  if (/flood|wetland|wet.?land|100.?yr|fema/.test(n))               return 'some flood or wetland issues';
+  if (/no.{0,8}survey|survey.*(needed|not done|missing)/.test(n))   return 'no survey on file';
+  if (/motivated|must sell|relocation|need.{0,8}(sell|close)/.test(n)) return 'seller seems motivated';
+  if (/estate sale|inherited|heir/.test(n))                          return 'looks like an estate situation';
+  return '';
+}
+
 function generateAgentSMS(agentId) {
   const a = (db.agents||[]).find(x => x.id === agentId);
   const firstName = a ? (a.name||'').split(' ')[0] : '';
@@ -9419,55 +9438,39 @@ function generateAgentSMS(agentId) {
   const isSFH   = document.getElementById('agd-pt-sfh')?.dataset.active === '1';
 
   const addrStr  = address || 'your listing';
-  const acreStr  = acreage ? `${acreage} acres` : '';
   const priceStr = price   ? ` at ${price}` : '';
+  const acreTag  = acreage && !isSFH ? ` (${acreage} ac)` : '';
 
   // DOM phrasing — never show the raw number
-  const domPhrase = dom > 60 ? "looks like it's been sitting a while" : dom > 0 ? "been on the market for a bit" : '';
+  const sitting = dom > 60 ? ", been sitting a while" : dom > 0 ? ", been on a bit" : '';
 
-  // Weave in listing notes naturally
-  const notesPhrase = lnotes ? `I did notice ${lnotes.charAt(0).toLowerCase() + lnotes.slice(1)} — figured that's probably keeping some buyers away.` : '';
-
-  // Build casual property reference
-  const propRef = [addrStr, acreStr && !isSFH ? `(${acreStr})` : ''].filter(Boolean).join(' ');
+  // Notes → short inferred hint only (never verbatim)
+  const hint = interpretNotesHint(lnotes);
+  const hintClause = hint ? ` — ${hint}` : '';
 
   let msg = '';
 
   if (isSFH) {
     // ── SFH templates ──
     if (tpl === 'first') {
-      const sitting = domPhrase ? `, and it ${domPhrase}` : '';
-      const notes = notesPhrase ? ` ${notesPhrase}` : '';
-      msg = `Hey ${firstName}, saw your listing at ${addrStr}${priceStr}${sitting}.${notes} We buy homes as-is for cash, no repairs or showings — worth a quick chat about where the seller's at? — Will`;
+      msg = `Hey ${firstName}, saw your listing at ${addrStr}${priceStr}${sitting}${hintClause}. We buy homes cash, as-is, no repairs — worth a quick chat about where the seller's at? — Will`;
     } else if (tpl === 'followup') {
-      const sitting = domPhrase ? ` — ${domPhrase}` : '';
-      const notes = notesPhrase ? ` ${notesPhrase}` : '';
-      msg = `Hey ${firstName}, just circling back on ${addrStr}${sitting}.${notes} Still able to come in cash, close on their timeline, no repairs needed — lmk if it's worth a conversation. — Will`;
+      msg = `Hey ${firstName}, circling back on ${addrStr}${sitting}${hintClause}. Still cash, no repairs, close on their timeline — lmk if that's ever worth a call. — Will`;
     } else if (tpl === 'relationship') {
-      const notes = notesPhrase ? ` ${notesPhrase}` : '';
-      msg = `Hey ${firstName}, the numbers on ${addrStr} didn't quite get there for us, just wanted to tell you rather than go quiet.${notes} We're buying in this market though — would love to be on your list for future ones. — Will`;
+      msg = `Hey ${firstName}, numbers on ${addrStr} didn't get there for us${hintClause}. We're still buying in this market — would love to be on your list for future ones. — Will`;
     } else if (tpl === 'offer') {
-      const sitting = domPhrase ? `, and it ${domPhrase}` : '';
-      const notes = notesPhrase ? ` ${notesPhrase}` : '';
-      msg = `Hey ${firstName}, ran the numbers on ${addrStr}${priceStr}${sitting}.${notes ? ' ' + notesPhrase : ''} We'd like to put a cash offer together — no repairs, no contingencies, flexible close. Good time to get on a quick call? — Will`;
+      msg = `Hey ${firstName}, did some digging on ${addrStr}${priceStr}${hintClause}. Want to put a cash offer together — no repairs, no contingencies, flexible close. Worth a quick call? — Will`;
     }
   } else {
     // ── Land templates ──
     if (tpl === 'first') {
-      const sitting = domPhrase ? `, and it ${domPhrase}` : '';
-      const notes = notesPhrase ? ` ${notesPhrase}` : '';
-      msg = `Hey ${firstName}, came across your listing at ${propRef}${priceStr}${sitting}.${notes} We buy land cash, no contingencies — mind if I ask a little about where the seller's at? — Will`;
+      msg = `Hey ${firstName}, came across your listing at ${addrStr}${acreTag}${priceStr}${sitting}${hintClause}. We buy land cash, no contingencies — mind if I ask where the seller's at? — Will`;
     } else if (tpl === 'followup') {
-      const sitting = domPhrase ? ` — ${domPhrase}` : '';
-      const notes = notesPhrase ? ` ${notesPhrase}` : '';
-      msg = `Hey ${firstName}, just checking back in on ${propRef}${sitting}.${notes} Still happy to come in cash and close quick if the timing ever makes sense — just lmk. — Will`;
+      msg = `Hey ${firstName}, checking back on ${addrStr}${acreTag}${sitting}${hintClause}. Still happy to come in cash and close quick — just lmk. — Will`;
     } else if (tpl === 'relationship') {
-      const notes = notesPhrase ? ` ${notesPhrase}` : '';
-      msg = `Hey ${firstName}, the numbers on ${propRef} just aren't quite there for us right now, wanted to be straight with you rather than disappear.${notes} We're active in this market though — would love to stay on your radar for future stuff. — Will`;
+      msg = `Hey ${firstName}, numbers on ${addrStr} aren't quite there for us${hintClause}. We're active in this market though — would love to stay on your radar. — Will`;
     } else if (tpl === 'offer') {
-      const sitting = domPhrase ? `, and it ${domPhrase}` : '';
-      const notes = notesPhrase ? ` ${notesPhrase}` : '';
-      msg = `Hey ${firstName}, did some digging on ${propRef}${priceStr}${sitting}.${notes ? ' ' + notesPhrase : ''} We'd like to make a cash offer, no contingencies, flexible on close date — would it make sense to get on a quick call? — Will`;
+      msg = `Hey ${firstName}, did some homework on ${addrStr}${acreTag}${priceStr}${hintClause}. Want to make a cash offer — no contingencies, flexible close. Good time for a quick call? — Will`;
     }
   }
 
