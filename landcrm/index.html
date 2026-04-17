@@ -9321,6 +9321,17 @@ function openAgentDetail(id) {
           <div class="form-group form-full"><label class="form-label">Listing Notes</label><input class="form-input" id="agd-listing-notes" value="${L.notes||''}" placeholder="Estate sale, motivated seller, no well/septic…" oninput="generateAgentSMS('${a.id}')"></div>
         </div>
 
+        <!-- Property type toggle -->
+        <div style="margin-bottom:12px;">
+          <label class="form-label" style="margin-bottom:6px;display:block;">Property Type</label>
+          <div style="display:flex;gap:6px;">
+            <button type="button" id="agd-pt-land" onclick="agentSetPropType('${a.id}','land')"
+              style="flex:1;padding:6px 0;border-radius:var(--rl);border:1px solid var(--accent);background:var(--accent);color:#fff;font-size:12px;font-weight:600;cursor:pointer;">Land</button>
+            <button type="button" id="agd-pt-sfh" onclick="agentSetPropType('${a.id}','sfh')"
+              style="flex:1;padding:6px 0;border-radius:var(--rl);border:1px solid var(--border);background:transparent;color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;">SFH</button>
+          </div>
+        </div>
+
         <!-- Template selector -->
         <div style="margin-bottom:10px;">
           <label class="form-label" style="margin-bottom:6px;display:block;">Template</label>
@@ -9335,7 +9346,12 @@ function openAgentDetail(id) {
 
         <!-- Preview + copy -->
         <textarea id="agd-sms-preview" rows="5" class="form-input" style="resize:vertical;font-size:12px;line-height:1.65;margin-bottom:8px;color:var(--text);" placeholder="Select a template above — message will appear here…" readonly></textarea>
-        <button type="button" class="btn btn-ghost btn-sm" onclick="copyAgentSMS()">📋 Copy Message</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+          <button type="button" class="btn btn-ghost btn-sm" onclick="copyAgentSMS()">📋 Copy Message</button>
+          <button type="button" class="btn btn-ghost btn-sm" id="agd-mark-sent-btn" onclick="markAgentSMSSent('${a.id}')" style="border-color:var(--teal);color:var(--teal);">✉️ Mark as Sent</button>
+          ${a.smsPendingTask ? `<button type="button" class="btn btn-ghost btn-sm" onclick="markAgentResponded('${a.id}')" style="border-color:var(--accent);color:var(--accent);">✅ Responded</button>` : ''}
+          ${a.lastSmsSent ? `<span style="font-size:11px;color:var(--text3);">Last sent ${a.lastSmsSent}</span>` : ''}
+        </div>
       </div>
 
     </div>
@@ -9345,6 +9361,8 @@ function openAgentDetail(id) {
       <button class="btn btn-primary" onclick="saveAgentDetail('${a.id}')">Save</button>
     </div>`;
   openCustomModal(html);
+  // Init property type toggle after DOM is ready (inline <script> doesn't run inside innerHTML)
+  requestAnimationFrame(() => agentSetPropType(a.id, L.propType || 'land', true));
 }
 
 function saveAgentDetail(id) {
@@ -9365,12 +9383,28 @@ function saveAgentDetail(id) {
     acreage : document.getElementById('agd-listing-acreage')?.value.trim() || '',
     dom     : document.getElementById('agd-listing-dom')?.value.trim()     || '',
     notes   : document.getElementById('agd-listing-notes')?.value.trim()   || '',
+    propType: (document.getElementById('agd-pt-sfh')?.dataset.active === '1') ? 'sfh' : 'land',
   };
   save();
   if (a.phone) pushContactToQuo(a);
   closeModal();
   renderAgents();
   toast('Agent updated', 'success');
+}
+
+function agentSetPropType(agentId, type, silent) {
+  // Toggle button styles
+  const landBtn = document.getElementById('agd-pt-land');
+  const sfhBtn  = document.getElementById('agd-pt-sfh');
+  if (!landBtn || !sfhBtn) return;
+  if (type === 'sfh') {
+    sfhBtn.style.background  = 'var(--accent)'; sfhBtn.style.color = '#fff'; sfhBtn.style.borderColor = 'var(--accent)'; sfhBtn.dataset.active = '1';
+    landBtn.style.background = 'transparent';   landBtn.style.color = 'var(--text2)'; landBtn.style.borderColor = 'var(--border)'; landBtn.dataset.active = '0';
+  } else {
+    landBtn.style.background = 'var(--accent)'; landBtn.style.color = '#fff'; landBtn.style.borderColor = 'var(--accent)'; landBtn.dataset.active = '1';
+    sfhBtn.style.background  = 'transparent';   sfhBtn.style.color = 'var(--text2)'; sfhBtn.style.borderColor = 'var(--border)'; sfhBtn.dataset.active = '0';
+  }
+  if (!silent) generateAgentSMS(agentId);
 }
 
 function generateAgentSMS(agentId) {
@@ -9382,45 +9416,135 @@ function generateAgentSMS(agentId) {
   const dom     = parseInt(document.getElementById('agd-listing-dom')?.value.trim() || '0', 10);
   const lnotes  = document.getElementById('agd-listing-notes')?.value.trim()   || '';
   const tpl     = document.getElementById('agd-sms-template')?.value || '';
+  const isSFH   = document.getElementById('agd-pt-sfh')?.dataset.active === '1';
 
   const addrStr  = address || 'your listing';
   const acreStr  = acreage ? `${acreage} acres` : '';
   const priceStr = price   ? ` at ${price}` : '';
 
-  // DOM phrasing — never show the raw number if over 60
-  const domPhrase = dom > 60 ? "looks like it's been sitting a while" : dom > 0 ? `been on the market for a bit` : '';
+  // DOM phrasing — never show the raw number
+  const domPhrase = dom > 60 ? "looks like it's been sitting a while" : dom > 0 ? "been on the market for a bit" : '';
 
-  // Weave in listing notes naturally as a casual observation
+  // Weave in listing notes naturally
   const notesPhrase = lnotes ? `I did notice ${lnotes.charAt(0).toLowerCase() + lnotes.slice(1)} — figured that's probably keeping some buyers away.` : '';
 
   // Build casual property reference
-  const propRef = [addrStr, acreStr ? `(${acreStr})` : ''].filter(Boolean).join(' ');
+  const propRef = [addrStr, acreStr && !isSFH ? `(${acreStr})` : ''].filter(Boolean).join(' ');
 
   let msg = '';
-  if (tpl === 'first') {
-    const sitting = domPhrase ? `, and it ${domPhrase}` : '';
-    const notes = notesPhrase ? ` ${notesPhrase}` : '';
-    msg = `Hey ${firstName}, came across your listing at ${propRef}${priceStr}${sitting}.${notes} We buy land cash, no contingencies — mind if I ask a little about where the seller's at? — Will`;
-  } else if (tpl === 'followup') {
-    const sitting = domPhrase ? ` — ${domPhrase}` : '';
-    const notes = notesPhrase ? ` ${notesPhrase}` : '';
-    msg = `Hey ${firstName}, just checking back in on ${propRef}${sitting}.${notes} Still happy to come in cash and close quick if the timing ever makes sense — just lmk. — Will`;
-  } else if (tpl === 'relationship') {
-    const notes = notesPhrase ? ` ${notesPhrase}` : '';
-    msg = `Hey ${firstName}, the numbers on ${propRef} just aren't quite there for us right now, wanted to be straight with you rather than disappear.${notes} We're active in this market though — would love to stay on your radar for future stuff. — Will`;
-  } else if (tpl === 'offer') {
-    const sitting = domPhrase ? `, and it ${domPhrase}` : '';
-    const notes = notesPhrase ? ` ${notesPhrase}` : '';
-    msg = `Hey ${firstName}, did some digging on ${propRef}${priceStr}${sitting}${notes ? ' —' : ''} ${notes}We'd like to make a cash offer, no contingencies, flexible on close date — would it make sense to get on a quick call? — Will`;
+
+  if (isSFH) {
+    // ── SFH templates ──
+    if (tpl === 'first') {
+      const sitting = domPhrase ? `, and it ${domPhrase}` : '';
+      const notes = notesPhrase ? ` ${notesPhrase}` : '';
+      msg = `Hey ${firstName}, saw your listing at ${addrStr}${priceStr}${sitting}.${notes} We buy homes as-is for cash, no repairs or showings — worth a quick chat about where the seller's at? — Will`;
+    } else if (tpl === 'followup') {
+      const sitting = domPhrase ? ` — ${domPhrase}` : '';
+      const notes = notesPhrase ? ` ${notesPhrase}` : '';
+      msg = `Hey ${firstName}, just circling back on ${addrStr}${sitting}.${notes} Still able to come in cash, close on their timeline, no repairs needed — lmk if it's worth a conversation. — Will`;
+    } else if (tpl === 'relationship') {
+      const notes = notesPhrase ? ` ${notesPhrase}` : '';
+      msg = `Hey ${firstName}, the numbers on ${addrStr} didn't quite get there for us, just wanted to tell you rather than go quiet.${notes} We're buying in this market though — would love to be on your list for future ones. — Will`;
+    } else if (tpl === 'offer') {
+      const sitting = domPhrase ? `, and it ${domPhrase}` : '';
+      const notes = notesPhrase ? ` ${notesPhrase}` : '';
+      msg = `Hey ${firstName}, ran the numbers on ${addrStr}${priceStr}${sitting}.${notes ? ' ' + notesPhrase : ''} We'd like to put a cash offer together — no repairs, no contingencies, flexible close. Good time to get on a quick call? — Will`;
+    }
   } else {
-    msg = '';
+    // ── Land templates ──
+    if (tpl === 'first') {
+      const sitting = domPhrase ? `, and it ${domPhrase}` : '';
+      const notes = notesPhrase ? ` ${notesPhrase}` : '';
+      msg = `Hey ${firstName}, came across your listing at ${propRef}${priceStr}${sitting}.${notes} We buy land cash, no contingencies — mind if I ask a little about where the seller's at? — Will`;
+    } else if (tpl === 'followup') {
+      const sitting = domPhrase ? ` — ${domPhrase}` : '';
+      const notes = notesPhrase ? ` ${notesPhrase}` : '';
+      msg = `Hey ${firstName}, just checking back in on ${propRef}${sitting}.${notes} Still happy to come in cash and close quick if the timing ever makes sense — just lmk. — Will`;
+    } else if (tpl === 'relationship') {
+      const notes = notesPhrase ? ` ${notesPhrase}` : '';
+      msg = `Hey ${firstName}, the numbers on ${propRef} just aren't quite there for us right now, wanted to be straight with you rather than disappear.${notes} We're active in this market though — would love to stay on your radar for future stuff. — Will`;
+    } else if (tpl === 'offer') {
+      const sitting = domPhrase ? `, and it ${domPhrase}` : '';
+      const notes = notesPhrase ? ` ${notesPhrase}` : '';
+      msg = `Hey ${firstName}, did some digging on ${propRef}${priceStr}${sitting}.${notes ? ' ' + notesPhrase : ''} We'd like to make a cash offer, no contingencies, flexible on close date — would it make sense to get on a quick call? — Will`;
+    }
   }
 
-  // Clean up any double spaces that can appear when optional parts are empty
+  // Clean up stray spacing / punctuation from empty optional parts
   msg = msg.replace(/  +/g, ' ').replace(/ —\s*\./g, '.').replace(/\.\s*\./g, '.').trim();
 
   const preview = document.getElementById('agd-sms-preview');
   if (preview) preview.value = msg;
+}
+
+function markAgentSMSSent(agentId) {
+  const preview = document.getElementById('agd-sms-preview');
+  if (!preview || !preview.value.trim()) { toast('Generate a message first', 'error'); return; }
+  const a = (db.agents||[]).find(x => x.id === agentId);
+  if (!a) return;
+
+  const address = document.getElementById('agd-listing-address')?.value.trim() || 'listing';
+  const sentDate = today();
+
+  // Stamp outreach on agent record
+  a.lastSmsSent = sentDate;
+  a.lastContact = sentDate;
+
+  // Create follow-up call task due in 2 days
+  const dueDate = (() => { const d = new Date(); d.setDate(d.getDate() + 2); return d.toISOString().slice(0,10); })();
+  const taskTitle = `Call ${a.name} — no reply to SMS about ${address}`;
+  const task = {
+    id: uid(), title: taskTitle, dueDate, priority: 'this-week',
+    done: false, source: 'agent-sms', agentId,
+    contactName: a.name, created: sentDate, createdAt: new Date().toISOString(),
+  };
+  if (!db.tasks) db.tasks = [];
+  // Remove any previous pending SMS task for this agent
+  db.tasks = db.tasks.filter(t => !(t.source === 'agent-sms' && t.agentId === agentId && !t.done));
+  db.tasks.unshift(task);
+  a.smsPendingTask = task.id;
+
+  save();
+  updateTaskBadge();
+  if (typeof renderTasks === 'function') renderTasks();
+  toast(`Marked sent — follow-up task created for ${dueDate}`, 'success');
+
+  // Refresh the modal button area to show Responded + timestamp
+  const sentSpan = document.getElementById('agd-sms-sent-info');
+  if (sentSpan) sentSpan.textContent = `Last sent ${sentDate}`;
+  const respondedBtn = document.getElementById('agd-responded-btn');
+  if (!respondedBtn) {
+    const markBtn = document.getElementById('agd-mark-sent-btn');
+    if (markBtn) {
+      const btn = document.createElement('button');
+      btn.type = 'button'; btn.id = 'agd-responded-btn';
+      btn.className = 'btn btn-ghost btn-sm';
+      btn.style.cssText = 'border-color:var(--accent);color:var(--accent);';
+      btn.textContent = '✅ Responded';
+      btn.onclick = () => markAgentResponded(agentId);
+      markBtn.insertAdjacentElement('afterend', btn);
+    }
+  }
+}
+
+function markAgentResponded(agentId) {
+  const a = (db.agents||[]).find(x => x.id === agentId);
+  if (!a) return;
+  // Complete (don't delete) the pending task
+  if (a.smsPendingTask) {
+    const task = (db.tasks||[]).find(t => t.id === a.smsPendingTask);
+    if (task) { task.done = true; task.doneAt = new Date().toISOString(); }
+  }
+  a.smsPendingTask = null;
+  a.lastContact = today();
+  save();
+  updateTaskBadge();
+  if (typeof renderTasks === 'function') renderTasks();
+  toast(`${a.name} marked as responded — call task removed`, 'success');
+  // Hide the Responded button
+  const btn = document.getElementById('agd-responded-btn');
+  if (btn) btn.remove();
 }
 
 function copyAgentSMS() {
