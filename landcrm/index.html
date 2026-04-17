@@ -749,7 +749,7 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
       </div>
       <div class="card">
         <table>
-          <thead><tr><th>Name</th><th>County / State</th><th>Acres</th><th>Source</th><th>Stage</th><th>Touches</th><th>Handler</th><th>Last contact</th><th>Temp</th></tr></thead>
+          <thead><tr><th>Name</th><th>Type</th><th>County / State</th><th>Acres</th><th>Source</th><th>Stage</th><th>Touches</th><th>Handler</th><th>Last contact</th><th>Temp</th></tr></thead>
           <tbody id="sellers-tbody"></tbody>
         </table>
       </div>
@@ -1973,12 +1973,16 @@ function renderSellers(){
     return true;
   });
   const tbody=document.getElementById('sellers-tbody');
-  if(!contacts.length){tbody.innerHTML='<tr><td colspan="9"><div class="empty"><div class="empty-title">No leads found</div></div></td></tr>';return;}
+  if(!contacts.length){tbody.innerHTML='<tr><td colspan="10"><div class="empty"><div class="empty-title">No leads found</div></div></td></tr>';return;}
   tbody.innerHTML=contacts.map(c=>{
     const tc=touchCount(c);
     const nh=needsHandoff(c);
+    const ctype=c.contactType||'seller';
+    const typeLabel=ctype==='agent'?'RE Agent':ctype==='dispoPartner'?'Dispo Partner':ctype==='title'?'Title Co':'Seller';
+    const typeStyle=ctype==='agent'?'tag-acq':ctype==='dispoPartner'?'tag-hot':ctype==='title'?'tag-ai':'tag-neutral';
     return`<tr onclick="openDetail('${c.id}')">
       <td style="font-weight:500">${c.name}</td>
+      <td><span class="tag ${typeStyle}">${typeLabel}</span></td>
       <td style="color:var(--text2)">${c.county}, ${c.state}</td>
       <td style="font-family:'DM Mono',monospace;font-size:11px">${c.acreage} ac</td>
       <td><span class="tag tag-neutral">${c.source||'—'}</span></td>
@@ -3742,9 +3746,18 @@ async function syncTranscriptToJSONbin(parsed, contact) {
 
 async function pushContactToQuo(contact){
   try{
-    const res=await fetch(`${FUNCTIONS_BASE}/push-contact`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:contact.name,phone:contact.phone,county:contact.county,state:contact.state,acreage:contact.acreage})});
+    const res=await fetch(`${FUNCTIONS_BASE}/push-contact`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+      name:contact.name,
+      phone:contact.phone,
+      county:contact.county||'',
+      state:contact.state||'',
+      acreage:contact.acreage||'',
+      notes:contact.notes||'',
+      email:contact.email||'',
+    })});
     const d=await res.json();
     if(d.ok)console.log('Quo contact '+d.action+':',contact.name);
+    else console.warn('Quo push failed:',contact.name,d);
   }catch(e){console.warn('Quo push error:',e.message);}
 }
 async function syncFromQuo(){
@@ -9281,7 +9294,8 @@ function saveNewAgent(id) {
     phone:  agent.phone,
     county: (agent.counties||[]).join(', ') || agent.county || '',
     state:  agent.state || '',
-    notes:  agent.brokerage || '',
+    notes:  [agent.brokerage, 'RE Agent'].filter(Boolean).join(' | '),
+    email:  agent.email || '',
   });
   closeModal();
   showView('agents');
@@ -9425,7 +9439,8 @@ function saveAgentDetail(id) {
     phone:  a.phone,
     county: (a.counties||[]).join(', ') || a.county || '',
     state:  a.state || '',
-    notes:  a.brokerage || '',
+    notes:  [a.brokerage, 'RE Agent'].filter(Boolean).join(' | '),
+    email:  a.email || '',
   });
   closeModal();
   renderAgents();
@@ -9788,7 +9803,8 @@ function saveNewDispoPartner() {
     phone:  partner.phone,
     county: (partner.counties||[]).join(', ') || partner.county || '',
     state:  partner.state || '',
-    notes:  [partner.company, partner.buyerType].filter(Boolean).join(' — ') || '',
+    notes:  [partner.company, partner.buyerType, 'Dispo Partner'].filter(Boolean).join(' | '),
+    email:  partner.email || '',
   });
   closeModal();
   renderDispoPartners();
@@ -9823,7 +9839,8 @@ function saveDispoPartnerDetail(id) {
     phone:  p.phone,
     county: (p.counties||[]).join(', ') || p.county || '',
     state:  p.state || '',
-    notes:  [p.company, p.buyerType].filter(Boolean).join(' — ') || '',
+    notes:  [p.company, p.buyerType, 'Dispo Partner'].filter(Boolean).join(' | '),
+    email:  p.email || '',
   });
   closeModal();
   renderDispoPartners();
