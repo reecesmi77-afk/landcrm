@@ -9414,7 +9414,19 @@ function openAgentDetail(id) {
           <textarea class="form-input" id="agd-agent-reply" rows="3" style="resize:vertical;font-size:12px;line-height:1.55;" placeholder="Paste what they said…">${a.pendingAgentReply||''}</textarea>
         </div>
 
-        <button type="button" class="btn btn-ghost btn-sm" id="agd-gen-reply-btn" onclick="generateAgentReply('${a.id}')" style="margin-bottom:14px;">✦ Generate Response</button>
+        <button type="button" class="btn btn-ghost btn-sm" id="agd-gen-reply-btn" onclick="generateAgentReply('${a.id}')" style="margin-bottom:8px;">✦ Generate Response</button>
+
+        <!-- Manual Will reply logger -->
+        <div style="margin-bottom:14px;">
+          <button type="button" class="btn btn-ghost btn-sm" style="font-size:11px;color:var(--text3);padding:3px 8px;" onclick="toggleManualWillReply()">+ Add My Reply Manually</button>
+          <div id="agd-manual-will-wrap" style="display:none;margin-top:8px;">
+            <textarea class="form-input" id="agd-manual-will-text" rows="3" style="resize:vertical;font-size:12px;line-height:1.55;margin-bottom:6px;" placeholder="Paste exactly what you sent in Quo…"></textarea>
+            <div style="display:flex;gap:6px;">
+              <button type="button" class="btn btn-ghost btn-sm" onclick="saveManualWillReply('${a.id}')">Save to Thread</button>
+              <button type="button" class="btn btn-ghost btn-sm" style="color:var(--text3);" onclick="toggleManualWillReply(true)">Cancel</button>
+            </div>
+          </div>
+        </div>
 
         <!-- Output section — hidden until first generation -->
         <div id="agd-reply-output-wrap" style="display:none;">
@@ -9921,6 +9933,38 @@ function deleteAgentConvoMsg(agentId, idx) {
   save();
   const section = document.getElementById('agd-convo-section');
   if (section) section.innerHTML = agentConvoHTML(a);
+}
+
+function toggleManualWillReply(forceClose) {
+  const wrap = document.getElementById('agd-manual-will-wrap');
+  if (!wrap) return;
+  const open = wrap.style.display === 'none';
+  wrap.style.display = (forceClose || !open) ? 'none' : '';
+  if (!forceClose && open) {
+    document.getElementById('agd-manual-will-text')?.focus();
+  } else {
+    const ta = document.getElementById('agd-manual-will-text');
+    if (ta) ta.value = '';
+  }
+}
+
+function saveManualWillReply(agentId) {
+  const a = (db.agents||[]).find(x => x.id === agentId);
+  if (!a) return;
+  const ta   = document.getElementById('agd-manual-will-text');
+  const text = ta?.value.trim() || '';
+  if (!text) { toast('Nothing to save', 'error'); return; }
+  if (!a.conversation) a.conversation = [];
+  a.conversation.push({ role: 'will', text, ts: new Date().toISOString() });
+  save();
+  const section = document.getElementById('agd-convo-section');
+  if (section) {
+    section.innerHTML = agentConvoHTML(a);
+    const thread = document.getElementById('agd-convo-thread');
+    if (thread) thread.scrollTop = thread.scrollHeight;
+  }
+  toggleManualWillReply(true);
+  toast('Saved to thread', 'success');
 }
 
 function copyAgentReply() {
