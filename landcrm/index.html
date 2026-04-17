@@ -9401,6 +9401,30 @@ function openAgentDetail(id) {
         </div>
       </div>
 
+      <!-- ── Generate Reply ── -->
+      <div style="border-top:1px solid var(--border);padding-top:18px;margin-top:4px;">
+        <div style="font-size:10px;color:var(--accent);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px;">Generate Reply</div>
+
+        <div style="margin-bottom:10px;">
+          <label class="form-label" style="margin-bottom:6px;display:block;">Agent's Latest Reply</label>
+          <textarea class="form-input" id="agd-agent-reply" rows="3" style="resize:vertical;font-size:12px;line-height:1.55;" placeholder="Paste what they said…">${a.lastAgentReply||''}</textarea>
+        </div>
+
+        <button type="button" class="btn btn-ghost btn-sm" id="agd-gen-reply-btn" onclick="generateAgentReply('${a.id}')" style="margin-bottom:14px;">✦ Generate Response</button>
+
+        <div id="agd-reply-output-wrap" style="${a.lastGeneratedReply ? '' : 'display:none;'}">
+          <label class="form-label" style="margin-bottom:6px;display:block;">Generated Response <span style="font-size:10px;color:var(--text3);font-weight:400">— editable</span></label>
+          <textarea class="form-input" id="agd-generated-reply" rows="4" style="resize:vertical;font-size:12px;line-height:1.65;margin-bottom:8px;">${a.lastGeneratedReply||''}</textarea>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px;">
+            <button type="button" class="btn btn-ghost btn-sm" onclick="copyAgentReply()">📋 Copy</button>
+          </div>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <input class="form-input" id="agd-refine-note" placeholder="make it shorter, be more direct, ask about timeline…" style="flex:1;font-size:12px;">
+            <button type="button" class="btn btn-ghost btn-sm" onclick="generateAgentReply('${a.id}', true)" style="white-space:nowrap;">↺ Regenerate</button>
+          </div>
+        </div>
+      </div>
+
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost btn-sm" style="color:var(--coral)" onclick="deleteAgent('${a.id}')">Delete</button>
@@ -9440,6 +9464,11 @@ function saveAgentDetail(id) {
   a.state = document.getElementById('agd-state')?.value || '';
   a.notes = document.getElementById('agd-notes')?.value.trim() || '';
   a.lastContact = document.getElementById('agd-lastcontact')?.value || a.lastContact;
+  // Persist reply conversation fields (also auto-saved by generateAgentReply)
+  const _replyTA = document.getElementById('agd-agent-reply');
+  const _genTA   = document.getElementById('agd-generated-reply');
+  if (_replyTA) a.lastAgentReply    = _replyTA.value.trim();
+  if (_genTA)   a.lastGeneratedReply = _genTA.value.trim();
   // Persist listing / SMS property data
   a.listing = {
     address : document.getElementById('agd-listing-address')?.value.trim() || '',
@@ -9656,6 +9685,82 @@ function copyAgentSMS() {
   } else {
     preview.select(); document.execCommand('copy'); toast('Message copied!', 'success');
   }
+}
+
+async function generateAgentReply(agentId, isRefinement) {
+  const a = (db.agents||[]).find(x => x.id === agentId);
+  const btn = document.getElementById('agd-gen-reply-btn');
+  const agentReplyText = document.getElementById('agd-agent-reply')?.value.trim() || '';
+  if (!agentReplyText) { toast("Paste the agent's reply first", 'error'); return; }
+
+  const address  = document.getElementById('agd-listing-address')?.value.trim() || '';
+  const streetOnly = address ? address.split(',')[0].trim() : 'the listing';
+  const lnotes   = document.getElementById('agd-listing-notes')?.value.trim() || '';
+  const isSFH    = document.getElementById('agd-pt-sfh')?.dataset.active === '1';
+  const propType = isSFH ? 'SFH' : 'Land';
+  const sentSMS  = document.getElementById('agd-sms-preview')?.value.trim()
+                   || (a?.lastSmsSent ? '[SMS sent ' + a.lastSmsSent + ']' : '[original outreach not recorded]');
+  const agentFirstName = a ? (a.name||'').split(' ')[0] : 'the agent';
+
+  const refineNote       = isRefinement ? (document.getElementById('agd-refine-note')?.value.trim() || '') : '';
+  const previousResponse = isRefinement ? (document.getElementById('agd-generated-reply')?.value.trim() || '') : '';
+
+  if (btn) { btn.textContent = '…thinking'; btn.disabled = true; }
+
+  let prompt = `You are Will, a direct cash buyer of ${propType} real estate. You are NOT a wholesaler or middleman — you are the end buyer. You close fast, pay cash, no contingencies, no repairs needed.
+
+Situation:
+- You reached out to agent ${agentFirstName} about their listing: ${streetOnly}
+- Property type: ${propType}
+- Listing notes (your private context — do NOT quote or reference directly): ${lnotes || 'none provided'}
+- Your original outreach SMS: "${sentSMS}"
+- ${agentFirstName}'s reply: "${agentReplyText}"
+
+Write a short SMS reply from Will. Rules:
+- 1–3 sentences, text-message casual, no formality
+- Your job right now is to qualify seller motivation: find out timeline, reason for selling, any flexibility — WITHOUT making or hinting at a price yet
+- Do not mention price, ARV, or what you'd offer
+- Sound like a real person who knows what they're doing, not a script
+- Warm but direct — you have genuine interest and you've done your homework
+- End with — Will`;
+
+  if (isRefinement && previousResponse) {
+    prompt += `\n\nYour previous draft:\n"${previousResponse}"\n\nRefinement note: "${refineNote || 'improve it'}"\n\nWrite a revised version based on that note.`;
+  }
+
+  try {
+    const res = await fetch(`${FUNCTIONS_BASE}/dd-analysis`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    const reply = (data.text || '').trim();
+    const wrap  = document.getElementById('agd-reply-output-wrap');
+    const outTA = document.getElementById('agd-generated-reply');
+    if (wrap)  wrap.style.display  = '';
+    if (outTA) outTA.value = reply;
+
+    // Auto-save to agent record
+    if (a) { a.lastAgentReply = agentReplyText; a.lastGeneratedReply = reply; save(); }
+    toast('Reply generated', 'success');
+  } catch(err) {
+    toast('Generate failed: ' + err.message, 'error');
+  } finally {
+    if (btn) { btn.textContent = '✦ Generate Response'; btn.disabled = false; }
+  }
+}
+
+function copyAgentReply() {
+  const ta = document.getElementById('agd-generated-reply');
+  if (!ta || !ta.value.trim()) { toast('Nothing to copy', 'error'); return; }
+  if (navigator.clipboard?.writeText) {
+    navigator.clipboard.writeText(ta.value).then(() => toast('Copied!', 'success')).catch(() => {
+      ta.select(); document.execCommand('copy'); toast('Copied!', 'success');
+    });
+  } else { ta.select(); document.execCommand('copy'); toast('Copied!', 'success'); }
 }
 
 function deleteAgent(id) {
