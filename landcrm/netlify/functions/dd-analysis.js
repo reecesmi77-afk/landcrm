@@ -1,4 +1,4 @@
-// dd-analysis.js — proxies DD analysis requests to Claude API with 3-attempt retry
+// dd-analysis.js — proxies requests to Claude API with optional system prompt + 3-attempt retry
 exports.handler = async (event) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
@@ -16,10 +16,18 @@ exports.handler = async (event) => {
   try { body = JSON.parse(event.body); }
   catch (e) { return { statusCode: 400, headers, body: JSON.stringify({ error: 'Invalid JSON' }) }; }
 
-  const { prompt } = body;
+  const { prompt, system } = body;
   if (!prompt) return { statusCode: 400, headers, body: JSON.stringify({ error: 'prompt required' }) };
 
   const callClaude = async () => {
+    const payload = {
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1500,
+      messages: [{ role: 'user', content: prompt }],
+    };
+    // Optional system prompt — used for structured JSON responses
+    if (system) payload.system = system;
+
     const resp = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -27,11 +35,7 @@ exports.handler = async (event) => {
         'x-api-key': CLAUDE_KEY,
         'anthropic-version': '2023-06-01'
       },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1500,
-        messages: [{ role: 'user', content: prompt }]
-      })
+      body: JSON.stringify(payload)
     });
     const data = await resp.json();
     if (!resp.ok) {
@@ -59,7 +63,7 @@ exports.handler = async (event) => {
       lastError = err;
       const isOverload = err.status === 529 || err.message.toLowerCase().includes('overload');
       console.error(`Attempt ${i+1} failed:`, err.message);
-      if (!isOverload) break; // don't retry non-overload errors
+      if (!isOverload) break;
     }
   }
 
