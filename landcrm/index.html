@@ -9405,28 +9405,33 @@ function openAgentDetail(id) {
       <div style="border-top:1px solid var(--border);padding-top:18px;margin-top:4px;">
         <div style="font-size:10px;color:var(--accent);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px;">Generate Reply</div>
 
-        <!-- Conversation thread (persisted history) -->
-        ${agentConvoHTML(a)}
+        <!-- Conversation thread (persisted, with per-message delete) -->
+        <div id="agd-convo-section">${agentConvoHTML(a)}</div>
 
+        <!-- Agent reply input — stays populated until manually cleared -->
         <div style="margin-bottom:10px;">
           <label class="form-label" style="margin-bottom:6px;display:block;">Agent's Latest Reply</label>
-          <textarea class="form-input" id="agd-agent-reply" rows="3" style="resize:vertical;font-size:12px;line-height:1.55;" placeholder="Paste what they said…"></textarea>
+          <textarea class="form-input" id="agd-agent-reply" rows="3" style="resize:vertical;font-size:12px;line-height:1.55;" placeholder="Paste what they said…">${a.pendingAgentReply||''}</textarea>
         </div>
 
         <button type="button" class="btn btn-ghost btn-sm" id="agd-gen-reply-btn" onclick="generateAgentReply('${a.id}')" style="margin-bottom:14px;">✦ Generate Response</button>
 
-        <div id="agd-reply-output-wrap" style="${a.lastGeneratedReply ? '' : 'display:none;'}">
-          <div id="agd-stage-badge" style="margin-bottom:8px;${a.lastStageLabel ? '' : 'display:none;'}">
-            <span style="font-size:10px;background:var(--accent);color:#fff;padding:2px 10px;border-radius:20px;font-family:'DM Mono',monospace;letter-spacing:.04em;">${a.lastStageLabel||''}</span>
+        <!-- Output section — hidden until first generation -->
+        <div id="agd-reply-output-wrap" style="display:none;">
+          <div id="agd-stage-badge" style="margin-bottom:8px;display:none;">
+            <span id="agd-stage-label" style="font-size:10px;background:var(--accent);color:#fff;padding:2px 10px;border-radius:20px;font-family:'DM Mono',monospace;letter-spacing:.04em;"></span>
           </div>
           <label class="form-label" style="margin-bottom:6px;display:block;">Generated Response <span style="font-size:10px;color:var(--text3);font-weight:400">— editable</span></label>
-          <textarea class="form-input" id="agd-generated-reply" rows="4" style="resize:vertical;font-size:12px;line-height:1.65;margin-bottom:8px;">${a.lastGeneratedReply||''}</textarea>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px;">
-            <button type="button" class="btn btn-ghost btn-sm" onclick="copyAgentReply()">📋 Copy</button>
-          </div>
-          <div style="display:flex;gap:6px;align-items:center;">
+          <textarea class="form-input" id="agd-generated-reply" rows="4" style="resize:vertical;font-size:12px;line-height:1.65;margin-bottom:10px;"></textarea>
+          <!-- Refine row -->
+          <div style="display:flex;gap:6px;align-items:center;margin-bottom:10px;">
             <input class="form-input" id="agd-refine-note" placeholder="make it shorter, be more direct, ask about timeline…" style="flex:1;font-size:12px;">
             <button type="button" class="btn btn-ghost btn-sm" onclick="generateAgentReply('${a.id}', true)" style="white-space:nowrap;">↺ Regenerate</button>
+          </div>
+          <!-- Action row -->
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+            <button type="button" class="btn btn-primary btn-sm" onclick="saveThreadAndCopy('${a.id}')">💾 Save to Thread + Copy</button>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="cancelAgentReply('${a.id}')">Cancel</button>
           </div>
         </div>
       </div>
@@ -9470,16 +9475,9 @@ function saveAgentDetail(id) {
   a.state = document.getElementById('agd-state')?.value || '';
   a.notes = document.getElementById('agd-notes')?.value.trim() || '';
   a.lastContact = document.getElementById('agd-lastcontact')?.value || a.lastContact;
-  // Persist reply fields (conversation array auto-saved by generateAgentReply; capture edits here)
-  const _genTA = document.getElementById('agd-generated-reply');
-  if (_genTA && _genTA.value.trim()) {
-    a.lastGeneratedReply = _genTA.value.trim();
-    // Sync any manual edits back to the last Will message in the conversation
-    if (a.conversation && a.conversation.length) {
-      const lastWill = [...a.conversation].reverse().find(m => m.role === 'will');
-      if (lastWill) lastWill.text = a.lastGeneratedReply;
-    }
-  }
+  // Persist pending agent reply text so it survives modal close before generating
+  const _agentReplyTA = document.getElementById('agd-agent-reply');
+  if (_agentReplyTA) a.pendingAgentReply = _agentReplyTA.value.trim();
   // Persist listing / SMS property data
   a.listing = {
     address : document.getElementById('agd-listing-address')?.value.trim() || '',
@@ -9509,24 +9507,31 @@ function saveAgentDetail(id) {
   toast('Agent updated', 'success');
 }
 
-// Renders the saved conversation thread as HTML for the agent detail modal
+// Renders the saved conversation thread with per-message delete buttons
 function agentConvoHTML(a) {
   const convo = a.conversation;
   if (!convo || !convo.length) return '';
   const agentFirst = (a.name||'Agent').split(' ')[0];
   const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  const rows = convo.map(function(msg) {
+  const rows = convo.map(function(msg, idx) {
     const isWill = msg.role === 'will';
     const label  = isWill ? 'Will' : agentFirst;
     const dateStr = msg.ts ? new Date(msg.ts).toLocaleDateString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}) : '';
-    return '<div style="display:flex;flex-direction:column;align-items:' + (isWill?'flex-end':'flex-start') + ';margin-bottom:8px;">' +
-      '<div style="font-size:10px;color:var(--text3);margin-bottom:3px;font-family:\'DM Mono\',monospace;">' + label + (dateStr ? '  ·  ' + dateStr : '') + '</div>' +
-      '<div style="background:' + (isWill?'var(--accent)':'var(--bg2)') + ';color:' + (isWill?'#fff':'var(--text)') + ';border:1px solid ' + (isWill?'var(--accent)':'var(--border)') + ';padding:8px 11px;border-radius:10px;font-size:12px;line-height:1.55;max-width:88%;word-break:break-word;white-space:pre-wrap;">' + esc(msg.text) + '</div>' +
-      '</div>';
+    const align = isWill ? 'flex-end' : 'flex-start';
+    const bg    = isWill ? 'var(--accent)' : 'var(--bg2)';
+    const color = isWill ? '#fff' : 'var(--text)';
+    const border= isWill ? 'var(--accent)' : 'var(--border)';
+    return '<div style="display:flex;flex-direction:column;align-items:' + align + ';margin-bottom:8px;">' +
+      '<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">' +
+        '<span style="font-size:10px;color:var(--text3);font-family:\'DM Mono\',monospace;">' + esc(label) + (dateStr ? '  ·  ' + dateStr : '') + '</span>' +
+        '<button onclick="deleteAgentConvoMsg(\'' + a.id + '\',' + idx + ')" title="Delete message" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:11px;padding:0 2px;line-height:1;" type="button">✕</button>' +
+      '</div>' +
+      '<div style="background:' + bg + ';color:' + color + ';border:1px solid ' + border + ';padding:8px 11px;border-radius:10px;font-size:12px;line-height:1.55;max-width:88%;word-break:break-word;white-space:pre-wrap;">' + esc(msg.text) + '</div>' +
+    '</div>';
   }).join('');
   return '<div style="margin-bottom:14px;">' +
     '<div style="font-size:11px;color:var(--text3);margin-bottom:6px;">Conversation history</div>' +
-    '<div id="agd-convo-thread" style="max-height:220px;overflow-y:auto;background:var(--bg);border:1px solid var(--border);border-radius:var(--rl);padding:12px;">' +
+    '<div id="agd-convo-thread" style="max-height:240px;overflow-y:auto;background:var(--bg);border:1px solid var(--border);border-radius:var(--rl);padding:12px;">' +
     rows + '</div></div>';
 }
 
@@ -9747,57 +9752,47 @@ async function generateAgentReply(agentId, isRefinement) {
 
   if (btn) { btn.textContent = '…thinking'; btn.disabled = true; }
 
-  // ── Build conversation history for the prompt ──────────────────────────────
-  if (!a.conversation) a.conversation = [];
-
-  // On a new generate (not refinement), add the agent's reply to history
-  // (avoid re-adding if it's already the last agent message)
-  if (!isRefinement) {
-    const lastMsg = a.conversation[a.conversation.length - 1];
-    const alreadyAdded = lastMsg && lastMsg.role === 'agent' && lastMsg.text === agentReplyText;
-    if (!alreadyAdded) {
-      a.conversation.push({ role: 'agent', text: agentReplyText, ts: new Date().toISOString() });
-    }
-  }
-
-  // Build thread string for Claude: Will's first outreach + full history
+  // Build thread string from saved history only (agent reply NOT saved yet)
+  const savedConvo = a.conversation || [];
   let threadLines = [];
-  if (originalSMS) threadLines.push('Will (first outreach): "' + originalSMS + '"');
-  a.conversation.forEach(function(msg) {
+  if (originalSMS && (!savedConvo.length || savedConvo[0].text !== originalSMS)) {
+    threadLines.push('Will (first outreach): "' + originalSMS + '"');
+  }
+  savedConvo.forEach(function(msg) {
     const label = msg.role === 'will' ? 'Will' : agentFirstName;
     threadLines.push(label + ': "' + msg.text + '"');
   });
+  // Append the current agent reply as the latest message (for context only — not saved yet)
+  threadLines.push(agentFirstName + ' (latest, not yet saved): "' + agentReplyText + '"');
   const threadStr = threadLines.join('\n');
 
-  // ── System prompt — instructs Claude to return JSON ────────────────────────
   const systemPrompt = `You are ghostwriting SMS replies for Will, a direct cash buyer of real estate (NOT a wholesaler). Cash, no contingencies, quick close. You must respond with ONLY valid JSON — no other text. Format:
 {"stage":1,"stageLabel":"Breaking the ice","reply":"...text... — Will"}
 
-Stage definitions (advance through them based on what has already been covered):
+Stage definitions — advance based on what has already been covered in the thread:
 1 "Breaking the ice" — first reply received, nothing qualified yet
 2 "Qualifying motivation" — ask how long they've owned it and why they're selling
-3 "Qualifying price flexibility" — motivation known, ask if they're open to a cash offer below list
-4 "Buyer rep ask" — price flexibility confirmed; reply must include exactly: "Makes sense — I'd like to put something together. Would you be able to rep me as the buyer on this one? — Will"
+3 "Qualifying price flexibility" — motivation known, ask if open to a cash offer below list
+4 "Buyer rep ask" — price flexibility confirmed; reply must be exactly: "Makes sense — I'd like to put something together. Would you be able to rep me as the buyer on this one? — Will"
 
-Reply rules (apply to all stages):
+Reply rules:
 - 1–2 sentences maximum
 - No exclamation points
-- Casual SMS tone — real person, not a script
+- Casual SMS tone, real person not a script
 - Do NOT re-introduce Will, do not repeat what was already said
 - Do not mention price or make an offer before Stage 4
 - Always end with — Will`;
 
-  // ── User prompt ────────────────────────────────────────────────────────────
   let userPrompt = `Property context (private — do NOT reference directly):
 Listing: ${streetOnly} | Type: ${propType} | Notes: ${lnotes || 'none'}
 
 Full SMS thread so far:
 ${threadStr}
 
-Read the thread, determine the current stage, and write Will's next reply.`;
+Determine the current stage from the thread and write Will's next reply.`;
 
   if (isRefinement && previousResponse) {
-    userPrompt += `\n\nPrevious draft: "${previousResponse}"\nRefinement: "${refineNote || 'improve it'}"\nWrite a revised version (same JSON format).`;
+    userPrompt += `\n\nPrevious draft: "${previousResponse}"\nRefinement note: "${refineNote || 'improve it'}"\nReturn a revised version in the same JSON format.`;
   }
 
   try {
@@ -9809,10 +9804,10 @@ Read the thread, determine the current stage, and write Will's next reply.`;
     const data = await res.json();
     if (data.error) throw new Error(data.error);
 
-    // Parse JSON response — fall back to treating raw text as the reply
+    // Parse JSON — fall back to raw text
     let stage = 0, stageLabel = '', reply = '';
     try {
-      const raw = (data.text||'').trim().replace(/^```json\s*/,'').replace(/```\s*$/,'');
+      const raw = (data.text||'').trim().replace(/^```json\s*/i,'').replace(/```\s*$/,'');
       const parsed = JSON.parse(raw);
       stage      = parsed.stage      || 0;
       stageLabel = parsed.stageLabel || '';
@@ -9822,80 +9817,110 @@ Read the thread, determine the current stage, and write Will's next reply.`;
     }
     if (!reply) throw new Error('Empty response from Claude');
 
-    // Update UI
+    // Show output section
     const wrap  = document.getElementById('agd-reply-output-wrap');
     const outTA = document.getElementById('agd-generated-reply');
     const badge = document.getElementById('agd-stage-badge');
+    const lbl   = document.getElementById('agd-stage-label');
     if (wrap)  wrap.style.display = '';
     if (outTA) outTA.value = reply;
-    if (badge) {
-      if (stageLabel) {
-        badge.style.display = '';
-        badge.querySelector('span').textContent = 'Stage ' + stage + ': ' + stageLabel;
-      } else {
-        badge.style.display = 'none';
-      }
+    if (badge && lbl) {
+      if (stageLabel) { lbl.textContent = 'Stage ' + stage + ': ' + stageLabel; badge.style.display = ''; }
+      else badge.style.display = 'none';
     }
 
-    // ── Save Will's reply to conversation (replace last Will msg on refinement) ──
-    if (isRefinement) {
-      // Replace last Will message if it exists
-      const lastWillIdx = [...a.conversation].map((m,i)=>({m,i})).filter(x=>x.m.role==='will').pop();
-      if (lastWillIdx) {
-        a.conversation[lastWillIdx.i] = { role:'will', text:reply, ts:new Date().toISOString() };
-      } else {
-        a.conversation.push({ role:'will', text:reply, ts:new Date().toISOString() });
-      }
-    } else {
-      a.conversation.push({ role:'will', text:reply, ts:new Date().toISOString() });
-    }
+    // Store generated reply + stage temporarily (not saved to thread yet)
+    a._pendingStage      = stageLabel ? ('Stage ' + stage + ': ' + stageLabel) : '';
+    a._pendingAgentReply = agentReplyText;
+    a._pendingWillReply  = reply;
 
-    // Persist to agent record
-    a.lastGeneratedReply = reply;
-    a.lastAgentReply     = agentReplyText;
-    a.lastStageLabel     = stageLabel ? ('Stage ' + stage + ': ' + stageLabel) : '';
-    save();
-
-    // Refresh thread display
-    const threadEl = document.getElementById('agd-convo-thread');
-    if (threadEl) {
-      const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-      threadEl.innerHTML = a.conversation.map(function(msg) {
-        const isWill = msg.role === 'will';
-        const label  = isWill ? 'Will' : agentFirstName;
-        const dateStr = msg.ts ? new Date(msg.ts).toLocaleDateString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}) : '';
-        return '<div style="display:flex;flex-direction:column;align-items:' + (isWill?'flex-end':'flex-start') + ';margin-bottom:8px;">' +
-          '<div style="font-size:10px;color:var(--text3);margin-bottom:3px;font-family:\'DM Mono\',monospace;">' + label + (dateStr ? '  ·  ' + dateStr : '') + '</div>' +
-          '<div style="background:' + (isWill?'var(--accent)':'var(--bg2)') + ';color:' + (isWill?'#fff':'var(--text)') + ';border:1px solid ' + (isWill?'var(--accent)':'var(--border)') + ';padding:8px 11px;border-radius:10px;font-size:12px;line-height:1.55;max-width:88%;word-break:break-word;white-space:pre-wrap;">' + esc(msg.text) + '</div></div>';
-      }).join('');
-      threadEl.scrollTop = threadEl.scrollHeight;
-    } else if (a.conversation.length > 0) {
-      // Thread div didn't exist yet (first message) — re-render the section
-      const sectionEl = document.getElementById('agd-reply-output-wrap')?.closest('div[style*="border-top"]');
-      if (sectionEl) {
-        const placeholder = sectionEl.querySelector('div[style*="margin-bottom:14px"]');
-        if (placeholder) {
-          placeholder.outerHTML = agentConvoHTML(a);
-        } else {
-          sectionEl.insertAdjacentHTML('afterbegin', agentConvoHTML(a));
-        }
-      }
-    }
-
-    // Clear the agent-reply textarea so it's ready for the next incoming message
-    const replyTA = document.getElementById('agd-agent-reply');
-    if (replyTA) replyTA.value = '';
-
-    toast('Reply generated', 'success');
+    toast('Reply generated — hit "Save to Thread + Copy" when ready', 'success');
   } catch(err) {
-    // If conversation was mutated, roll back the agent message add
-    if (!isRefinement && a.conversation.length && a.conversation[a.conversation.length-1].role === 'agent') {
-      a.conversation.pop();
-    }
     toast('Generate failed: ' + err.message, 'error');
   } finally {
     if (btn) { btn.textContent = '✦ Generate Response'; btn.disabled = false; }
   }
+}
+
+// Save both messages to thread and copy Will's reply to clipboard
+function saveThreadAndCopy(agentId) {
+  const a = (db.agents||[]).find(x => x.id === agentId);
+  if (!a) return;
+
+  const agentText = a._pendingAgentReply || document.getElementById('agd-agent-reply')?.value.trim() || '';
+  const willText  = a._pendingWillReply  || document.getElementById('agd-generated-reply')?.value.trim() || '';
+  if (!agentText || !willText) { toast('Generate a response first', 'error'); return; }
+
+  if (!a.conversation) a.conversation = [];
+  const now = new Date().toISOString();
+
+  // Duplicate guard — don't add if last entry already matches
+  const last = a.conversation[a.conversation.length - 1];
+  if (!(last && last.role === 'agent' && last.text === agentText)) {
+    a.conversation.push({ role: 'agent', text: agentText, ts: now });
+  }
+  // Always add Will's reply (it's a new response)
+  const lastAfter = a.conversation[a.conversation.length - 1];
+  if (!(lastAfter && lastAfter.role === 'will' && lastAfter.text === willText)) {
+    a.conversation.push({ role: 'will', text: willText, ts: now });
+  }
+
+  a.lastStageLabel     = a._pendingStage || '';
+  a.lastGeneratedReply = willText;
+  a.pendingAgentReply  = '';
+  delete a._pendingAgentReply;
+  delete a._pendingWillReply;
+  delete a._pendingStage;
+  save();
+
+  // Refresh thread display
+  const section = document.getElementById('agd-convo-section');
+  if (section) section.innerHTML = agentConvoHTML(a);
+  const threadEl = document.getElementById('agd-convo-thread');
+  if (threadEl) threadEl.scrollTop = threadEl.scrollHeight;
+
+  // Clear inputs
+  const replyTA = document.getElementById('agd-agent-reply');
+  const genTA   = document.getElementById('agd-generated-reply');
+  if (replyTA) replyTA.value = '';
+  if (genTA)   genTA.value  = '';
+  const wrap = document.getElementById('agd-reply-output-wrap');
+  if (wrap) wrap.style.display = 'none';
+
+  // Copy to clipboard
+  if (navigator.clipboard?.writeText) {
+    navigator.clipboard.writeText(willText).then(() => toast('Saved to thread and copied', 'success')).catch(() => {
+      if (genTA) { genTA.value = willText; genTA.select(); document.execCommand('copy'); }
+      toast('Saved to thread and copied', 'success');
+    });
+  } else {
+    if (genTA) { genTA.value = willText; genTA.select(); document.execCommand('copy'); }
+    toast('Saved to thread and copied', 'success');
+  }
+}
+
+// Cancel — clear inputs without saving anything
+function cancelAgentReply(agentId) {
+  const a = (db.agents||[]).find(x => x.id === agentId);
+  if (a) { delete a._pendingAgentReply; delete a._pendingWillReply; delete a._pendingStage; }
+  const replyTA = document.getElementById('agd-agent-reply');
+  const genTA   = document.getElementById('agd-generated-reply');
+  const refine  = document.getElementById('agd-refine-note');
+  if (replyTA) replyTA.value = '';
+  if (genTA)   genTA.value  = '';
+  if (refine)  refine.value = '';
+  const wrap = document.getElementById('agd-reply-output-wrap');
+  if (wrap) wrap.style.display = 'none';
+}
+
+// Delete a single message from the conversation thread by index
+function deleteAgentConvoMsg(agentId, idx) {
+  const a = (db.agents||[]).find(x => x.id === agentId);
+  if (!a || !a.conversation) return;
+  a.conversation.splice(idx, 1);
+  save();
+  const section = document.getElementById('agd-convo-section');
+  if (section) section.innerHTML = agentConvoHTML(a);
 }
 
 function copyAgentReply() {
