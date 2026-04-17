@@ -9312,13 +9312,23 @@ function openAgentDetail(id) {
         <div style="font-size:10px;color:var(--accent);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px;">Generate SMS</div>
 
         <!-- Property mini-form -->
-        <div style="font-size:11px;color:var(--text3);margin-bottom:8px;">Property info — saved to agent record</div>
+        <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:8px;">
+          <span style="font-size:11px;color:var(--text3);">Property info — saved to agent record</span>
+          <button type="button" class="btn btn-ghost btn-sm" onclick="clearAgentProperty('${a.id}')" style="font-size:10px;padding:2px 8px;color:var(--text3);">✕ Clear Property</button>
+        </div>
         <div class="form-grid" style="margin-bottom:14px;">
           <div class="form-group form-full"><label class="form-label">Address</label><input class="form-input" id="agd-listing-address" value="${L.address||''}" placeholder="123 Timber Rd, Shelby County, TN" oninput="generateAgentSMS('${a.id}')"></div>
           <div class="form-group"><label class="form-label">List Price</label><input class="form-input" id="agd-listing-price" value="${L.price||''}" placeholder="$85,000" oninput="generateAgentSMS('${a.id}')"></div>
           <div class="form-group"><label class="form-label">Acreage</label><input class="form-input" id="agd-listing-acreage" value="${L.acreage||''}" placeholder="12.5" oninput="generateAgentSMS('${a.id}')"></div>
           <div class="form-group"><label class="form-label">Days on Market</label><input class="form-input" id="agd-listing-dom" value="${L.dom||''}" placeholder="47" oninput="generateAgentSMS('${a.id}')"></div>
           <div class="form-group form-full"><label class="form-label">Listing Notes</label><input class="form-input" id="agd-listing-notes" value="${L.notes||''}" placeholder="Estate sale, motivated seller, no well/septic…" oninput="generateAgentSMS('${a.id}')"></div>
+          <div class="form-group form-full">
+            <label class="form-label">Listing URL <span style="font-size:10px;color:var(--text3);font-weight:400">— Redfin or Zillow</span></label>
+            <div style="display:flex;gap:6px;align-items:center;">
+              <input class="form-input" id="agd-listing-url" value="${L.url||''}" placeholder="https://www.redfin.com/…" style="flex:1;">
+              ${L.url ? `<a href="${L.url}" target="_blank" rel="noopener" style="white-space:nowrap;font-size:12px;color:var(--accent);text-decoration:none;padding:6px 10px;border:1px solid var(--accent);border-radius:var(--rl);" id="agd-listing-url-link">Open ↗</a>` : `<a href="#" target="_blank" rel="noopener" style="white-space:nowrap;font-size:12px;color:var(--text3);text-decoration:none;padding:6px 10px;border:1px solid var(--border);border-radius:var(--rl);pointer-events:none;" id="agd-listing-url-link">Open ↗</a>`}
+            </div>
+          </div>
         </div>
 
         <!-- Property type toggle -->
@@ -9361,8 +9371,25 @@ function openAgentDetail(id) {
       <button class="btn btn-primary" onclick="saveAgentDetail('${a.id}')">Save</button>
     </div>`;
   openCustomModal(html);
-  // Init property type toggle after DOM is ready (inline <script> doesn't run inside innerHTML)
-  requestAnimationFrame(() => agentSetPropType(a.id, L.propType || 'land', true));
+  // Init property type toggle + live URL link after DOM is ready
+  requestAnimationFrame(() => {
+    agentSetPropType(a.id, L.propType || 'land', true);
+    // Keep the Open ↗ link live as user types a URL
+    const urlInput = document.getElementById('agd-listing-url');
+    const urlLink  = document.getElementById('agd-listing-url-link');
+    if (urlInput && urlLink) {
+      urlInput.addEventListener('input', () => {
+        const v = urlInput.value.trim();
+        if (v) {
+          urlLink.href = v; urlLink.style.color = 'var(--accent)';
+          urlLink.style.borderColor = 'var(--accent)'; urlLink.style.pointerEvents = 'auto';
+        } else {
+          urlLink.href = '#'; urlLink.style.color = 'var(--text3)';
+          urlLink.style.borderColor = 'var(--border)'; urlLink.style.pointerEvents = 'none';
+        }
+      });
+    }
+  });
 }
 
 function saveAgentDetail(id) {
@@ -9383,6 +9410,7 @@ function saveAgentDetail(id) {
     acreage : document.getElementById('agd-listing-acreage')?.value.trim() || '',
     dom     : document.getElementById('agd-listing-dom')?.value.trim()     || '',
     notes   : document.getElementById('agd-listing-notes')?.value.trim()   || '',
+    url     : document.getElementById('agd-listing-url')?.value.trim()     || '',
     propType: (document.getElementById('agd-pt-sfh')?.dataset.active === '1') ? 'sfh' : 'land',
   };
   save();
@@ -9479,6 +9507,25 @@ function generateAgentSMS(agentId) {
 
   const preview = document.getElementById('agd-sms-preview');
   if (preview) preview.value = msg;
+}
+
+function clearAgentProperty(agentId) {
+  if (!confirm('Clear all property fields for this agent?')) return;
+  ['agd-listing-address','agd-listing-price','agd-listing-acreage',
+   'agd-listing-dom','agd-listing-notes','agd-listing-url'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  // Reset the Open link to disabled state
+  const link = document.getElementById('agd-listing-url-link');
+  if (link) { link.href = '#'; link.style.color = 'var(--text3)'; link.style.borderColor = 'var(--border)'; link.style.pointerEvents = 'none'; }
+  // Clear SMS preview
+  const preview = document.getElementById('agd-sms-preview');
+  if (preview) preview.value = '';
+  // Persist cleared state immediately
+  const a = (db.agents||[]).find(x => x.id === agentId);
+  if (a) { a.listing = { propType: a.listing?.propType || 'land' }; save(); }
+  toast('Property cleared', 'success');
 }
 
 function markAgentSMSSent(agentId) {
