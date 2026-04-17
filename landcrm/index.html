@@ -9285,15 +9285,18 @@ function saveNewAgent(id) {
 function openAgentDetail(id) {
   const a = (db.agents||[]).find(x => x.id === id);
   if (!a) return;
-  // Normalise counties — may be array (new) or legacy string field
   const existingCounties = a.counties && a.counties.length ? a.counties
     : (a.county ? [a.county] : []);
+  const L = a.listing || {};
   const html = `
     <div class="modal-header">
       <div class="modal-title">${a.name}</div>
+      <button class="modal-close" onclick="closeModal()">&#x2715;</button>
     </div>
     <div class="modal-body">
-      <div class="form-grid">
+
+      <!-- ── Contact info ── -->
+      <div class="form-grid" style="margin-bottom:20px;">
         <div class="form-group"><label class="form-label">Name</label><input class="form-input" id="agd-name" value="${a.name||''}"></div>
         <div class="form-group"><label class="form-label">Brokerage</label><input class="form-input" id="agd-brokerage" value="${a.brokerage||''}"></div>
         <div class="form-group"><label class="form-label">Phone</label><input class="form-input" id="agd-phone" value="${a.phone||''}"></div>
@@ -9303,6 +9306,38 @@ function openAgentDetail(id) {
         <div class="form-group form-full"><label class="form-label">Counties <span style="font-size:10px;color:var(--text3);font-weight:400">— type and press Enter or comma to add</span></label>${countyTagWidget('agd-county-inp','agd-county-tags',existingCounties)}</div>
         <div class="form-group form-full"><label class="form-label">Notes</label><textarea class="form-input" id="agd-notes" rows="3" style="resize:vertical">${a.notes||''}</textarea></div>
       </div>
+
+      <!-- ── Generate SMS ── -->
+      <div style="border-top:1px solid var(--border);padding-top:18px;">
+        <div style="font-size:10px;color:var(--accent);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px;">Generate SMS</div>
+
+        <!-- Property mini-form -->
+        <div style="font-size:11px;color:var(--text3);margin-bottom:8px;">Property info — saved to agent record</div>
+        <div class="form-grid" style="margin-bottom:14px;">
+          <div class="form-group form-full"><label class="form-label">Address</label><input class="form-input" id="agd-listing-address" value="${L.address||''}" placeholder="123 Timber Rd, Shelby County, TN" oninput="generateAgentSMS('${a.id}')"></div>
+          <div class="form-group"><label class="form-label">List Price</label><input class="form-input" id="agd-listing-price" value="${L.price||''}" placeholder="$85,000" oninput="generateAgentSMS('${a.id}')"></div>
+          <div class="form-group"><label class="form-label">Acreage</label><input class="form-input" id="agd-listing-acreage" value="${L.acreage||''}" placeholder="12.5" oninput="generateAgentSMS('${a.id}')"></div>
+          <div class="form-group"><label class="form-label">Days on Market</label><input class="form-input" id="agd-listing-dom" value="${L.dom||''}" placeholder="47" oninput="generateAgentSMS('${a.id}')"></div>
+          <div class="form-group form-full"><label class="form-label">Listing Notes</label><input class="form-input" id="agd-listing-notes" value="${L.notes||''}" placeholder="Estate sale, motivated seller, no well/septic…" oninput="generateAgentSMS('${a.id}')"></div>
+        </div>
+
+        <!-- Template selector -->
+        <div style="margin-bottom:10px;">
+          <label class="form-label" style="margin-bottom:6px;display:block;">Template</label>
+          <select class="form-input" id="agd-sms-template" onchange="generateAgentSMS('${a.id}')">
+            <option value="">— Select template —</option>
+            <option value="first">First Outreach — saw your listing</option>
+            <option value="followup">Follow Up — no response</option>
+            <option value="relationship">Relationship Build — passing on deal but staying connected</option>
+            <option value="offer">Offer Interest — want to make an offer</option>
+          </select>
+        </div>
+
+        <!-- Preview + copy -->
+        <textarea id="agd-sms-preview" rows="5" class="form-input" style="resize:vertical;font-size:12px;line-height:1.65;margin-bottom:8px;color:var(--text);" placeholder="Select a template above — message will appear here…" readonly></textarea>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="copyAgentSMS()">📋 Copy Message</button>
+      </div>
+
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost btn-sm" style="color:var(--coral)" onclick="deleteAgent('${a.id}')">Delete</button>
@@ -9323,11 +9358,64 @@ function saveAgentDetail(id) {
   a.state = document.getElementById('agd-state')?.value || '';
   a.notes = document.getElementById('agd-notes')?.value.trim() || '';
   a.lastContact = document.getElementById('agd-lastcontact')?.value || a.lastContact;
+  // Persist listing / SMS property data
+  a.listing = {
+    address : document.getElementById('agd-listing-address')?.value.trim() || '',
+    price   : document.getElementById('agd-listing-price')?.value.trim()   || '',
+    acreage : document.getElementById('agd-listing-acreage')?.value.trim() || '',
+    dom     : document.getElementById('agd-listing-dom')?.value.trim()     || '',
+    notes   : document.getElementById('agd-listing-notes')?.value.trim()   || '',
+  };
   save();
   if (a.phone) pushContactToQuo(a);
   closeModal();
   renderAgents();
   toast('Agent updated', 'success');
+}
+
+function generateAgentSMS(agentId) {
+  const a = (db.agents||[]).find(x => x.id === agentId);
+  const firstName = a ? (a.name||'').split(' ')[0] : '';
+  const address = document.getElementById('agd-listing-address')?.value.trim() || '';
+  const price   = document.getElementById('agd-listing-price')?.value.trim()   || '';
+  const acreage = document.getElementById('agd-listing-acreage')?.value.trim() || '';
+  const dom     = document.getElementById('agd-listing-dom')?.value.trim()     || '';
+  const lnotes  = document.getElementById('agd-listing-notes')?.value.trim()   || '';
+  const tpl     = document.getElementById('agd-sms-template')?.value || '';
+
+  const acreStr  = acreage ? `${acreage}-acre ` : '';
+  const priceStr = price   ? ` listed at ${price}` : '';
+  const domStr   = dom     ? ` (${dom} days on market)` : '';
+  const addrStr  = address || 'your listing';
+  const notesStr = lnotes  ? ` — ${lnotes}` : '';
+
+  let msg = '';
+  if (tpl === 'first') {
+    msg = `Hey ${firstName}, saw your ${acreStr}listing at ${addrStr}${priceStr}${domStr}. We buy land for cash, no contingencies, quick close. Would you be open to a brief conversation about what your seller's situation looks like? — Will`;
+  } else if (tpl === 'followup') {
+    msg = `Hey ${firstName}, just circling back on ${addrStr}${domStr}. Still showing active — wanted to see if there's any flexibility on terms or timeline. We can close cash, usually within 2–3 weeks. Let me know if that's worth a quick call. — Will`;
+  } else if (tpl === 'relationship') {
+    msg = `Hey ${firstName}, the numbers on ${addrStr} don't quite work for us today but I wanted to pass that along rather than ghost you. We buy land in this market regularly — cash, no contingencies. Would love to be on your radar for future listings. — Will`;
+  } else if (tpl === 'offer') {
+    msg = `Hey ${firstName}, we've done our homework on ${addrStr}${priceStr}${domStr}${notesStr} and we're interested in making a cash offer. No contingencies, flexible close date, straightforward contract. Can we jump on a quick call this week? — Will`;
+  } else {
+    msg = '';
+  }
+
+  const preview = document.getElementById('agd-sms-preview');
+  if (preview) preview.value = msg;
+}
+
+function copyAgentSMS() {
+  const preview = document.getElementById('agd-sms-preview');
+  if (!preview || !preview.value.trim()) { toast('Nothing to copy — generate a message first', 'error'); return; }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(preview.value).then(() => toast('Message copied!', 'success')).catch(() => {
+      preview.select(); document.execCommand('copy'); toast('Message copied!', 'success');
+    });
+  } else {
+    preview.select(); document.execCommand('copy'); toast('Message copied!', 'success');
+  }
 }
 
 function deleteAgent(id) {
