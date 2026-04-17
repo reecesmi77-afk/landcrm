@@ -9276,6 +9276,7 @@ function saveNewAgent(id) {
   if (!db.agents) db.agents = [];
   db.agents.push(agent);
   save();
+  if (agent.phone) pushContactToQuo(agent);
   closeModal();
   showView('agents');
   toast('Agent saved', 'success');
@@ -9323,6 +9324,7 @@ function saveAgentDetail(id) {
   a.notes = document.getElementById('agd-notes')?.value.trim() || '';
   a.lastContact = document.getElementById('agd-lastcontact')?.value || a.lastContact;
   save();
+  if (a.phone) pushContactToQuo(a);
   closeModal();
   renderAgents();
   toast('Agent updated', 'success');
@@ -9490,6 +9492,7 @@ function saveNewDispoPartner() {
   if (!db.dispoPartners) db.dispoPartners = [];
   db.dispoPartners.unshift(partner);
   save();
+  if (partner.phone) pushContactToQuo(partner);
   closeModal();
   renderDispoPartners();
   toast('Partner saved — ' + name, 'success');
@@ -9518,6 +9521,7 @@ function saveDispoPartnerDetail(id) {
   p.notes       = document.getElementById('dp-notes')?.value.trim()       || '';
   p.lastContact = document.getElementById('dp-lastcontact')?.value        || p.lastContact;
   save();
+  if (p.phone) pushContactToQuo(p);
   closeModal();
   renderDispoPartners();
   toast('Partner updated — ' + name, 'success');
