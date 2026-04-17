@@ -9492,12 +9492,13 @@ function generateAgentSMS(agentId) {
   const tpl     = document.getElementById('agd-sms-template')?.value || '';
   const isSFH   = document.getElementById('agd-pt-sfh')?.dataset.active === '1';
 
-  const addrStr  = address || 'your listing';
+  // Street name only — strip city/zip (everything after the first comma)
+  const streetOnly = address ? address.split(',')[0].trim() : 'your listing';
   const priceStr = price   ? ` at ${price}` : '';
   const acreTag  = acreage && !isSFH ? ` (${acreage} ac)` : '';
 
-  // DOM phrasing — never show the raw number
-  const sitting = dom > 60 ? ", been sitting a while" : dom > 0 ? ", been on a bit" : '';
+  // DOM phrasing — only if over 60 days, never show the raw number
+  const sitting = dom > 60 ? ', been sitting a while' : '';
 
   // Notes → short inferred hint only (never verbatim)
   const hint = interpretNotesHint(lnotes);
@@ -9508,24 +9509,24 @@ function generateAgentSMS(agentId) {
   if (isSFH) {
     // ── SFH templates ──
     if (tpl === 'first') {
-      msg = `Hey ${firstName}, saw your listing at ${addrStr}${priceStr}${sitting}${hintClause}. We buy homes cash, as-is, no repairs — worth a quick chat about where the seller's at? — Will`;
+      msg = `Hey ${firstName}, saw your listing on ${streetOnly}${priceStr}${sitting}${hintClause}. Cash buyer, no contingencies, as-is — had a couple questions about the seller's situation. — Will`;
     } else if (tpl === 'followup') {
-      msg = `Hey ${firstName}, circling back on ${addrStr}${sitting}${hintClause}. Still cash, no repairs, close on their timeline — lmk if that's ever worth a call. — Will`;
+      msg = `Hey ${firstName}, circling back on ${streetOnly}${sitting}${hintClause}. Still cash, no repairs, close on their timeline — had a question or two if you have a sec. — Will`;
     } else if (tpl === 'relationship') {
-      msg = `Hey ${firstName}, numbers on ${addrStr} didn't get there for us${hintClause}. We're still buying in this market — would love to be on your list for future ones. — Will`;
+      msg = `Hey ${firstName}, numbers on ${streetOnly} didn't get there for us${hintClause}. Still active in this market, cash buyer — would love to stay on your radar for future ones. — Will`;
     } else if (tpl === 'offer') {
-      msg = `Hey ${firstName}, did some digging on ${addrStr}${priceStr}${hintClause}. Want to put a cash offer together — no repairs, no contingencies, flexible close. Worth a quick call? — Will`;
+      msg = `Hey ${firstName}, did some digging on ${streetOnly}${priceStr}${hintClause}. Cash buyer, no repairs, no contingencies — want to put a number together. You around this week? — Will`;
     }
   } else {
     // ── Land templates ──
     if (tpl === 'first') {
-      msg = `Hey ${firstName}, came across your listing at ${addrStr}${acreTag}${priceStr}${sitting}${hintClause}. We buy land cash, no contingencies — mind if I ask where the seller's at? — Will`;
+      msg = `Hey ${firstName}, came across your listing on ${streetOnly}${acreTag}${priceStr}${sitting}${hintClause}. Cash buyer, no contingencies — had a couple questions about the seller's situation. — Will`;
     } else if (tpl === 'followup') {
-      msg = `Hey ${firstName}, checking back on ${addrStr}${acreTag}${sitting}${hintClause}. Still happy to come in cash and close quick — just lmk. — Will`;
+      msg = `Hey ${firstName}, checking back on ${streetOnly}${acreTag}${sitting}${hintClause}. Still cash, close quick, no contingencies — had a question or two if you have a sec. — Will`;
     } else if (tpl === 'relationship') {
-      msg = `Hey ${firstName}, numbers on ${addrStr} aren't quite there for us${hintClause}. We're active in this market though — would love to stay on your radar. — Will`;
+      msg = `Hey ${firstName}, numbers on ${streetOnly} aren't quite there for us${hintClause}. Still active in this market, cash buyer — would love to stay on your radar. — Will`;
     } else if (tpl === 'offer') {
-      msg = `Hey ${firstName}, did some homework on ${addrStr}${acreTag}${priceStr}${hintClause}. Want to make a cash offer — no contingencies, flexible close. Good time for a quick call? — Will`;
+      msg = `Hey ${firstName}, did some homework on ${streetOnly}${acreTag}${priceStr}${hintClause}. Cash buyer, no contingencies — want to put a number together. You around this week? — Will`;
     }
   }
 
