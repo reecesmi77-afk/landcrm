@@ -1214,6 +1214,9 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
           <option>Cash Buyer</option>
           <option>JV Partner</option>
           <option>Land Investor</option>
+          <option>Note Buyer</option>
+          <option>Land Funder</option>
+          <option>Transactional Funder</option>
         </select>
         <span id="dp-count" style="font-size:11px;color:var(--text3)"></span>
         <button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="openAddDispoPartner()">+ Add Partner</button>
@@ -10074,6 +10077,20 @@ function renderDispoPartners() {
   }).join('');
 }
 
+function toggleDpFinancerFields() {
+  const bt = document.getElementById('dp-buyertype')?.value || '';
+  const show = bt === 'Note Buyer' || bt === 'Land Funder';
+  const sec = document.getElementById('dp-financer-section');
+  if (sec) sec.style.display = show ? '' : 'none';
+  if (show) toggleDpTfFee();
+}
+
+function toggleDpTfFee() {
+  const avail = document.getElementById('dp-fin-tf-avail')?.value;
+  const wrap  = document.getElementById('dp-fin-tf-fee-wrap');
+  if (wrap) wrap.style.display = avail === 'yes' ? '' : 'none';
+}
+
 function dpModalHtml(p) {
   // p is null for Add, populated for Edit
   const todayStr = new Date().toISOString().slice(0,10);
@@ -10082,8 +10099,10 @@ function dpModalHtml(p) {
   const title = isEdit ? (p.name||'Edit Partner') : 'Add Dispo Partner';
   const saveCall = isEdit ? `saveDispoPartnerDetail('${p?.id}')` : `saveNewDispoPartner()`;
 
-  const buyerTypes = ['Wholesaler','Cash Buyer','JV Partner','Land Investor'];
+  const buyerTypes = ['Wholesaler','Cash Buyer','JV Partner','Land Investor','Note Buyer','Land Funder','Transactional Funder'];
   const stages     = ['Identified','Contacted','Building','Active Partner','Sent Deal'];
+  const fin        = p?.financer || {};
+  const finStates  = fin.states || [];
 
   return `
     <div class="modal-header"><div class="modal-title">${title}</div><button class="modal-close" onclick="closeModal()">&#x2715;</button></div>
@@ -10095,7 +10114,7 @@ function dpModalHtml(p) {
         <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="dp-email" value="${p?.email||''}" placeholder="john@example.com"></div>
         <div class="form-group"><label class="form-label">State</label><select class="form-input" id="dp-state">${stateOptions(p?.state||'')}</select></div>
         <div class="form-group"><label class="form-label">Last Contact</label><input class="form-input" id="dp-lastcontact" type="date" value="${p?.lastContact||todayStr}"></div>
-        <div class="form-group"><label class="form-label">Buyer Type</label><select class="form-input" id="dp-buyertype">
+        <div class="form-group"><label class="form-label">Buyer Type</label><select class="form-input" id="dp-buyertype" onchange="toggleDpFinancerFields()">
           <option value="">— Select —</option>
           ${buyerTypes.map(t=>`<option${(p?.buyerType||'')=== t?' selected':''}>${t}</option>`).join('')}
         </select></div>
@@ -10105,6 +10124,48 @@ function dpModalHtml(p) {
         <div class="form-group form-full"><label class="form-label">Counties <span style="font-size:10px;color:var(--text3);font-weight:400">— type and press Enter or comma to add</span></label>${countyTagWidget('dp-county-inp','dp-county-tags',existing)}</div>
         <div class="form-group form-full"><label class="form-label">Buy Box <span style="font-size:10px;color:var(--text3);font-weight:400">— what they're looking for</span></label><input class="form-input" id="dp-buybox" value="${p?.buyBox||''}" placeholder="5–50 ac, TN/MS, no flood, cash close in 14d"></div>
         <div class="form-group form-full"><label class="form-label">Notes</label><textarea class="form-input" id="dp-notes" rows="3" style="resize:vertical">${p?.notes||''}</textarea></div>
+      </div>
+
+      <!-- ── Financer Fields (Note Buyer / Land Funder only) ── -->
+      <div id="dp-financer-section" style="display:none;margin-top:16px;border-top:1px solid var(--border);padding-top:16px;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:12px;">Financing Details</div>
+        <div class="form-grid">
+          <div class="form-group"><label class="form-label">Purchase Rate (%)</label><input class="form-input" id="dp-fin-rate" type="number" min="0" max="100" step="0.1" value="${fin.purchaseRate||''}" placeholder="85"></div>
+          <div class="form-group"><label class="form-label">Min Down Payment</label><input class="form-input" id="dp-fin-min-down" value="${fin.minDownPayment||''}" placeholder="10%"></div>
+          <div class="form-group"><label class="form-label">Min Credit Score</label><input class="form-input" id="dp-fin-min-credit" type="number" value="${fin.minCreditScore||''}" placeholder="600"></div>
+          <div class="form-group"><label class="form-label">Min Interest Rate (%)</label><input class="form-input" id="dp-fin-min-rate" type="number" min="0" step="0.1" value="${fin.minInterestRate||''}" placeholder="8"></div>
+          <div class="form-group"><label class="form-label">Min Note Amount ($)</label><input class="form-input" id="dp-fin-min-amount" type="number" min="0" value="${fin.minNoteAmount||''}" placeholder="10000"></div>
+          <div class="form-group"><label class="form-label">Max Note Amount ($)</label><input class="form-input" id="dp-fin-max-amount" type="number" min="0" value="${fin.maxNoteAmount||''}" placeholder="500000"></div>
+          <div class="form-group"><label class="form-label">Turnaround Time</label><input class="form-input" id="dp-fin-turnaround" value="${fin.turnaroundTime||''}" placeholder="14 days"></div>
+          <div class="form-group"><label class="form-label">Last Deal Submitted</label><input class="form-input" id="dp-fin-last-deal" type="date" value="${fin.lastDealSubmitted||''}"></div>
+
+          <!-- Transactional Funding toggle -->
+          <div class="form-group">
+            <label class="form-label">Transactional Funding Available</label>
+            <select class="form-input" id="dp-fin-tf-avail" onchange="toggleDpTfFee()">
+              <option value="">— Select —</option>
+              <option value="yes"${fin.tfAvailable==='yes'?' selected':''}>Yes</option>
+              <option value="no"${fin.tfAvailable==='no'?' selected':''}>No</option>
+            </select>
+          </div>
+          <div class="form-group" id="dp-fin-tf-fee-wrap">
+            <label class="form-label">Transactional Funding Fee (%)</label>
+            <input class="form-input" id="dp-fin-tf-fee" type="number" min="0" step="0.1" value="${fin.tfFee||''}" placeholder="1.5">
+          </div>
+
+          <!-- States tag input -->
+          <div class="form-group form-full"><label class="form-label">States They Operate In <span style="font-size:10px;color:var(--text3);font-weight:400">— type and press Enter or comma to add</span></label>${countyTagWidget('dp-fin-states-inp','dp-fin-states-tags',finStates)}</div>
+
+          <!-- Property Types -->
+          <div class="form-group form-full">
+            <label class="form-label">Preferred Property Types</label>
+            <div style="display:flex;gap:20px;margin-top:6px;">
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;color:var(--text2)"><input type="checkbox" id="dp-fin-prop-land" ${(fin.propTypes||[]).includes('Land')?'checked':''}> Land</label>
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;color:var(--text2)"><input type="checkbox" id="dp-fin-prop-sfh"  ${(fin.propTypes||[]).includes('SFH')?'checked':''}> SFH</label>
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;color:var(--text2)"><input type="checkbox" id="dp-fin-prop-both" ${(fin.propTypes||[]).includes('Both')?'checked':''}> Both</label>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
     <div class="modal-footer">
@@ -10116,6 +10177,31 @@ function dpModalHtml(p) {
 
 function openAddDispoPartner() {
   openCustomModal(dpModalHtml(null));
+  requestAnimationFrame(() => { toggleDpFinancerFields(); });
+}
+
+function _readDpFinancerFields() {
+  const bt = document.getElementById('dp-buyertype')?.value || '';
+  const isFinancer = bt === 'Note Buyer' || bt === 'Land Funder';
+  if (!isFinancer) return null;
+  const propTypes = [];
+  if (document.getElementById('dp-fin-prop-land')?.checked) propTypes.push('Land');
+  if (document.getElementById('dp-fin-prop-sfh')?.checked)  propTypes.push('SFH');
+  if (document.getElementById('dp-fin-prop-both')?.checked) propTypes.push('Both');
+  return {
+    purchaseRate:     document.getElementById('dp-fin-rate')?.value.trim()         || '',
+    minDownPayment:   document.getElementById('dp-fin-min-down')?.value.trim()     || '',
+    minCreditScore:   document.getElementById('dp-fin-min-credit')?.value.trim()   || '',
+    minInterestRate:  document.getElementById('dp-fin-min-rate')?.value.trim()     || '',
+    minNoteAmount:    document.getElementById('dp-fin-min-amount')?.value.trim()   || '',
+    maxNoteAmount:    document.getElementById('dp-fin-max-amount')?.value.trim()   || '',
+    turnaroundTime:   document.getElementById('dp-fin-turnaround')?.value.trim()   || '',
+    lastDealSubmitted:document.getElementById('dp-fin-last-deal')?.value           || '',
+    tfAvailable:      document.getElementById('dp-fin-tf-avail')?.value            || '',
+    tfFee:            document.getElementById('dp-fin-tf-fee')?.value.trim()       || '',
+    states:           agentTagsRead('dp-fin-states-tags'),
+    propTypes,
+  };
 }
 
 function saveNewDispoPartner() {
@@ -10136,6 +10222,8 @@ function saveNewDispoPartner() {
     lastContact: document.getElementById('dp-lastcontact')?.value        || new Date().toISOString().slice(0,10),
     created:     new Date().toISOString().slice(0,10),
   };
+  const financer = _readDpFinancerFields();
+  if (financer) partner.financer = financer;
   if (!db.dispoPartners) db.dispoPartners = [];
   db.dispoPartners.unshift(partner);
   save();
@@ -10161,6 +10249,7 @@ function openDispoPartnerDetail(id) {
   const p = (db.dispoPartners||[]).find(x => x.id === id);
   if (!p) return;
   openCustomModal(dpModalHtml(p));
+  requestAnimationFrame(() => { toggleDpFinancerFields(); toggleDpTfFee(); });
 }
 
 function saveDispoPartnerDetail(id) {
@@ -10179,6 +10268,8 @@ function saveDispoPartnerDetail(id) {
   p.buyBox      = document.getElementById('dp-buybox')?.value.trim()      || '';
   p.notes       = document.getElementById('dp-notes')?.value.trim()       || '';
   p.lastContact = document.getElementById('dp-lastcontact')?.value        || p.lastContact;
+  const financer = _readDpFinancerFields();
+  if (financer) p.financer = financer; else delete p.financer;
   save();
   if (p.phone) {
     pushContactToQuo({
