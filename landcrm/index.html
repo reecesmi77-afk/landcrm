@@ -84,7 +84,27 @@ nav{padding:10px 8px;flex:1;overflow-y:auto;}
 /* MAIN */
 #main{margin-left:224px;flex:1;display:flex;flex-direction:column;min-height:100vh;}
 #topbar{height:56px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:12px;position:sticky;top:0;z-index:50;}
-.page-title{font-family:'Inter',sans-serif;font-weight:700;font-size:16px;flex:1;}
+.page-title{font-family:'Inter',sans-serif;font-weight:700;font-size:16px;}
+
+/* GLOBAL SEARCH */
+#gs-wrap{position:relative;flex:1;max-width:420px;}
+#gs-input{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:7px 12px 7px 34px;font-size:13px;color:var(--text);font-family:'DM Sans',sans-serif;outline:none;transition:border-color .15s,box-shadow .15s;}
+#gs-input::placeholder{color:var(--text3);}
+#gs-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--adim);}
+#gs-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:var(--text3);pointer-events:none;}
+#gs-clear{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:18px;height:18px;border-radius:4px;background:var(--bg4);border:none;color:var(--text3);cursor:pointer;display:none;align-items:center;justify-content:center;font-size:10px;padding:0;}
+#gs-dropdown{position:absolute;top:calc(100% + 6px);left:0;right:0;background:var(--bg2);border:1px solid var(--border2);border-radius:10px;box-shadow:0 16px 48px rgba(0,0,0,.55);z-index:999;max-height:420px;overflow-y:auto;display:none;}
+.gs-section-label{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);padding:10px 14px 4px;font-family:'DM Mono',monospace;}
+.gs-result{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 14px;cursor:pointer;border-radius:0;transition:background .1s;}
+.gs-result:hover{background:var(--bg3);}
+.gs-result:first-child{border-radius:10px 10px 0 0;}
+.gs-result:last-child{border-radius:0 0 10px 10px;}
+.gs-result-main{display:flex;align-items:center;gap:8px;min-width:0;}
+.gs-badge{font-size:9px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:2px 6px;border-radius:4px;flex-shrink:0;font-family:'DM Mono',monospace;}
+.gs-label{font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.gs-sub{font-size:11px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:1;font-family:'DM Mono',monospace;}
+.gs-no-results{padding:14px 16px;color:var(--text3);font-size:12px;text-align:center;}
+.gs-divider{height:1px;background:var(--border);margin:4px 0;}
 #content{padding:22px;flex:1;}
 .view{display:none;}
 .view.active{display:block;}
@@ -537,6 +557,13 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
 <main id="main">
   <div id="topbar">
     <div class="page-title" id="page-title">Dashboard</div>
+    <div id="gs-wrap">
+      <svg id="gs-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6.5" cy="6.5" r="4.5"/><line x1="10" y1="10" x2="14" y2="14"/></svg>
+      <input id="gs-input" type="text" placeholder="Search properties, sellers, agents…" autocomplete="off"
+        oninput="globalSearch()" onkeydown="gsKeydown(event)">
+      <button id="gs-clear" onclick="gsClear()" title="Clear search">✕</button>
+      <div id="gs-dropdown"></div>
+    </div>
     <div style="display:flex;gap:8px;align-items:center;">
       <button class="btn btn-ghost btn-sm" onclick="generateBriefing()">AI Briefing</button>
       <button class="btn btn-ghost btn-sm" onclick="openFollowupModal()">Send SMS</button>
@@ -1680,6 +1707,131 @@ function showView(v){
   if(v==='gmail')loadGmailInbox();
   if(v==='agents'){renderAgents();}
   if(v==='dispo-partners'){renderDispoPartners();}
+}
+
+// ══════════════════════════════════
+// GLOBAL SEARCH
+// ══════════════════════════════════
+(function initGlobalSearch(){
+  document.addEventListener('click', function(e){
+    if(!document.getElementById('gs-wrap')?.contains(e.target)) gsClose();
+  });
+  document.addEventListener('keydown', function(e){
+    if(e.key==='Escape') gsClose();
+  });
+})();
+
+function _gsEsc(str){
+  return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function globalSearch(){
+  const inp = document.getElementById('gs-input');
+  const drop = document.getElementById('gs-dropdown');
+  const clearBtn = document.getElementById('gs-clear');
+  const q = (inp?.value||'').trim().toLowerCase();
+  if(clearBtn) clearBtn.style.display = q ? 'flex' : 'none';
+  if(!q || q.length < 2){ drop.style.display='none'; return; }
+
+  const sections = [];
+  const MAX_EACH = 4;
+
+  // ── Contacts (Sellers / Leads) ──
+  const contactHits = [];
+  (db.contacts||[]).forEach(c => {
+    const haystack = [c.name,c.county,c.state,c.phone,c.address,c.apn].filter(Boolean).join(' ').toLowerCase();
+    if(!haystack.includes(q)) return;
+    if(contactHits.length >= MAX_EACH) return;
+    const badge  = (c.contactType==='buyer') ? 'Buyer' : 'Seller';
+    const bColor = (c.contactType==='buyer') ? 'var(--amber)' : 'var(--accent)';
+    const sub    = [c.address ? c.address.split(',')[0] : '', c.county ? c.county+' Co' : ''].filter(Boolean).join(' · ') || c.phone || '';
+    contactHits.push({label:c.name||'(no name)',sub,badge,bColor,action:`gsGo('sellers','openDetail','${c.id}')`});
+  });
+  if(contactHits.length) sections.push({title:'Sellers / Leads', items:contactHits});
+
+  // ── RE Agents ──
+  const agentHits = [];
+  (db.agents||[]).forEach(a => {
+    const listing = a.listing || {};
+    const haystack = [a.name,a.brokerage,a.phone,(a.counties||[]).join(' '),a.state,listing.address].filter(Boolean).join(' ').toLowerCase();
+    if(!haystack.includes(q)) return;
+    if(agentHits.length >= MAX_EACH) return;
+    const sub = [a.brokerage, (a.counties||[]).slice(0,2).join(', ')].filter(Boolean).join(' · ') || a.phone || '';
+    agentHits.push({label:a.name,sub,badge:'Agent',bColor:'var(--blue)',action:`gsGo('agents','openAgentDetail','${a.id}')`});
+  });
+  if(agentHits.length) sections.push({title:'RE Agents', items:agentHits});
+
+  // ── Buyers ──
+  const buyerHits = [];
+  (db.buyers||[]).forEach(b => {
+    const haystack = [b.name,b.phone,(b.states||[]).join(' '),b.type].filter(Boolean).join(' ').toLowerCase();
+    if(!haystack.includes(q)) return;
+    if(buyerHits.length >= MAX_EACH) return;
+    const sub = (b.states||[]).join(', ') || b.type || '';
+    buyerHits.push({label:b.name,sub,badge:'Buyer',bColor:'var(--amber)',action:`gsGo('buyers','openBuyerDetail','${b.id}')`});
+  });
+  if(buyerHits.length) sections.push({title:'Buyers', items:buyerHits});
+
+  // ── Dispo Partners ──
+  const partnerHits = [];
+  (db.dispoPartners||[]).forEach(p => {
+    const haystack = [p.name,p.company,p.phone,(p.counties||[]).join(' '),p.state].filter(Boolean).join(' ').toLowerCase();
+    if(!haystack.includes(q)) return;
+    if(partnerHits.length >= MAX_EACH) return;
+    const sub = [p.company,(p.counties||[]).slice(0,2).join(', ')].filter(Boolean).join(' · ') || p.phone || '';
+    partnerHits.push({label:p.name,sub,badge:'Partner',bColor:'var(--purple)',action:`gsGo('dispo-partners','openDispoPartnerDetail','${p.id}')`});
+  });
+  if(partnerHits.length) sections.push({title:'Dispo Partners', items:partnerHits});
+
+  if(!sections.length){
+    drop.innerHTML = '<div class="gs-no-results">No results for "'+_gsEsc(q)+'"</div>';
+    drop.style.display = 'block';
+    return;
+  }
+
+  let html = '';
+  sections.forEach((sec, si) => {
+    if(si > 0) html += '<div class="gs-divider"></div>';
+    html += '<div class="gs-section-label">'+_gsEsc(sec.title)+'</div>';
+    sec.items.forEach(r => {
+      html += `<div class="gs-result" onclick="${r.action}">
+        <div class="gs-result-main">
+          <span class="gs-badge" style="background:${r.bColor}20;color:${r.bColor}">${_gsEsc(r.badge)}</span>
+          <span class="gs-label">${_gsEsc(r.label)}</span>
+        </div>
+        ${r.sub ? `<span class="gs-sub">${_gsEsc(r.sub)}</span>` : ''}
+      </div>`;
+    });
+  });
+  drop.innerHTML = html;
+  drop.style.display = 'block';
+}
+
+function gsGo(view, fn, id){
+  gsClose();
+  showView(view);
+  setTimeout(()=>{ try{ window[fn](id); }catch(e){} }, 80);
+}
+
+function gsClose(){
+  const drop = document.getElementById('gs-dropdown');
+  if(drop) drop.style.display = 'none';
+}
+
+function gsClear(){
+  const inp = document.getElementById('gs-input');
+  if(inp){ inp.value=''; inp.focus(); }
+  const clearBtn = document.getElementById('gs-clear');
+  if(clearBtn) clearBtn.style.display='none';
+  gsClose();
+}
+
+function gsKeydown(e){
+  if(e.key==='Escape'){ gsClear(); return; }
+  if(e.key==='Enter'){
+    const first = document.querySelector('#gs-dropdown .gs-result');
+    if(first) first.click();
+  }
 }
 
 // ══════════════════════════════════
