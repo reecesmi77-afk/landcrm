@@ -2076,6 +2076,18 @@ function parsePastedProperty() {
   offerAmt = offerAmt.replace(/[$,]/g, '');
   const status     = extract(['Status','Property Status'], raw);
 
+  // Follow Up Date — normalize to YYYY-MM-DD
+  let followUpDate = extract(['Follow Up Date','Follow-Up Date','Followup Date','Follow Up','Follow-Up'], raw);
+  if (followUpDate) {
+    // Try parsing common formats: MM/DD/YYYY, MM-DD-YYYY, Month D YYYY, YYYY-MM-DD
+    const parsed = new Date(followUpDate);
+    if (!isNaN(parsed.getTime())) {
+      followUpDate = parsed.toISOString().slice(0,10);
+    } else {
+      followUpDate = ''; // can't parse, leave blank
+    }
+  }
+
   // Notes — everything after "Notes:" label, or fall back to empty
   let notes = '';
   const notesM = raw.match(/Notes?\s*[:\-]\s*([\s\S]*)/i);
@@ -2102,6 +2114,7 @@ function parsePastedProperty() {
   fillSelect('pf-comp',         comp);
   fillSelect('pf-offer-status', offerSt);
   fillSelect('pf-status',       status);
+  if (followUpDate) fill('pf-followup', followUpDate);
 
   // Collapse the import panel after successful parse
   const body = document.getElementById('prop-import-body');
@@ -2110,7 +2123,7 @@ function parsePastedProperty() {
   if (chevron) chevron.textContent = '▼';
 
   // Count how many fields got filled
-  const filled = [address,apn,countyClean||county,state,asking,acres,agentName,agentPhone,utilities,roadAccess,landlocked,fema,taxDelinq,slope,comp,offerSt,offerAmt,status,notes].filter(Boolean).length;
+  const filled = [address,apn,countyClean||county,state,asking,acres,agentName,agentPhone,utilities,roadAccess,landlocked,fema,taxDelinq,slope,comp,offerSt,offerAmt,status,followUpDate,notes].filter(Boolean).length;
   toast(`Auto-filled ${filled} field${filled !== 1 ? 's' : ''}`, 'success');
 }
 
@@ -2193,6 +2206,7 @@ function _propModalHtml(p, newId) {
             ${PROP_STATUSES.map(s=>`<option${(p?.status||'Researching')===s?' selected':''}>${s}</option>`).join('')}
           </select>
         </div>
+        <div class="form-group"><label class="form-label">Follow Up Date</label><input class="form-input" id="pf-followup" type="date" value="${p?.followUpDate||''}"></div>
       </div>
 
       <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin:18px 0 10px;">Notes</div>
@@ -2225,6 +2239,7 @@ function _readPropFields() {
     offerStatus:     document.getElementById('pf-offer-status')?.value         || '',
     offerAmount:     document.getElementById('pf-offer-amount')?.value.trim()  || '',
     status:          document.getElementById('pf-status')?.value               || 'Researching',
+    followUpDate:    document.getElementById('pf-followup')?.value             || '',
     notes:           document.getElementById('pf-notes')?.value.trim()         || '',
   };
 }
@@ -2338,6 +2353,12 @@ function _propDetailHtml(p) {
           <div style="margin-top:16px;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:8px">Agent</div>
           ${ddRow('Name', p.agentName)}
           ${ddRow('Phone', p.agentPhone)}
+
+          ${p.followUpDate ? `<div style="margin-top:16px;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:8px">Follow Up</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;">
+            <span style="font-size:12px;color:var(--text3)">Follow Up Date</span>
+            <span style="font-size:12px;font-weight:600;color:${p.followUpDate <= today() ? 'var(--amber)' : 'var(--teal)'};font-family:'DM Mono',monospace">${p.followUpDate}${p.followUpDate === today() ? ' — Today' : p.followUpDate < today() ? ' — Overdue' : ''}</span>
+          </div>` : ''}
         </div>
 
         <!-- Right column: Notes -->
@@ -8735,6 +8756,7 @@ function openTaskContactById(id, type) {
   if (type === 'agent') openAgentDetail(id);
   else if (type === 'buyer') openBuyerDetail(id);
   else if (type === 'title') openTitleDetail(id);
+  else if (type === 'property') { showView('properties'); setTimeout(function(){ openPropertyDetail(id); }, 120); }
   else openDetail(id);
 }
 
@@ -8745,6 +8767,7 @@ function openTaskContact(el) {
   if (type === 'agent') openAgentDetail(id);
   else if (type === 'buyer') openBuyerDetail(id);
   else if (type === 'title') openTitleDetail(id);
+  else if (type === 'property') { showView('properties'); setTimeout(function(){ openPropertyDetail(id); }, 120); }
   else openDetail(id);
 }
 
@@ -8871,6 +8894,32 @@ function generateSystemTasks() {
       contactId:c.id, contactName:c.name, contactType:'contact',
       notes:'Offer made '+daysSince(c.lastContact)+' days ago with no update',
       created:today(), createdAt:new Date().toISOString(),
+    });
+  });
+
+  // Property follow-up dates — surface when date <= today and property not Dead/Promoted
+  (db.properties||[]).forEach(function(p) {
+    if (!p.followUpDate) return;
+    if (p.status === 'Dead' || p.status === 'Promoted') return;
+    if (p.followUpDate > today()) return;
+    var key = 'prop-followup-'+p.id+'-'+p.followUpDate;
+    if (existingKeys.includes(key)) return;
+    var overdue = p.followUpDate < today();
+    var addrShort = p.address ? p.address.split(',')[0] : 'Property';
+    newTasks.push({
+      id: uid(),
+      title: 'Follow up — ' + addrShort,
+      source: 'system',
+      systemKey: key,
+      dueDate: p.followUpDate,
+      priority: overdue ? 'urgent' : 'today',
+      done: false,
+      contactId: p.id,
+      contactName: addrShort,
+      contactType: 'property',
+      note: (p.county ? p.county + ' Co, ' + (p.state||'') + ' · ' : '') + (p.acres ? p.acres + ' ac · ' : '') + (p.askingPrice ? '$' + Number(p.askingPrice).toLocaleString() + ' asking' : ''),
+      created: today(),
+      createdAt: new Date().toISOString(),
     });
   });
 
