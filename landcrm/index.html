@@ -490,6 +490,11 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="5" r="3"/><path d="M2 14c0-3.314 2.686-6 6-6s6 2.686 6 6"/></svg>
         Sellers
       </button>
+      <button class="nav-item" onclick="showView('properties')" id="nav-properties">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 7L8 1l7 6v7a1 1 0 01-1 1H2a1 1 0 01-1-1V7z"/><path d="M5 15V9h6v6"/></svg>
+        Properties
+        <span class="nb" id="nb-properties" style="display:none;background:var(--teal)">0</span>
+      </button>
       <button class="nav-item" onclick="showView('buyers')">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="7" width="12" height="8" rx="1.5"/><path d="M5 7V5a3 3 0 016 0v2"/></svg>
         Buyers
@@ -567,6 +572,7 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
     <div style="display:flex;gap:8px;align-items:center;">
       <button class="btn btn-ghost btn-sm" onclick="generateBriefing()">AI Briefing</button>
       <button class="btn btn-ghost btn-sm" onclick="openFollowupModal()">Send SMS</button>
+      <button class="btn btn-ghost btn-sm" onclick="openAddProperty()" id="btn-add-property" style="display:none">+ Add Property</button>
       <button class="btn btn-primary btn-sm" onclick="openAddContact()">+ Add Contact</button>
     </div>
   </div>
@@ -778,6 +784,51 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
         <table>
           <thead><tr><th>Name</th><th>Type</th><th>County / State</th><th>Acres</th><th>Source</th><th>Stage</th><th>Touches</th><th>Handler</th><th>Last contact</th><th>Temp</th></tr></thead>
           <tbody id="sellers-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- PROPERTIES -->
+    <div id="view-properties" class="view">
+      <div class="filter-bar">
+        <input class="search-input" type="text" placeholder="Search properties…" id="prop-search" oninput="renderProperties()">
+        <select class="filter-select" id="prop-status-filter" onchange="renderProperties()">
+          <option value="">All statuses</option>
+          <option>Researching</option>
+          <option>Call Needed</option>
+          <option>Offer Pending</option>
+          <option>Promoted</option>
+          <option>Dead</option>
+        </select>
+        <select class="filter-select" id="prop-state-filter" onchange="renderProperties()">
+          <option value="">All states</option>
+          <option>TN</option><option>MS</option><option>AR</option><option>MO</option><option>AL</option><option>KY</option><option>GA</option><option>FL</option><option>TX</option><option>OK</option>
+        </select>
+        <select class="filter-select" id="prop-sort" onchange="renderProperties()">
+          <option value="updated-desc">Last Updated ↓</option>
+          <option value="updated-asc">Last Updated ↑</option>
+          <option value="price-asc">Asking Price ↑</option>
+          <option value="price-desc">Asking Price ↓</option>
+          <option value="acres-desc">Acres ↓</option>
+          <option value="acres-asc">Acres ↑</option>
+          <option value="address-asc">Address A–Z</option>
+        </select>
+      </div>
+      <div class="card">
+        <table>
+          <thead>
+            <tr>
+              <th>Property Address</th>
+              <th>APN</th>
+              <th>County / State</th>
+              <th>Asking Price</th>
+              <th>Acres</th>
+              <th>Agent</th>
+              <th>Status</th>
+              <th>Last Updated</th>
+            </tr>
+          </thead>
+          <tbody id="properties-tbody"></tbody>
         </table>
       </div>
     </div>
@@ -1601,7 +1652,7 @@ var AGENT_TOUCH_DAYS = { 'Identified':7, 'Contacted':14, 'Building':30, 'Active 
 // DATA
 // ══════════════════════════════════
 const KEY = 'landcrm_v2';
-function load(){try{const r=localStorage.getItem(KEY);const d=r?JSON.parse(r):{contacts:[],buyers:[],agents:[],titleCos:[],tasks:[],lenders:[],referrals:[]};if(!d.agents)d.agents=[];if(!d.dispoPartners)d.dispoPartners=[];if(!d.titleCos)d.titleCos=[];if(!d.tasks)d.tasks=[];if(!d.lenders)d.lenders=[];if(!d.referrals)d.referrals=[];return d;}catch(e){return{contacts:[],buyers:[],agents:[],dispoPartners:[],titleCos:[],tasks:[],lenders:[],referrals:[]};}
+function load(){try{const r=localStorage.getItem(KEY);const d=r?JSON.parse(r):{contacts:[],buyers:[],agents:[],titleCos:[],tasks:[],lenders:[],referrals:[],properties:[]};if(!d.agents)d.agents=[];if(!d.dispoPartners)d.dispoPartners=[];if(!d.titleCos)d.titleCos=[];if(!d.tasks)d.tasks=[];if(!d.lenders)d.lenders=[];if(!d.referrals)d.referrals=[];if(!d.properties)d.properties=[];return d;}catch(e){return{contacts:[],buyers:[],agents:[],dispoPartners:[],titleCos:[],tasks:[],lenders:[],referrals:[],properties:[]};}
 }
 function save(){
   localStorage.setItem(KEY,JSON.stringify(db));
@@ -1692,7 +1743,9 @@ function showView(v){
   currentView=v;
   const _ve=document.getElementById('view-'+v);if(_ve)_ve.classList.add('active');
   const _ne=document.getElementById('nav-'+v);if(_ne)_ne.classList.add('active');
-  const titles={dashboard:'Dashboard','acq-pipeline':'Acquisitions Pipeline','dis-pipeline':'Dispositions Pipeline','ai-queue':'AI Handoff Queue',sellers:'All Leads',buyers:'Buyer Network',calculator:'Offer Calculator',sequences:'SMS Sequences',settings:'Settings','ai-qualified':'AI Qualified Leads',reporting:'Reporting',gmail:'Email',agents:'RE Agents','dispo-partners':'Dispo Partners',title:'Title & Closing',tasks:'Tasks',lenders:'Lenders & Funders',referrals:'Referral Partners'};
+  const titles={dashboard:'Dashboard','acq-pipeline':'Acquisitions Pipeline','dis-pipeline':'Dispositions Pipeline','ai-queue':'AI Handoff Queue',sellers:'All Leads',properties:'Properties',buyers:'Buyer Network',calculator:'Offer Calculator',sequences:'SMS Sequences',settings:'Settings','ai-qualified':'AI Qualified Leads',reporting:'Reporting',gmail:'Email',agents:'RE Agents','dispo-partners':'Dispo Partners',title:'Title & Closing',tasks:'Tasks',lenders:'Lenders & Funders',referrals:'Referral Partners'};
+  const btnAddProp = document.getElementById('btn-add-property');
+  if(btnAddProp) btnAddProp.style.display = v==='properties' ? '' : 'none';
   document.getElementById('page-title').textContent=titles[v]||v;
   if(v==='dashboard')renderDashboard();
   if(v==='acq-pipeline')renderPipeline('acq');
@@ -1707,6 +1760,7 @@ function showView(v){
   if(v==='gmail')loadGmailInbox();
   if(v==='agents'){renderAgents();}
   if(v==='dispo-partners'){renderDispoPartners();}
+  if(v==='properties'){renderProperties();}
 }
 
 // ══════════════════════════════════
@@ -1772,6 +1826,17 @@ function globalSearch(){
   });
   if(buyerHits.length) sections.push({title:'Buyers', items:buyerHits});
 
+  // ── Properties ──
+  const propHits = [];
+  (db.properties||[]).forEach(p => {
+    const haystack = [p.address,p.apn,p.county,p.state,p.agentName,p.notes].filter(Boolean).join(' ').toLowerCase();
+    if(!haystack.includes(q)) return;
+    if(propHits.length >= MAX_EACH) return;
+    const sub = [p.county ? p.county+' Co, '+p.state : '', p.acres ? p.acres+' ac' : ''].filter(Boolean).join(' · ') || '';
+    propHits.push({label:p.address||'(no address)',sub,badge:'Property',bColor:'var(--teal)',action:`gsGo('properties','openPropertyDetail','${p.id}')`});
+  });
+  if(propHits.length) sections.push({title:'Properties', items:propHits});
+
   // ── Dispo Partners ──
   const partnerHits = [];
   (db.dispoPartners||[]).forEach(p => {
@@ -1832,6 +1897,416 @@ function gsKeydown(e){
     const first = document.querySelector('#gs-dropdown .gs-result');
     if(first) first.click();
   }
+}
+
+// ══════════════════════════════════
+// PROPERTIES
+// ══════════════════════════════════
+const PROP_STATUSES = ['Researching','Call Needed','Offer Pending','Promoted','Dead'];
+const PROP_STATUS_COLORS = {
+  'Researching':'var(--accent)',
+  'Call Needed':'var(--amber)',
+  'Offer Pending':'var(--purple)',
+  'Promoted':'var(--teal)',
+  'Dead':'var(--text3)',
+};
+
+function renderProperties() {
+  const search  = (document.getElementById('prop-search')?.value || '').toLowerCase();
+  const statusF = document.getElementById('prop-status-filter')?.value || '';
+  const stateF  = document.getElementById('prop-state-filter')?.value  || '';
+  const sortV   = document.getElementById('prop-sort')?.value          || 'updated-desc';
+
+  let list = (db.properties || []).filter(p => {
+    if (statusF && p.status !== statusF) return false;
+    if (stateF  && p.state  !== stateF)  return false;
+    if (search) {
+      const h = [p.address,p.apn,p.county,p.state,p.agentName,p.notes].filter(Boolean).join(' ').toLowerCase();
+      if (!h.includes(search)) return false;
+    }
+    return true;
+  });
+
+  // Sort
+  list = list.slice().sort((a, b) => {
+    if (sortV === 'updated-desc') return new Date(b.updated||0) - new Date(a.updated||0);
+    if (sortV === 'updated-asc')  return new Date(a.updated||0) - new Date(b.updated||0);
+    if (sortV === 'price-asc')    return (parseFloat(a.askingPrice)||0) - (parseFloat(b.askingPrice)||0);
+    if (sortV === 'price-desc')   return (parseFloat(b.askingPrice)||0) - (parseFloat(a.askingPrice)||0);
+    if (sortV === 'acres-desc')   return (parseFloat(b.acres)||0) - (parseFloat(a.acres)||0);
+    if (sortV === 'acres-asc')    return (parseFloat(a.acres)||0) - (parseFloat(b.acres)||0);
+    if (sortV === 'address-asc')  return (a.address||'').localeCompare(b.address||'');
+    return 0;
+  });
+
+  // Update nav badge
+  const activeCount = (db.properties||[]).filter(p => p.status !== 'Dead' && p.status !== 'Promoted').length;
+  const nb = document.getElementById('nb-properties');
+  if (nb) { nb.textContent = activeCount; nb.style.display = activeCount ? '' : 'none'; }
+
+  const tbody = document.getElementById('properties-tbody');
+  if (!tbody) return;
+  if (!list.length) {
+    tbody.innerHTML = '<tr><td colspan="8"><div class="empty"><div class="empty-title">No properties found</div><div class="empty-sub">Add a property to start tracking due diligence</div></div></td></tr>';
+    return;
+  }
+
+  const fmt$ = n => n ? '$' + Number(n).toLocaleString() : '—';
+  tbody.innerHTML = list.map(p => {
+    const stColor = PROP_STATUS_COLORS[p.status] || 'var(--text3)';
+    return `<tr onclick="openPropertyDetail('${p.id}')" style="cursor:pointer;">
+      <td style="font-weight:500;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${_gsEsc(p.address||'—')}</td>
+      <td style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text2)">${_gsEsc(p.apn||'—')}</td>
+      <td style="color:var(--text2)">${_gsEsc(p.county||'—')}, ${_gsEsc(p.state||'—')}</td>
+      <td style="font-family:'DM Mono',monospace;font-size:12px">${fmt$(p.askingPrice)}</td>
+      <td style="font-family:'DM Mono',monospace;font-size:12px">${p.acres ? p.acres+' ac' : '—'}</td>
+      <td style="color:var(--text2)">${_gsEsc(p.agentName||'—')}</td>
+      <td><span class="tag" style="background:${stColor}18;color:${stColor};border:1px solid ${stColor}30">${_gsEsc(p.status||'Researching')}</span></td>
+      <td style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text3)">${p.updated||p.created||'—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+function openAddProperty() {
+  const id = 'prop' + Date.now().toString(36);
+  openCustomModal(_propModalHtml(null, id));
+}
+
+function openPropertyDetail(id) {
+  const p = (db.properties||[]).find(x => x.id === id);
+  if (!p) return;
+  openCustomModal(_propDetailHtml(p));
+}
+
+function _propYN(val, id) {
+  return `<select class="form-input" id="${id}">
+    <option value="">— Select —</option>
+    <option value="Yes"${val==='Yes'?' selected':''}>Yes</option>
+    <option value="No"${val==='No'?' selected':''}>No</option>
+  </select>`;
+}
+
+function _propModalHtml(p, newId) {
+  const isEdit = !!p;
+  const id     = isEdit ? p.id : newId;
+  const saveCall = isEdit ? `savePropertyDetail('${id}')` : `saveNewProperty('${id}')`;
+  const title  = isEdit ? (p.address ? p.address.split(',')[0] : 'Edit Property') : 'Add Property';
+
+  return `
+    <div class="modal-header">
+      <div class="modal-title">${isEdit ? 'Edit — ' : ''}${_gsEsc(title)}</div>
+      <button class="modal-close" onclick="closeModal()">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:10px;">Property Info</div>
+      <div class="form-grid">
+        <div class="form-group form-full"><label class="form-label">Property Address *</label><input class="form-input" id="pf-address" value="${_gsEsc(p?.address||'')}" placeholder="123 Timber Rd, Memphis, TN 38101"></div>
+        <div class="form-group"><label class="form-label">APN / Parcel ID</label><input class="form-input" id="pf-apn" value="${_gsEsc(p?.apn||'')}" placeholder="123-456-789"></div>
+        <div class="form-group"><label class="form-label">County</label><input class="form-input" id="pf-county" value="${_gsEsc(p?.county||'')}" placeholder="Shelby"></div>
+        <div class="form-group"><label class="form-label">State</label><select class="form-input" id="pf-state">${stateOptions(p?.state||'')}</select></div>
+        <div class="form-group"><label class="form-label">Asking Price ($)</label><input class="form-input" id="pf-asking" type="number" min="0" value="${p?.askingPrice||''}" placeholder="75000"></div>
+        <div class="form-group"><label class="form-label">Acres</label><input class="form-input" id="pf-acres" type="number" min="0" step="0.01" value="${p?.acres||''}" placeholder="12.5"></div>
+        <div class="form-group"><label class="form-label">Agent Name</label><input class="form-input" id="pf-agent-name" value="${_gsEsc(p?.agentName||'')}" placeholder="Karen Smith"></div>
+        <div class="form-group"><label class="form-label">Agent Phone</label><input class="form-input" id="pf-agent-phone" value="${_gsEsc(p?.agentPhone||'')}" placeholder="901-555-0100"></div>
+      </div>
+
+      <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin:18px 0 10px;">Due Diligence</div>
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">Utilities</label>
+          <select class="form-input" id="pf-utilities">
+            <option value="">— Select —</option>
+            <option${(p?.utilities||'')==='None Confirmed'?' selected':''}>None Confirmed</option>
+            <option${(p?.utilities||'')==='Electric Only'?' selected':''}>Electric Only</option>
+            <option${(p?.utilities||'')==='Full Utilities'?' selected':''}>Full Utilities</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Road Access</label>
+          <select class="form-input" id="pf-road">
+            <option value="">— Select —</option>
+            <option${(p?.roadAccess||'')==='Confirmed'?' selected':''}>Confirmed</option>
+            <option${(p?.roadAccess||'')==='Easement Only'?' selected':''}>Easement Only</option>
+            <option${(p?.roadAccess||'')==='Unknown'?' selected':''}>Unknown</option>
+            <option${(p?.roadAccess||'')==='None'?' selected':''}>None</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Landlocked</label>${_propYN(p?.landlocked,'pf-landlocked')}</div>
+        <div class="form-group"><label class="form-label">FEMA Checked</label>${_propYN(p?.femaChecked,'pf-fema')}</div>
+        <div class="form-group"><label class="form-label">Tax Delinquent</label>${_propYN(p?.taxDelinquent,'pf-tax')}</div>
+        <div class="form-group"><label class="form-label">Slope Report Pulled</label>${_propYN(p?.slopeReportPulled,'pf-slope')}</div>
+        <div class="form-group"><label class="form-label">Comp Report Pulled</label>${_propYN(p?.compReportPulled,'pf-comp')}</div>
+      </div>
+
+      <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin:18px 0 10px;">Offer & Status</div>
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">Offer Status</label>
+          <select class="form-input" id="pf-offer-status">
+            <option value="">None</option>
+            <option${(p?.offerStatus||'')==='Sent'?' selected':''}>Sent</option>
+            <option${(p?.offerStatus||'')==='Countered'?' selected':''}>Countered</option>
+            <option${(p?.offerStatus||'')==='Accepted'?' selected':''}>Accepted</option>
+            <option${(p?.offerStatus||'')==='Dead'?' selected':''}>Dead</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Offer Amount ($)</label><input class="form-input" id="pf-offer-amount" type="number" min="0" value="${p?.offerAmount||''}" placeholder="60000"></div>
+        <div class="form-group"><label class="form-label">Status</label>
+          <select class="form-input" id="pf-status">
+            ${PROP_STATUSES.map(s=>`<option${(p?.status||'Researching')===s?' selected':''}>${s}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+
+      <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin:18px 0 10px;">Notes</div>
+      <div class="form-group form-full"><textarea class="form-input" id="pf-notes" rows="4" style="resize:vertical;width:100%">${_gsEsc(p?.notes||'')}</textarea></div>
+    </div>
+    <div class="modal-footer">
+      ${isEdit ? `<button class="btn btn-ghost btn-sm" style="color:var(--coral)" onclick="deleteProperty('${id}')">Delete</button>` : ''}
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="${saveCall}">Save</button>
+    </div>`;
+}
+
+function _readPropFields() {
+  return {
+    address:         document.getElementById('pf-address')?.value.trim()      || '',
+    apn:             document.getElementById('pf-apn')?.value.trim()           || '',
+    county:          document.getElementById('pf-county')?.value.trim()        || '',
+    state:           document.getElementById('pf-state')?.value                || '',
+    askingPrice:     document.getElementById('pf-asking')?.value.trim()        || '',
+    acres:           document.getElementById('pf-acres')?.value.trim()         || '',
+    agentName:       document.getElementById('pf-agent-name')?.value.trim()    || '',
+    agentPhone:      document.getElementById('pf-agent-phone')?.value.trim()   || '',
+    utilities:       document.getElementById('pf-utilities')?.value            || '',
+    roadAccess:      document.getElementById('pf-road')?.value                 || '',
+    landlocked:      document.getElementById('pf-landlocked')?.value           || '',
+    femaChecked:     document.getElementById('pf-fema')?.value                 || '',
+    taxDelinquent:   document.getElementById('pf-tax')?.value                  || '',
+    slopeReportPulled: document.getElementById('pf-slope')?.value              || '',
+    compReportPulled:  document.getElementById('pf-comp')?.value               || '',
+    offerStatus:     document.getElementById('pf-offer-status')?.value         || '',
+    offerAmount:     document.getElementById('pf-offer-amount')?.value.trim()  || '',
+    status:          document.getElementById('pf-status')?.value               || 'Researching',
+    notes:           document.getElementById('pf-notes')?.value.trim()         || '',
+  };
+}
+
+function saveNewProperty(id) {
+  const fields = _readPropFields();
+  if (!fields.address) { toast('Property address is required', 'error'); return; }
+  const now = today();
+  const prop = Object.assign({ id, created: now, updated: now, activityLog: [] }, fields);
+  if (fields.notes) prop.activityLog.push({ text: fields.notes, ts: new Date().toISOString() });
+  if (!db.properties) db.properties = [];
+  db.properties.unshift(prop);
+  save();
+  closeModal();
+  renderProperties();
+  toast('Property saved', 'success');
+}
+
+function savePropertyDetail(id) {
+  const p = (db.properties||[]).find(x => x.id === id);
+  if (!p) return;
+  const fields = _readPropFields();
+  if (!fields.address) { toast('Property address is required', 'error'); return; }
+  Object.assign(p, fields);
+  p.updated = today();
+  save();
+  closeModal();
+  renderProperties();
+  toast('Property updated', 'success');
+}
+
+function deleteProperty(id) {
+  if (!confirm('Delete this property?')) return;
+  db.properties = (db.properties||[]).filter(x => x.id !== id);
+  save();
+  closeModal();
+  renderProperties();
+  toast('Property deleted', 'success');
+}
+
+function _propDetailHtml(p) {
+  const fmt$ = n => n ? '$' + Number(n).toLocaleString() : '—';
+  const stColor = PROP_STATUS_COLORS[p.status] || 'var(--text3)';
+  const ddRow = (label, val, isYN) => {
+    if (!val) val = '—';
+    let color = 'var(--text2)';
+    if (isYN && val === 'Yes') color = 'var(--coral)';
+    if (isYN && val === 'No')  color = 'var(--teal)';
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);">
+      <span style="font-size:12px;color:var(--text3)">${label}</span>
+      <span style="font-size:12px;font-weight:500;color:${color}">${_gsEsc(val)}</span>
+    </div>`;
+  };
+
+  const logHtml = (p.activityLog||[]).length
+    ? [...(p.activityLog||[])].reverse().map(e => {
+        const ts = e.ts ? new Date(e.ts).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'}) : '';
+        return `<div style="padding:10px 0;border-bottom:1px solid var(--border);">
+          <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:4px">${ts}</div>
+          <div style="font-size:13px;color:var(--text2);white-space:pre-wrap">${_gsEsc(e.text)}</div>
+        </div>`;
+      }).join('')
+    : '<div style="font-size:12px;color:var(--text3);padding:10px 0;">No activity yet</div>';
+
+  return `
+    <div class="modal-header">
+      <div style="min-width:0;flex:1;">
+        <div class="modal-title" style="font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${_gsEsc(p.address||'Property Detail')}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px">${_gsEsc(p.county||'')}${p.county&&p.state?', ':''}${_gsEsc(p.state||'')} · APN: ${_gsEsc(p.apn||'—')}</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;margin-left:12px;">
+        <span style="font-size:11px;font-weight:700;padding:3px 9px;border-radius:6px;background:${stColor}18;color:${stColor};border:1px solid ${stColor}30">${_gsEsc(p.status||'Researching')}</span>
+        <button class="modal-close" onclick="closeModal()">&#x2715;</button>
+      </div>
+    </div>
+    <div class="modal-body">
+
+      <!-- Key stats row -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;">
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;">
+          <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;text-transform:uppercase;margin-bottom:4px">Asking</div>
+          <div style="font-size:18px;font-weight:700;color:var(--text)">${fmt$(p.askingPrice)}</div>
+        </div>
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;">
+          <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;text-transform:uppercase;margin-bottom:4px">Acres</div>
+          <div style="font-size:18px;font-weight:700;color:var(--text)">${p.acres ? p.acres+' ac' : '—'}</div>
+        </div>
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;">
+          <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;text-transform:uppercase;margin-bottom:4px">Offer Status</div>
+          <div style="font-size:15px;font-weight:700;color:var(--text)">${_gsEsc(p.offerStatus||'None')}</div>
+        </div>
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;">
+          <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;text-transform:uppercase;margin-bottom:4px">Our Offer</div>
+          <div style="font-size:18px;font-weight:700;color:var(--accent)">${fmt$(p.offerAmount)}</div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+
+        <!-- Left column: Due Diligence checklist -->
+        <div>
+          <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:8px">Due Diligence</div>
+          ${ddRow('Utilities', p.utilities)}
+          ${ddRow('Road Access', p.roadAccess)}
+          ${ddRow('Landlocked', p.landlocked, true)}
+          ${ddRow('FEMA Checked', p.femaChecked)}
+          ${ddRow('Tax Delinquent', p.taxDelinquent, true)}
+          ${ddRow('Slope Report', p.slopeReportPulled)}
+          ${ddRow('Comp Report', p.compReportPulled)}
+
+          <div style="margin-top:16px;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:8px">Agent</div>
+          ${ddRow('Name', p.agentName)}
+          ${ddRow('Phone', p.agentPhone)}
+        </div>
+
+        <!-- Right column: Notes -->
+        <div>
+          <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:8px">Notes</div>
+          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;font-size:13px;color:var(--text2);white-space:pre-wrap;min-height:80px;max-height:140px;overflow-y:auto">${_gsEsc(p.notes||'No notes yet')}</div>
+        </div>
+      </div>
+
+      <!-- Activity Log -->
+      <div style="margin-top:20px;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:8px">Activity Log</div>
+        <div id="prop-log-entries" style="max-height:200px;overflow-y:auto;margin-bottom:12px">${logHtml}</div>
+        <div style="display:flex;gap:8px;">
+          <textarea id="prop-log-input" class="form-input" rows="2" style="flex:1;resize:none;font-size:13px" placeholder="Add a note to the log…"></textarea>
+          <button class="btn btn-ghost btn-sm" style="align-self:flex-end" onclick="addPropertyLog('${p.id}')">+ Log</button>
+        </div>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost btn-sm" style="color:var(--coral)" onclick="deleteProperty('${p.id}')">Delete</button>
+      <button class="btn btn-ghost btn-sm" onclick="openPropEditModal('${p.id}')">✎ Edit</button>
+      <button class="btn btn-ghost" onclick="closeModal()">Close</button>
+      <button class="btn btn-primary" onclick="promoteToAcquisitions('${p.id}')">🚀 Promote to Acquisitions</button>
+    </div>`;
+}
+
+function openPropEditModal(id) {
+  const p = (db.properties||[]).find(x => x.id === id);
+  if (!p) return;
+  closeModal();
+  setTimeout(() => openCustomModal(_propModalHtml(p, p.id)), 80);
+}
+
+function addPropertyLog(id) {
+  const p = (db.properties||[]).find(x => x.id === id);
+  if (!p) return;
+  const text = document.getElementById('prop-log-input')?.value.trim();
+  if (!text) return;
+  if (!p.activityLog) p.activityLog = [];
+  p.activityLog.push({ text, ts: new Date().toISOString() });
+  p.updated = today();
+  save();
+  // Re-render just the log section
+  const entriesEl = document.getElementById('prop-log-entries');
+  if (entriesEl) {
+    const logHtml = [...p.activityLog].reverse().map(e => {
+      const ts = e.ts ? new Date(e.ts).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'}) : '';
+      return `<div style="padding:10px 0;border-bottom:1px solid var(--border);">
+        <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:4px">${ts}</div>
+        <div style="font-size:13px;color:var(--text2);white-space:pre-wrap">${_gsEsc(e.text)}</div>
+      </div>`;
+    }).join('');
+    entriesEl.innerHTML = logHtml;
+  }
+  document.getElementById('prop-log-input').value = '';
+  toast('Note logged', 'success');
+}
+
+function promoteToAcquisitions(id) {
+  const p = (db.properties||[]).find(x => x.id === id);
+  if (!p) return;
+  if (!confirm('Promote "' + (p.address||'this property') + '" to Acquisitions? This creates a new contact in the Acq pipeline.')) return;
+
+  // Build the log history as a notes string
+  const logText = (p.activityLog||[]).map(e => {
+    const d = e.ts ? new Date(e.ts).toLocaleDateString() : '';
+    return (d ? '['+d+'] ' : '') + e.text;
+  }).join('\n\n');
+  const combinedNotes = [p.notes, logText].filter(Boolean).join('\n\n---\n\n');
+
+  const now = today();
+  const newContact = {
+    id:           uid(),
+    created:      now,
+    lastContact:  now,
+    touches:      [],
+    contactType:  'seller',
+    pipeline:     'acq',
+    stage:        'New',
+    temp:         'warm',
+    name:         p.agentName || p.address || 'Promoted Property',
+    phone:        p.agentPhone || '',
+    email:        '',
+    address:      p.address || '',
+    county:       p.county  || '',
+    state:        p.state   || '',
+    acreage:      p.acres   || '',
+    apn:          p.apn     || '',
+    askingPrice:  p.askingPrice || '',
+    ourOffer:     p.offerAmount || '',
+    source:       'MLS',
+    notes:        combinedNotes ? [{ date: now, text: combinedNotes }] : [],
+    tags:         ['promoted-from-properties'],
+  };
+  db.contacts.unshift(newContact);
+
+  // Mark property as promoted
+  p.status  = 'Promoted';
+  p.updated = now;
+  if (!p.activityLog) p.activityLog = [];
+  p.activityLog.push({ text: 'Promoted to Acquisitions pipeline — contact ID: ' + newContact.id, ts: new Date().toISOString() });
+
+  save();
+  closeModal();
+  renderProperties();
+  toast('Promoted! Opening in Acquisitions…', 'success');
+  setTimeout(() => { showView('acq-pipeline'); }, 400);
 }
 
 // ══════════════════════════════════
