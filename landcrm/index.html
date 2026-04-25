@@ -1984,6 +1984,136 @@ function _propYN(val, id) {
   </select>`;
 }
 
+function togglePropImport() {
+  const body    = document.getElementById('prop-import-body');
+  const chevron = document.getElementById('prop-import-chevron');
+  if (!body) return;
+  const open = body.style.display !== 'none';
+  body.style.display    = open ? 'none' : '';
+  if (chevron) chevron.textContent = open ? '▼' : '▲';
+  if (!open) setTimeout(() => document.getElementById('pf-paste-raw')?.focus(), 50);
+}
+
+function parsePastedProperty() {
+  const raw = (document.getElementById('pf-paste-raw')?.value || '').trim();
+  if (!raw) { toast('Paste some property info first', 'error'); return; }
+
+  // Core extractor — handles "LABEL: value" with flexible separators
+  function extract(labels, text) {
+    if (!Array.isArray(labels)) labels = [labels];
+    for (const label of labels) {
+      const re = new RegExp(String.raw`(?:^|\n|\·|\|)\s*${label}\s*[:\-]\s*([^\n\·\|]+)`, 'im');
+      const m  = text.match(re);
+      if (m && m[1]?.trim()) return m[1].trim();
+    }
+    return '';
+  }
+
+  // Fill a text/number input
+  function fill(id, val) {
+    const el = document.getElementById(id);
+    if (el && val) el.value = val;
+  }
+
+  // Set a <select> by matching option value or text (case-insensitive)
+  function fillSelect(id, val) {
+    if (!val) return;
+    const el = document.getElementById(id);
+    if (!el) return;
+    const v = val.trim().toLowerCase();
+    for (let i = 0; i < el.options.length; i++) {
+      if (el.options[i].value.toLowerCase() === v ||
+          el.options[i].text.toLowerCase()  === v) {
+        el.selectedIndex = i; return;
+      }
+    }
+    // Partial match fallback
+    for (let i = 0; i < el.options.length; i++) {
+      if (el.options[i].value.toLowerCase().includes(v) ||
+          el.options[i].text.toLowerCase().includes(v)) {
+        el.selectedIndex = i; return;
+      }
+    }
+  }
+
+  // ── Extract all fields ──
+  const address     = extract(['Address','Property Address','Prop Address'], raw);
+  const apn         = extract(['APN','Parcel ID','Parcel Number','Parcel'], raw);
+  const county      = extract(['County'], raw);
+
+  let state = extract(['State'], raw);
+  // If state came back as a full name try to resolve abbreviation
+  const stateAbbr = { alabama:'AL',alaska:'AK',arizona:'AZ',arkansas:'AR',california:'CA',colorado:'CO',connecticut:'CT',delaware:'DE',florida:'FL',georgia:'GA',hawaii:'HI',idaho:'ID',illinois:'IL',indiana:'IN',iowa:'IA',kansas:'KS',kentucky:'KY',louisiana:'LA',maine:'ME',maryland:'MD',massachusetts:'MA',michigan:'MI',minnesota:'MN',mississippi:'MS',missouri:'MO',montana:'MT',nebraska:'NE',nevada:'NV','new hampshire':'NH','new jersey':'NJ','new mexico':'NM','new york':'NY','north carolina':'NC','north dakota':'ND',ohio:'OH',oklahoma:'OK',oregon:'OR',pennsylvania:'PA','rhode island':'RI','south carolina':'SC','south dakota':'SD',tennessee:'TN',texas:'TX',utah:'UT',vermont:'VT',virginia:'VA',washington:'WA','west virginia':'WV',wisconsin:'WI',wyoming:'WY' };
+  if (state && state.length > 2) state = stateAbbr[state.toLowerCase()] || state;
+
+  // Try to pull state from address line if not found explicitly
+  if (!state && address) {
+    const m = address.match(/,\s*([A-Z]{2})\b/);
+    if (m) state = m[1];
+  }
+
+  // Strip state+zip from county if they bled in
+  const countyClean = county.replace(/,.*$/, '').replace(/\s+county$/i, '').trim();
+
+  let asking = extract(['Asking Price','Asking','List Price','Price'], raw);
+  asking = asking.replace(/[$,]/g, '');
+
+  let acres = extract(['Acres','Acreage','Acre'], raw);
+  acres = acres.replace(/[^0-9.]/g, '');
+
+  const agentName  = extract(['Agent Name','Agent','Listing Agent','Listed By'], raw);
+  const agentPhone = extract(['Agent Phone','Agent Cell','Agent Number'], raw);
+
+  const utilities  = extract(['Utilities','Utility'], raw);
+  const roadAccess = extract(['Road Access','Road','Access'], raw);
+  const landlocked = extract(['Landlocked'], raw);
+  const fema       = extract(['FEMA Checked','FEMA','Flood Zone Checked'], raw);
+  const taxDelinq  = extract(['Tax Delinquent','Taxes Delinquent','Tax Status'], raw);
+  const slope      = extract(['Slope Report','Slope Report Pulled','Slope'], raw);
+  const comp       = extract(['Comp Report','Comp Report Pulled','Comps'], raw);
+  const offerSt    = extract(['Offer Status','Offer'], raw);
+  let offerAmt     = extract(['Offer Amount','Our Offer','Offer Price'], raw);
+  offerAmt = offerAmt.replace(/[$,]/g, '');
+  const status     = extract(['Status','Property Status'], raw);
+
+  // Notes — everything after "Notes:" label, or fall back to empty
+  let notes = '';
+  const notesM = raw.match(/Notes?\s*[:\-]\s*([\s\S]*)/i);
+  if (notesM) notes = notesM[1].trim();
+
+  // ── Apply to form ──
+  fill('pf-address', address);
+  fill('pf-apn',     apn);
+  fill('pf-county',  countyClean || county);
+  fill('pf-asking',  asking);
+  fill('pf-acres',   acres);
+  fill('pf-agent-name',  agentName);
+  fill('pf-agent-phone', agentPhone);
+  fill('pf-notes',   notes);
+  if (offerAmt) fill('pf-offer-amount', offerAmt);
+
+  fillSelect('pf-state',        state);
+  fillSelect('pf-utilities',    utilities);
+  fillSelect('pf-road',         roadAccess);
+  fillSelect('pf-landlocked',   landlocked);
+  fillSelect('pf-fema',         fema);
+  fillSelect('pf-tax',          taxDelinq);
+  fillSelect('pf-slope',        slope);
+  fillSelect('pf-comp',         comp);
+  fillSelect('pf-offer-status', offerSt);
+  fillSelect('pf-status',       status);
+
+  // Collapse the import panel after successful parse
+  const body = document.getElementById('prop-import-body');
+  if (body) body.style.display = 'none';
+  const chevron = document.getElementById('prop-import-chevron');
+  if (chevron) chevron.textContent = '▼';
+
+  // Count how many fields got filled
+  const filled = [address,apn,countyClean||county,state,asking,acres,agentName,agentPhone,utilities,roadAccess,landlocked,fema,taxDelinq,slope,comp,offerSt,offerAmt,status,notes].filter(Boolean).length;
+  toast(`Auto-filled ${filled} field${filled !== 1 ? 's' : ''}`, 'success');
+}
+
 function _propModalHtml(p, newId) {
   const isEdit = !!p;
   const id     = isEdit ? p.id : newId;
@@ -1996,6 +2126,18 @@ function _propModalHtml(p, newId) {
       <button class="modal-close" onclick="closeModal()">&#x2715;</button>
     </div>
     <div class="modal-body">
+      ${!isEdit ? `
+      <div style="margin-bottom:16px;padding:12px 14px;background:var(--bg3);border-radius:8px;border:1px solid var(--border2);">
+        <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;" onclick="togglePropImport()">
+          <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;font-family:'DM Mono',monospace;">⚡ Quick Import — paste &amp; auto-fill</div>
+          <span id="prop-import-chevron" style="font-size:11px;color:var(--text3);">▼</span>
+        </div>
+        <div id="prop-import-body" style="display:none;margin-top:10px;">
+          <div style="font-size:11px;color:var(--text3);margin-bottom:8px;line-height:1.5;">Paste any text with labeled fields (e.g. <code style="background:var(--bg4);padding:1px 4px;border-radius:3px;font-size:10px">Address: 123 Oak Rd · APN: 123-456 · Asking Price: 75000 · Acres: 10</code>) and the form will auto-fill.</div>
+          <textarea id="pf-paste-raw" class="form-input" rows="4" style="resize:vertical;width:100%;font-size:12px;font-family:'DM Mono',monospace;" placeholder="Address: 123 Timber Rd, Memphis, TN&#10;APN: 123-456-789&#10;County: Shelby&#10;State: TN&#10;Asking Price: 75000&#10;Acres: 12.5&#10;Agent Name: Karen Smith&#10;..."></textarea>
+          <button class="btn btn-ghost btn-sm" style="margin-top:8px;border-color:var(--teal);color:var(--teal);" onclick="parsePastedProperty()">⚡ Parse &amp; Auto-Fill</button>
+        </div>
+      </div>` : ''}
       <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:10px;">Property Info</div>
       <div class="form-grid">
         <div class="form-group form-full"><label class="form-label">Property Address *</label><input class="form-input" id="pf-address" value="${_gsEsc(p?.address||'')}" placeholder="123 Timber Rd, Memphis, TN 38101"></div>
