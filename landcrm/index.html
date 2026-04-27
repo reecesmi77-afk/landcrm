@@ -2171,11 +2171,13 @@ function parsePastedProperty() {
   let email = extract(['Email Address','Email'], raw);
   if (/^(none|n\/a|no email|na)$/i.test(email.trim())) email = '';
 
-  // Address — strip state+zip from end
+  // Address — strip state+zip from end, strip leading dash/hyphen
   let address = extract(['Property Address','Address'], raw);
   address = address.replace(/,?\s*[A-Z]{2}\s*,?\s*\d{5,}.*$/, '').replace(/,\s*[A-Z]{2}\s*$/, '').trim();
+  address = address.replace(/^[-\u2013\u2014\s]+/, '').trim();
 
-  const city = extract(['City'], raw) || '';
+  let city = extract(['City'], raw) || '';
+  if (city) city = city.replace(/\w\S*/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
 
   // State
   let state = extract(['State'], raw);
@@ -2196,10 +2198,10 @@ function parsePastedProperty() {
 
   const apn = extract(['APN','Parcel ID','Parcel Number','Parcel'], raw);
 
-  // Acres — blank if N/A
+  // Acres — blank if N/A or empty
   let acres = extract(['Acres','Acreage','Acre'], raw);
-  if (/^n\/a$/i.test(acres.trim())) acres = '';
-  acres = acres.replace(/[^0-9.]/g, '');
+  if (!acres || /^(n\/a|na|none)$/i.test(acres.trim())) acres = '';
+  else acres = acres.replace(/[^0-9.]/g, '');
 
   // Source & status from event type
   const source = isSMS ? 'Cold SMS' : isCall ? 'Lead Gen Call' : '';
@@ -2220,7 +2222,9 @@ function parsePastedProperty() {
   }
   const utilities  = mapYN(extractDD('Utilities'));
   const roadAccess = mapYN(extractDD('Road\\s*Access'));
-  const structures = extractDD('(?:structures?|Any structures?)');
+  const structuresRaw = extractDD('(?:structures?|Any structures?)');
+  const structures = /^(none|no)$/i.test(structuresRaw.trim()) ? '' : structuresRaw;
+  const structuresDD = /^(none|no)$/i.test(structuresRaw.trim()) ? 'No' : '';
 
   // Seller Notes: Notes block + CONFIRMED RAPPORT NOTES appended
   let sellerNotes = '';
@@ -2249,7 +2253,7 @@ function parsePastedProperty() {
   fill('pf-zip',          zip);
   fill('pf-apn',          apn);
   fill('pf-acres',        acres);
-  fill('pf-structures',   structures);
+  fill('pf-structures', structuresDD || structures);
   fill('pf-seller-notes', sellerNotes);
   if (followUpDate) fill('pf-followup', followUpDate);
   if (state)      fillSelect('pf-state',     state);
