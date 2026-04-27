@@ -807,25 +807,23 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
         <select class="filter-select" id="prop-sort" onchange="renderProperties()">
           <option value="updated-desc">Last Updated ↓</option>
           <option value="updated-asc">Last Updated ↑</option>
-          <option value="price-asc">Asking Price ↑</option>
-          <option value="price-desc">Asking Price ↓</option>
           <option value="acres-desc">Acres ↓</option>
           <option value="acres-asc">Acres ↑</option>
-          <option value="address-asc">Address A–Z</option>
+          <option value="name-asc">Name A–Z</option>
         </select>
       </div>
       <div class="card">
         <table>
           <thead>
             <tr>
-              <th>Property Address</th>
-              <th>APN</th>
+              <th>Name</th>
               <th>County / State</th>
-              <th>Asking Price</th>
               <th>Acres</th>
-              <th>Agent</th>
+              <th>Source</th>
+              <th>Utilities</th>
+              <th>Road Access</th>
               <th>Status</th>
-              <th>Last Updated</th>
+              <th>Follow Up</th>
             </tr>
           </thead>
           <tbody id="properties-tbody"></tbody>
@@ -1827,11 +1825,12 @@ function globalSearch(){
   // ── Properties ──
   const propHits = [];
   (db.properties||[]).forEach(p => {
-    const haystack = [p.address,p.apn,p.county,p.state,p.agentName,p.notes].filter(Boolean).join(' ').toLowerCase();
+    const haystack = [p.sellerName,p.address,p.apn,p.county,p.state,p.sellerNotes,p.notes,p.agentName].filter(Boolean).join(' ').toLowerCase();
     if(!haystack.includes(q)) return;
     if(propHits.length >= MAX_EACH) return;
+    const name = p.sellerName || p.address?.split(',')[0] || '(no name)';
     const sub = [p.county ? p.county+' Co, '+p.state : '', p.acres ? p.acres+' ac' : ''].filter(Boolean).join(' · ') || '';
-    propHits.push({label:p.address||'(no address)',sub,badge:'Property',bColor:'var(--teal)',action:`gsGo('properties','openPropertyDetail','${p.id}')`});
+    propHits.push({label:name,sub,badge:'Property',bColor:'var(--teal)',action:`gsGo('properties','openPropertyDetail','${p.id}')`});
   });
   if(propHits.length) sections.push({title:'Properties', items:propHits});
 
@@ -1909,6 +1908,14 @@ const PROP_STATUS_COLORS = {
   'Dead':'var(--text3)',
 };
 
+// Backward-compat: map old field names to new ones in-place
+function _propNormalize(p) {
+  if (!p.sellerName  && p.agentName)  p.sellerName  = p.agentName;
+  if (!p.sellerPhone && p.agentPhone) p.sellerPhone = p.agentPhone;
+  if (!p.sellerNotes && p.notes)      p.sellerNotes = p.notes;
+  return p;
+}
+
 function renderProperties() {
   const search  = (document.getElementById('prop-search')?.value || '').toLowerCase();
   const statusF = document.getElementById('prop-status-filter')?.value || '';
@@ -1916,10 +1923,11 @@ function renderProperties() {
   const sortV   = document.getElementById('prop-sort')?.value          || 'updated-desc';
 
   let list = (db.properties || []).filter(p => {
+    _propNormalize(p);
     if (statusF && p.status !== statusF) return false;
     if (stateF  && p.state  !== stateF)  return false;
     if (search) {
-      const h = [p.address,p.apn,p.county,p.state,p.agentName,p.notes].filter(Boolean).join(' ').toLowerCase();
+      const h = [p.sellerName,p.address,p.apn,p.county,p.state,p.sellerNotes,p.notes].filter(Boolean).join(' ').toLowerCase();
       if (!h.includes(search)) return false;
     }
     return true;
@@ -1929,15 +1937,13 @@ function renderProperties() {
   list = list.slice().sort((a, b) => {
     if (sortV === 'updated-desc') return new Date(b.updated||0) - new Date(a.updated||0);
     if (sortV === 'updated-asc')  return new Date(a.updated||0) - new Date(b.updated||0);
-    if (sortV === 'price-asc')    return (parseFloat(a.askingPrice)||0) - (parseFloat(b.askingPrice)||0);
-    if (sortV === 'price-desc')   return (parseFloat(b.askingPrice)||0) - (parseFloat(a.askingPrice)||0);
     if (sortV === 'acres-desc')   return (parseFloat(b.acres)||0) - (parseFloat(a.acres)||0);
     if (sortV === 'acres-asc')    return (parseFloat(a.acres)||0) - (parseFloat(b.acres)||0);
-    if (sortV === 'address-asc')  return (a.address||'').localeCompare(b.address||'');
+    if (sortV === 'name-asc')     return (a.sellerName||a.address||'').localeCompare(b.sellerName||b.address||'');
     return 0;
   });
 
-  // Update nav badge
+  // Nav badge
   const activeCount = (db.properties||[]).filter(p => p.status !== 'Dead' && p.status !== 'Promoted').length;
   const nb = document.getElementById('nb-properties');
   if (nb) { nb.textContent = activeCount; nb.style.display = activeCount ? '' : 'none'; }
@@ -1949,320 +1955,364 @@ function renderProperties() {
     return;
   }
 
-  const fmt$ = n => n ? '$' + Number(n).toLocaleString() : '—';
+  const ddDot = v => {
+    const c = v === 'Yes' ? 'var(--teal)' : v === 'No' ? 'var(--coral)' : 'var(--text3)';
+    return `<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${c};margin-right:5px;vertical-align:middle;"></span>`;
+  };
+  const srcBadge = src => {
+    if (!src) return '<span style="color:var(--text3)">—</span>';
+    const c = src.includes('SMS') ? 'var(--accent)' : src.includes('Call') ? 'var(--amber)' : 'var(--text3)';
+    return `<span style="font-size:10px;font-family:'DM Mono',monospace;background:${c}18;color:${c};padding:2px 6px;border-radius:4px;border:1px solid ${c}30">${_gsEsc(src)}</span>`;
+  };
+
   tbody.innerHTML = list.map(p => {
-    const stColor = PROP_STATUS_COLORS[p.status] || 'var(--text3)';
+    const stColor  = PROP_STATUS_COLORS[p.status] || 'var(--text3)';
+    const name     = p.sellerName || p.address?.split(',')[0] || '—';
+    const fu       = p.followUpDate;
+    const fuStyle  = fu && fu <= today() ? 'color:var(--amber);font-weight:600' : 'color:var(--text3)';
     return `<tr onclick="openPropertyDetail('${p.id}')" style="cursor:pointer;">
-      <td style="font-weight:500;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${_gsEsc(p.address||'—')}</td>
-      <td style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text2)">${_gsEsc(p.apn||'—')}</td>
+      <td style="font-weight:500">${_gsEsc(name)}</td>
       <td style="color:var(--text2)">${_gsEsc(p.county||'—')}, ${_gsEsc(p.state||'—')}</td>
-      <td style="font-family:'DM Mono',monospace;font-size:12px">${fmt$(p.askingPrice)}</td>
       <td style="font-family:'DM Mono',monospace;font-size:12px">${p.acres ? p.acres+' ac' : '—'}</td>
-      <td style="color:var(--text2)">${_gsEsc(p.agentName||'—')}</td>
+      <td>${srcBadge(p.source)}</td>
+      <td>${ddDot(p.utilities)}<span style="font-size:12px;color:var(--text2)">${p.utilities||'—'}</span></td>
+      <td>${ddDot(p.roadAccess)}<span style="font-size:12px;color:var(--text2)">${p.roadAccess||'—'}</span></td>
       <td><span class="tag" style="background:${stColor}18;color:${stColor};border:1px solid ${stColor}30">${_gsEsc(p.status||'Researching')}</span></td>
-      <td style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text3)">${p.updated||p.created||'—'}</td>
+      <td style="font-family:'DM Mono',monospace;font-size:11px;${fuStyle}">${fu||'—'}</td>
     </tr>`;
   }).join('');
 }
 
 function openAddProperty() {
-  const id = 'prop' + Date.now().toString(36);
-  openCustomModal(_propModalHtml(null, id));
+  openCustomModal(_propAddModalHtml());
+  requestAnimationFrame(() => switchPropTab('import'));
 }
 
 function openPropertyDetail(id) {
   const p = (db.properties||[]).find(x => x.id === id);
   if (!p) return;
+  _propNormalize(p);
   openCustomModal(_propDetailHtml(p));
 }
 
-function _propYN(val, id) {
+function switchPropTab(tab) {
+  const importPane = document.getElementById('prop-pane-import');
+  const tabImport  = document.getElementById('prop-tab-import');
+  const tabManual  = document.getElementById('prop-tab-manual');
+  const active   = 'font-size:13px;padding:6px 18px;border-radius:6px;border:none;cursor:pointer;background:var(--teal);color:#fff;font-weight:600';
+  const inactive = 'font-size:13px;padding:6px 18px;border-radius:6px;border:none;cursor:pointer;background:var(--bg3);color:var(--text3)';
+  if (tab === 'import') {
+    if (importPane) importPane.style.display = '';
+    if (tabImport)  tabImport.style.cssText  = active;
+    if (tabManual)  tabManual.style.cssText   = inactive;
+  } else {
+    if (importPane) importPane.style.display = 'none';
+    if (tabImport)  tabImport.style.cssText  = inactive;
+    if (tabManual)  tabManual.style.cssText   = active;
+  }
+}
+
+function _propAddModalHtml() {
+  return `
+    <div class="modal-header">
+      <div class="modal-title">Add Property</div>
+      <button class="modal-close" onclick="closeModal()">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex;gap:8px;margin-bottom:16px;">
+        <button id="prop-tab-import" onclick="switchPropTab('import')" style="font-size:13px;padding:6px 18px;border-radius:6px;border:none;cursor:pointer;background:var(--bg3);color:var(--text3)">⚡ Quick Import</button>
+        <button id="prop-tab-manual" onclick="switchPropTab('manual')" style="font-size:13px;padding:6px 18px;border-radius:6px;border:none;cursor:pointer;background:var(--bg3);color:var(--text3)">✏️ Manual Entry</button>
+      </div>
+
+      <div id="prop-pane-import">
+        <div style="font-size:12px;color:var(--text3);margin-bottom:8px;line-height:1.6">Paste a lead email from your lead gen company. Handles SMS lead and Call lead formats.</div>
+        <textarea id="pf-paste-raw" class="form-input" rows="6" style="resize:vertical;width:100%;font-size:12px;font-family:'DM Mono',monospace;" placeholder="Paste lead email here…"></textarea>
+        <div style="display:flex;align-items:center;gap:12px;margin-top:8px;margin-bottom:16px;">
+          <button class="btn btn-ghost btn-sm" style="border-color:var(--teal);color:var(--teal);" onclick="parsePastedProperty()">⚡ Parse &amp; Auto-Fill</button>
+          <span id="pf-parse-summary" style="font-size:12px;color:var(--text3)"></span>
+        </div>
+        <hr style="border:none;border-top:1px solid var(--border);margin-bottom:16px;">
+      </div>
+
+      ${_propManualFieldsHtml(null)}
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveNewProperty()">Save Property</button>
+    </div>`;
+}
+
+function _propManualFieldsHtml(p) {
+  return `
+    <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:10px">Seller Info</div>
+    <div class="form-grid">
+      <div class="form-group"><label class="form-label">Seller Name *</label><input class="form-input" id="pf-seller-name" value="${_gsEsc(p?.sellerName||'')}" placeholder="Jane Smith"></div>
+      <div class="form-group"><label class="form-label">Seller Phone</label><input class="form-input" id="pf-seller-phone" value="${_gsEsc(p?.sellerPhone||'')}" placeholder="901-555-0100"></div>
+      <div class="form-group form-full"><label class="form-label">Seller Email</label><input class="form-input" id="pf-seller-email" value="${_gsEsc(p?.sellerEmail||'')}" placeholder="jane@email.com"></div>
+    </div>
+
+    <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin:18px 0 10px">Source</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="form-label">Lead Source</label>
+        <select class="form-input" id="pf-source">
+          <option value="">— Select —</option>
+          <option value="Cold SMS"${(p?.source||'')==='Cold SMS'?' selected':''}>Cold SMS</option>
+          <option value="Lead Gen Call"${(p?.source||'')==='Lead Gen Call'?' selected':''}>Lead Gen Call</option>
+          <option value="MLS"${(p?.source||'')==='MLS'?' selected':''}>MLS</option>
+          <option value="Direct Mail"${(p?.source||'')==='Direct Mail'?' selected':''}>Direct Mail</option>
+          <option value="Referral"${(p?.source||'')==='Referral'?' selected':''}>Referral</option>
+          <option value="Other"${(p?.source||'')==='Other'?' selected':''}>Other</option>
+        </select>
+      </div>
+    </div>
+
+    <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin:18px 0 10px">Property Info</div>
+    <div class="form-grid">
+      <div class="form-group form-full"><label class="form-label">Address</label><input class="form-input" id="pf-address" value="${_gsEsc(p?.address||'')}" placeholder="123 Timber Rd"></div>
+      <div class="form-group"><label class="form-label">City</label><input class="form-input" id="pf-city" value="${_gsEsc(p?.city||'')}" placeholder="Memphis"></div>
+      <div class="form-group"><label class="form-label">County</label><input class="form-input" id="pf-county" value="${_gsEsc(p?.county||'')}" placeholder="Shelby"></div>
+      <div class="form-group"><label class="form-label">State</label><select class="form-input" id="pf-state">${stateOptions(p?.state||'')}</select></div>
+      <div class="form-group"><label class="form-label">Zip</label><input class="form-input" id="pf-zip" value="${_gsEsc(p?.zip||'')}" placeholder="38101"></div>
+      <div class="form-group"><label class="form-label">APN / Parcel ID</label><input class="form-input" id="pf-apn" value="${_gsEsc(p?.apn||'')}" placeholder="123-456-789"></div>
+      <div class="form-group"><label class="form-label">Acres</label><input class="form-input" id="pf-acres" type="number" min="0" step="0.01" value="${p?.acres||''}" placeholder="12.5"></div>
+    </div>
+
+    <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin:18px 0 10px">Due Diligence</div>
+    <div class="form-grid">
+      <div class="form-group"><label class="form-label">Utilities</label>${_propYNSelect('pf-utilities', p?.utilities||'')}</div>
+      <div class="form-group"><label class="form-label">Road Access</label>${_propYNSelect('pf-road', p?.roadAccess||'')}</div>
+      <div class="form-group"><label class="form-label">Structures</label><input class="form-input" id="pf-structures" value="${_gsEsc(p?.structures||'')}" placeholder="None / Cabin / Barn…"></div>
+      <div class="form-group"><label class="form-label">Landlocked</label>${_propYNSelect('pf-landlocked', p?.landlocked||'')}</div>
+      <div class="form-group"><label class="form-label">Tax Delinquent</label>${_propYNSelect('pf-tax', p?.taxDelinquent||'')}</div>
+      <div class="form-group"><label class="form-label">FEMA Checked</label>${_propYNSelect('pf-fema', p?.femaChecked||'')}</div>
+    </div>
+
+    <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin:18px 0 10px">Status</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="form-label">Property Status</label>
+        <select class="form-input" id="pf-status">
+          ${PROP_STATUSES.map(s=>`<option${(p?.status||'Researching')===s?' selected':''}>${s}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Follow Up Date</label><input class="form-input" id="pf-followup" type="date" value="${p?.followUpDate||''}"></div>
+    </div>
+
+    <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin:18px 0 10px">Seller Notes</div>
+    <div class="form-group form-full"><textarea class="form-input" id="pf-seller-notes" rows="4" style="resize:vertical;width:100%">${_gsEsc(p?.sellerNotes||'')}</textarea></div>
+  `;
+}
+
+function _propYNSelect(id, val) {
   return `<select class="form-input" id="${id}">
     <option value="">— Select —</option>
     <option value="Yes"${val==='Yes'?' selected':''}>Yes</option>
     <option value="No"${val==='No'?' selected':''}>No</option>
+    <option value="Unknown"${val==='Unknown'?' selected':''}>Unknown</option>
   </select>`;
-}
-
-function togglePropImport() {
-  const body    = document.getElementById('prop-import-body');
-  const chevron = document.getElementById('prop-import-chevron');
-  if (!body) return;
-  const open = body.style.display !== 'none';
-  body.style.display    = open ? 'none' : '';
-  if (chevron) chevron.textContent = open ? '▼' : '▲';
-  if (!open) setTimeout(() => document.getElementById('pf-paste-raw')?.focus(), 50);
 }
 
 function parsePastedProperty() {
   const raw = (document.getElementById('pf-paste-raw')?.value || '').trim();
-  if (!raw) { toast('Paste some property info first', 'error'); return; }
+  if (!raw) { toast('Paste a lead email first', 'error'); return; }
 
-  // Core extractor — handles "LABEL: value" with flexible separators
   function extract(labels, text) {
     if (!Array.isArray(labels)) labels = [labels];
     for (const label of labels) {
-      const re = new RegExp(String.raw`(?:^|\n|\·|\|)\s*${label}\s*[:\-]\s*([^\n\·\|]+)`, 'im');
+      const re = new RegExp(String.raw`(?:^|\n)\s*${label}\s*[:\-]\s*([^\n]+)`, 'im');
       const m  = text.match(re);
       if (m && m[1]?.trim()) return m[1].trim();
     }
     return '';
   }
 
-  // Fill a text/number input
   function fill(id, val) {
+    if (!val) return;
     const el = document.getElementById(id);
-    if (el && val) el.value = val;
+    if (el) el.value = val;
   }
 
-  // Set a <select> by matching option value or text (case-insensitive)
   function fillSelect(id, val) {
     if (!val) return;
     const el = document.getElementById(id);
     if (!el) return;
     const v = val.trim().toLowerCase();
     for (let i = 0; i < el.options.length; i++) {
-      if (el.options[i].value.toLowerCase() === v ||
-          el.options[i].text.toLowerCase()  === v) {
+      if (el.options[i].value.toLowerCase() === v || el.options[i].text.toLowerCase() === v) {
         el.selectedIndex = i; return;
       }
     }
-    // Partial match fallback
     for (let i = 0; i < el.options.length; i++) {
-      if (el.options[i].value.toLowerCase().includes(v) ||
-          el.options[i].text.toLowerCase().includes(v)) {
+      if (el.options[i].value.toLowerCase().includes(v) || el.options[i].text.toLowerCase().includes(v)) {
         el.selectedIndex = i; return;
       }
     }
   }
 
-  // ── Extract all fields ──
-  const address     = extract(['Address','Property Address','Prop Address'], raw);
-  const apn         = extract(['APN','Parcel ID','Parcel Number','Parcel'], raw);
-  const county      = extract(['County'], raw);
+  // Detect event type
+  const eventM = raw.match(/Event\s*[:\-]\s*(\S+)/i);
+  const eventType = (eventM ? eventM[1] : '').toLowerCase();
+  const isSMS  = eventType.includes('sms') || eventType.includes('text');
+  const isCall = eventType.includes('call');
 
+  // Names → full name
+  const firstName = extract(['First Name','First'], raw);
+  const lastName  = extract(['Last Name','Last'], raw);
+  const fullName  = [firstName, lastName].filter(Boolean).join(' ').trim();
+
+  // Phone — strip +1, format XXX-XXX-XXXX
+  let phone = extract(['Phone Number','Phone','Cell','Mobile'], raw);
+  phone = phone.replace(/\D/g, '');
+  if (phone.length === 11 && phone.startsWith('1')) phone = phone.slice(1);
+  if (phone.length === 10) phone = phone.slice(0,3)+'-'+phone.slice(3,6)+'-'+phone.slice(6);
+
+  // Email — blank if none/n/a
+  let email = extract(['Email Address','Email'], raw);
+  if (/^(none|n\/a|no email|na)$/i.test(email.trim())) email = '';
+
+  // Address — strip state+zip from end
+  let address = extract(['Property Address','Address'], raw);
+  address = address.replace(/,?\s*[A-Z]{2}\s*,?\s*\d{5,}.*$/, '').replace(/,\s*[A-Z]{2}\s*$/, '').trim();
+
+  const city = extract(['City'], raw) || '';
+
+  // State
   let state = extract(['State'], raw);
-  // If state came back as a full name try to resolve abbreviation
-  const stateAbbr = { alabama:'AL',alaska:'AK',arizona:'AZ',arkansas:'AR',california:'CA',colorado:'CO',connecticut:'CT',delaware:'DE',florida:'FL',georgia:'GA',hawaii:'HI',idaho:'ID',illinois:'IL',indiana:'IN',iowa:'IA',kansas:'KS',kentucky:'KY',louisiana:'LA',maine:'ME',maryland:'MD',massachusetts:'MA',michigan:'MI',minnesota:'MN',mississippi:'MS',missouri:'MO',montana:'MT',nebraska:'NE',nevada:'NV','new hampshire':'NH','new jersey':'NJ','new mexico':'NM','new york':'NY','north carolina':'NC','north dakota':'ND',ohio:'OH',oklahoma:'OK',oregon:'OR',pennsylvania:'PA','rhode island':'RI','south carolina':'SC','south dakota':'SD',tennessee:'TN',texas:'TX',utah:'UT',vermont:'VT',virginia:'VA',washington:'WA','west virginia':'WV',wisconsin:'WI',wyoming:'WY' };
-  if (state && state.length > 2) state = stateAbbr[state.toLowerCase()] || state;
-
-  // Try to pull state from address line if not found explicitly
-  if (!state && address) {
-    const m = address.match(/,\s*([A-Z]{2})\b/);
-    if (m) state = m[1];
+  if (state && state.length > 2) {
+    const stAbbr = { alabama:'AL',alaska:'AK',arizona:'AZ',arkansas:'AR',california:'CA',colorado:'CO',connecticut:'CT',delaware:'DE',florida:'FL',georgia:'GA',hawaii:'HI',idaho:'ID',illinois:'IL',indiana:'IN',iowa:'IA',kansas:'KS',kentucky:'KY',louisiana:'LA',maine:'ME',maryland:'MD',massachusetts:'MA',michigan:'MI',minnesota:'MN',mississippi:'MS',missouri:'MO',montana:'MT',nebraska:'NE',nevada:'NV','new hampshire':'NH','new jersey':'NJ','new mexico':'NM','new york':'NY','north carolina':'NC','north dakota':'ND',ohio:'OH',oklahoma:'OK',oregon:'OR',pennsylvania:'PA','rhode island':'RI','south carolina':'SC','south dakota':'SD',tennessee:'TN',texas:'TX',utah:'UT',vermont:'VT',virginia:'VA',washington:'WA','west virginia':'WV',wisconsin:'WI',wyoming:'WY' };
+    state = stAbbr[state.toLowerCase()] || state;
+  }
+  if (!state) {
+    const sm = raw.match(/,\s*([A-Z]{2})\s*(?:,|\s*\d{5}|$)/);
+    if (sm) state = sm[1];
   }
 
-  // Strip state+zip from county if they bled in
-  const countyClean = county.replace(/,.*$/, '').replace(/\s+county$/i, '').trim();
+  const zip = extract(['Zip','Zip Code','Postal Code'], raw) || '';
 
-  let asking = extract(['Asking Price','Asking','List Price','Price'], raw);
-  asking = asking.replace(/[$,]/g, '');
+  // County — strip trailing county/state bleed
+  let county = extract(['County'], raw);
+  county = county.replace(/,.*$/, '').replace(/\s+county$/i, '').trim();
 
+  const apn = extract(['APN','Parcel ID','Parcel Number','Parcel'], raw);
+
+  // Acres — blank if N/A
   let acres = extract(['Acres','Acreage','Acre'], raw);
+  if (/^n\/a$/i.test(acres.trim())) acres = '';
   acres = acres.replace(/[^0-9.]/g, '');
 
-  const agentName  = extract(['Agent Name','Agent','Listing Agent','Listed By'], raw);
-  const agentPhone = extract(['Agent Phone','Agent Cell','Agent Number'], raw);
+  // Source & status from event type
+  const source = isSMS ? 'Cold SMS' : isCall ? 'Lead Gen Call' : '';
+  const status = isSMS ? 'Call Needed' : isCall ? 'Researching' : '';
 
-  const utilities  = extract(['Utilities','Utility'], raw);
-  const roadAccess = extract(['Road Access','Road','Access'], raw);
-  const landlocked = extract(['Landlocked'], raw);
-  const fema       = extract(['FEMA Checked','FEMA','Flood Zone Checked'], raw);
-  const taxDelinq  = extract(['Tax Delinquent','Taxes Delinquent','Tax Status'], raw);
-  const slope      = extract(['Slope Report','Slope Report Pulled','Slope'], raw);
-  const comp       = extract(['Comp Report','Comp Report Pulled','Comps'], raw);
-  const offerSt    = extract(['Offer Status','Offer'], raw);
-  let offerAmt     = extract(['Offer Amount','Our Offer','Offer Price'], raw);
-  offerAmt = offerAmt.replace(/[$,]/g, '');
-  const status     = extract(['Status','Property Status'], raw);
+  // DD fields — extract Yes/No answer from lines after the question
+  function extractDD(keyword) {
+    const re = new RegExp(keyword + '[^\\n]*\\n[^\\n]*-\\s*(\\w[^\\n]*)', 'i');
+    const m2 = raw.match(re);
+    return m2 ? m2[1].trim() : '';
+  }
+  function mapYN(val) {
+    if (!val) return '';
+    const v = val.toLowerCase();
+    if (v === 'yes') return 'Yes';
+    if (v === 'no')  return 'No';
+    return 'Unknown';
+  }
+  const utilities  = mapYN(extractDD('Utilities'));
+  const roadAccess = mapYN(extractDD('Road\\s*Access'));
+  const structures = extractDD('(?:structures?|Any structures?)');
 
-  // Follow Up Date — normalize to YYYY-MM-DD
-  let followUpDate = extract(['Follow Up Date','Follow-Up Date','Followup Date','Follow Up','Follow-Up'], raw);
-  if (followUpDate) {
-    // Try parsing common formats: MM/DD/YYYY, MM-DD-YYYY, Month D YYYY, YYYY-MM-DD
-    const parsed = new Date(followUpDate);
-    if (!isNaN(parsed.getTime())) {
-      followUpDate = parsed.toISOString().slice(0,10);
-    } else {
-      followUpDate = ''; // can't parse, leave blank
-    }
+  // Seller Notes: Notes block + CONFIRMED RAPPORT NOTES appended
+  let sellerNotes = '';
+  const notesM = raw.match(/Notes?\s*[:\-]\s*([\s\S]*?)(?=\n\s*[A-Z][A-Z\s]+:|$)/i);
+  if (notesM) sellerNotes = notesM[1].trim();
+  const rapportM = raw.match(/CONFIRMED\s+RAPPORT\s+NOTES?\s*[:\-]?\s*([\s\S]*?)(?=\n\s*[A-Z][A-Z\s]+:|$)/i);
+  if (rapportM) {
+    const rt = rapportM[1].trim();
+    if (rt) sellerNotes = sellerNotes ? sellerNotes + '\n\nCONFIRMED RAPPORT NOTES:\n' + rt : 'CONFIRMED RAPPORT NOTES:\n' + rt;
   }
 
-  // Notes — everything after "Notes:" label, or fall back to empty
-  let notes = '';
-  const notesM = raw.match(/Notes?\s*[:\-]\s*([\s\S]*)/i);
-  if (notesM) notes = notesM[1].trim();
+  // Follow Up Date
+  let followUpDate = extract(['Follow Up Date','Follow-Up Date','Follow Up','Follow-Up'], raw);
+  if (followUpDate) {
+    const parsed = new Date(followUpDate);
+    followUpDate = !isNaN(parsed.getTime()) ? parsed.toISOString().slice(0,10) : '';
+  }
 
-  // ── Apply to form ──
-  fill('pf-address', address);
-  fill('pf-apn',     apn);
-  fill('pf-county',  countyClean || county);
-  fill('pf-asking',  asking);
-  fill('pf-acres',   acres);
-  fill('pf-agent-name',  agentName);
-  fill('pf-agent-phone', agentPhone);
-  fill('pf-notes',   notes);
-  if (offerAmt) fill('pf-offer-amount', offerAmt);
-
-  fillSelect('pf-state',        state);
-  fillSelect('pf-utilities',    utilities);
-  fillSelect('pf-road',         roadAccess);
-  fillSelect('pf-landlocked',   landlocked);
-  fillSelect('pf-fema',         fema);
-  fillSelect('pf-tax',          taxDelinq);
-  fillSelect('pf-slope',        slope);
-  fillSelect('pf-comp',         comp);
-  fillSelect('pf-offer-status', offerSt);
-  fillSelect('pf-status',       status);
+  // ── Fill form ──
+  fill('pf-seller-name',  fullName);
+  fill('pf-seller-phone', phone);
+  fill('pf-seller-email', email);
+  fill('pf-address',      address);
+  fill('pf-city',         city);
+  fill('pf-county',       county);
+  fill('pf-zip',          zip);
+  fill('pf-apn',          apn);
+  fill('pf-acres',        acres);
+  fill('pf-structures',   structures);
+  fill('pf-seller-notes', sellerNotes);
   if (followUpDate) fill('pf-followup', followUpDate);
+  if (state)      fillSelect('pf-state',     state);
+  if (source)     fillSelect('pf-source',    source);
+  if (status)     fillSelect('pf-status',    status);
+  if (utilities)  fillSelect('pf-utilities', utilities);
+  if (roadAccess) fillSelect('pf-road',      roadAccess);
 
-  // Collapse the import panel after successful parse
-  const body = document.getElementById('prop-import-body');
-  if (body) body.style.display = 'none';
-  const chevron = document.getElementById('prop-import-chevron');
-  if (chevron) chevron.textContent = '▼';
-
-  // Count how many fields got filled
-  const filled = [address,apn,countyClean||county,state,asking,acres,agentName,agentPhone,utilities,roadAccess,landlocked,fema,taxDelinq,slope,comp,offerSt,offerAmt,status,followUpDate,notes].filter(Boolean).length;
-  toast(`Auto-filled ${filled} field${filled !== 1 ? 's' : ''}`, 'success');
-}
-
-function _propModalHtml(p, newId) {
-  const isEdit = !!p;
-  const id     = isEdit ? p.id : newId;
-  const saveCall = isEdit ? `savePropertyDetail('${id}')` : `saveNewProperty('${id}')`;
-  const title  = isEdit ? (p.address ? p.address.split(',')[0] : 'Edit Property') : 'Add Property';
-
-  return `
-    <div class="modal-header">
-      <div class="modal-title">${isEdit ? 'Edit — ' : ''}${_gsEsc(title)}</div>
-      <button class="modal-close" onclick="closeModal()">&#x2715;</button>
-    </div>
-    <div class="modal-body">
-      ${!isEdit ? `
-      <div style="margin-bottom:16px;padding:12px 14px;background:var(--bg3);border-radius:8px;border:1px solid var(--border2);">
-        <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;" onclick="togglePropImport()">
-          <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;font-family:'DM Mono',monospace;">⚡ Quick Import — paste &amp; auto-fill</div>
-          <span id="prop-import-chevron" style="font-size:11px;color:var(--text3);">▼</span>
-        </div>
-        <div id="prop-import-body" style="display:none;margin-top:10px;">
-          <div style="font-size:11px;color:var(--text3);margin-bottom:8px;line-height:1.5;">Paste any text with labeled fields (e.g. <code style="background:var(--bg4);padding:1px 4px;border-radius:3px;font-size:10px">Address: 123 Oak Rd · APN: 123-456 · Asking Price: 75000 · Acres: 10</code>) and the form will auto-fill.</div>
-          <textarea id="pf-paste-raw" class="form-input" rows="4" style="resize:vertical;width:100%;font-size:12px;font-family:'DM Mono',monospace;" placeholder="Address: 123 Timber Rd, Memphis, TN&#10;APN: 123-456-789&#10;County: Shelby&#10;State: TN&#10;Asking Price: 75000&#10;Acres: 12.5&#10;Agent Name: Karen Smith&#10;..."></textarea>
-          <button class="btn btn-ghost btn-sm" style="margin-top:8px;border-color:var(--teal);color:var(--teal);" onclick="parsePastedProperty()">⚡ Parse &amp; Auto-Fill</button>
-        </div>
-      </div>` : ''}
-      <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:10px;">Property Info</div>
-      <div class="form-grid">
-        <div class="form-group form-full"><label class="form-label">Property Address *</label><input class="form-input" id="pf-address" value="${_gsEsc(p?.address||'')}" placeholder="123 Timber Rd, Memphis, TN 38101"></div>
-        <div class="form-group"><label class="form-label">APN / Parcel ID</label><input class="form-input" id="pf-apn" value="${_gsEsc(p?.apn||'')}" placeholder="123-456-789"></div>
-        <div class="form-group"><label class="form-label">County</label><input class="form-input" id="pf-county" value="${_gsEsc(p?.county||'')}" placeholder="Shelby"></div>
-        <div class="form-group"><label class="form-label">State</label><select class="form-input" id="pf-state">${stateOptions(p?.state||'')}</select></div>
-        <div class="form-group"><label class="form-label">Asking Price ($)</label><input class="form-input" id="pf-asking" type="number" min="0" value="${p?.askingPrice||''}" placeholder="75000"></div>
-        <div class="form-group"><label class="form-label">Acres</label><input class="form-input" id="pf-acres" type="number" min="0" step="0.01" value="${p?.acres||''}" placeholder="12.5"></div>
-        <div class="form-group"><label class="form-label">Agent Name</label><input class="form-input" id="pf-agent-name" value="${_gsEsc(p?.agentName||'')}" placeholder="Karen Smith"></div>
-        <div class="form-group"><label class="form-label">Agent Phone</label><input class="form-input" id="pf-agent-phone" value="${_gsEsc(p?.agentPhone||'')}" placeholder="901-555-0100"></div>
-      </div>
-
-      <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin:18px 0 10px;">Due Diligence</div>
-      <div class="form-grid">
-        <div class="form-group"><label class="form-label">Utilities</label>
-          <select class="form-input" id="pf-utilities">
-            <option value="">— Select —</option>
-            <option${(p?.utilities||'')==='None Confirmed'?' selected':''}>None Confirmed</option>
-            <option${(p?.utilities||'')==='Electric Only'?' selected':''}>Electric Only</option>
-            <option${(p?.utilities||'')==='Full Utilities'?' selected':''}>Full Utilities</option>
-          </select>
-        </div>
-        <div class="form-group"><label class="form-label">Road Access</label>
-          <select class="form-input" id="pf-road">
-            <option value="">— Select —</option>
-            <option${(p?.roadAccess||'')==='Confirmed'?' selected':''}>Confirmed</option>
-            <option${(p?.roadAccess||'')==='Easement Only'?' selected':''}>Easement Only</option>
-            <option${(p?.roadAccess||'')==='Unknown'?' selected':''}>Unknown</option>
-            <option${(p?.roadAccess||'')==='None'?' selected':''}>None</option>
-          </select>
-        </div>
-        <div class="form-group"><label class="form-label">Landlocked</label>${_propYN(p?.landlocked,'pf-landlocked')}</div>
-        <div class="form-group"><label class="form-label">FEMA Checked</label>${_propYN(p?.femaChecked,'pf-fema')}</div>
-        <div class="form-group"><label class="form-label">Tax Delinquent</label>${_propYN(p?.taxDelinquent,'pf-tax')}</div>
-        <div class="form-group"><label class="form-label">Slope Report Pulled</label>${_propYN(p?.slopeReportPulled,'pf-slope')}</div>
-        <div class="form-group"><label class="form-label">Comp Report Pulled</label>${_propYN(p?.compReportPulled,'pf-comp')}</div>
-      </div>
-
-      <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin:18px 0 10px;">Offer & Status</div>
-      <div class="form-grid">
-        <div class="form-group"><label class="form-label">Offer Status</label>
-          <select class="form-input" id="pf-offer-status">
-            <option value="">None</option>
-            <option${(p?.offerStatus||'')==='Sent'?' selected':''}>Sent</option>
-            <option${(p?.offerStatus||'')==='Countered'?' selected':''}>Countered</option>
-            <option${(p?.offerStatus||'')==='Accepted'?' selected':''}>Accepted</option>
-            <option${(p?.offerStatus||'')==='Dead'?' selected':''}>Dead</option>
-          </select>
-        </div>
-        <div class="form-group"><label class="form-label">Offer Amount ($)</label><input class="form-input" id="pf-offer-amount" type="number" min="0" value="${p?.offerAmount||''}" placeholder="60000"></div>
-        <div class="form-group"><label class="form-label">Status</label>
-          <select class="form-input" id="pf-status">
-            ${PROP_STATUSES.map(s=>`<option${(p?.status||'Researching')===s?' selected':''}>${s}</option>`).join('')}
-          </select>
-        </div>
-        <div class="form-group"><label class="form-label">Follow Up Date</label><input class="form-input" id="pf-followup" type="date" value="${p?.followUpDate||''}"></div>
-      </div>
-
-      <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin:18px 0 10px;">Notes</div>
-      <div class="form-group form-full"><textarea class="form-input" id="pf-notes" rows="4" style="resize:vertical;width:100%">${_gsEsc(p?.notes||'')}</textarea></div>
-    </div>
-    <div class="modal-footer">
-      ${isEdit ? `<button class="btn btn-ghost btn-sm" style="color:var(--coral)" onclick="deleteProperty('${id}')">Delete</button>` : ''}
-      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
-      <button class="btn btn-primary" onclick="${saveCall}">Save</button>
-    </div>`;
+  const filled = [fullName,phone,email,address,city,county,state,zip,apn,acres,source,status,utilities,roadAccess,structures,sellerNotes,followUpDate].filter(Boolean).length;
+  const summaryEl = document.getElementById('pf-parse-summary');
+  if (summaryEl) summaryEl.textContent = `Filled ${filled} field${filled!==1?'s':''} — review and save`;
+  toast(`Parsed — ${filled} fields filled`, 'success');
 }
 
 function _readPropFields() {
   return {
-    address:         document.getElementById('pf-address')?.value.trim()      || '',
-    apn:             document.getElementById('pf-apn')?.value.trim()           || '',
-    county:          document.getElementById('pf-county')?.value.trim()        || '',
-    state:           document.getElementById('pf-state')?.value                || '',
-    askingPrice:     document.getElementById('pf-asking')?.value.trim()        || '',
-    acres:           document.getElementById('pf-acres')?.value.trim()         || '',
-    agentName:       document.getElementById('pf-agent-name')?.value.trim()    || '',
-    agentPhone:      document.getElementById('pf-agent-phone')?.value.trim()   || '',
-    utilities:       document.getElementById('pf-utilities')?.value            || '',
-    roadAccess:      document.getElementById('pf-road')?.value                 || '',
-    landlocked:      document.getElementById('pf-landlocked')?.value           || '',
-    femaChecked:     document.getElementById('pf-fema')?.value                 || '',
-    taxDelinquent:   document.getElementById('pf-tax')?.value                  || '',
-    slopeReportPulled: document.getElementById('pf-slope')?.value              || '',
-    compReportPulled:  document.getElementById('pf-comp')?.value               || '',
-    offerStatus:     document.getElementById('pf-offer-status')?.value         || '',
-    offerAmount:     document.getElementById('pf-offer-amount')?.value.trim()  || '',
-    status:          document.getElementById('pf-status')?.value               || 'Researching',
-    followUpDate:    document.getElementById('pf-followup')?.value             || '',
-    notes:           document.getElementById('pf-notes')?.value.trim()         || '',
+    sellerName:    document.getElementById('pf-seller-name')?.value.trim()   || '',
+    sellerPhone:   document.getElementById('pf-seller-phone')?.value.trim()  || '',
+    sellerEmail:   document.getElementById('pf-seller-email')?.value.trim()  || '',
+    source:        document.getElementById('pf-source')?.value               || '',
+    address:       document.getElementById('pf-address')?.value.trim()       || '',
+    city:          document.getElementById('pf-city')?.value.trim()          || '',
+    county:        document.getElementById('pf-county')?.value.trim()        || '',
+    state:         document.getElementById('pf-state')?.value                || '',
+    zip:           document.getElementById('pf-zip')?.value.trim()           || '',
+    apn:           document.getElementById('pf-apn')?.value.trim()           || '',
+    acres:         document.getElementById('pf-acres')?.value.trim()         || '',
+    utilities:     document.getElementById('pf-utilities')?.value            || '',
+    roadAccess:    document.getElementById('pf-road')?.value                 || '',
+    structures:    document.getElementById('pf-structures')?.value.trim()    || '',
+    landlocked:    document.getElementById('pf-landlocked')?.value           || '',
+    taxDelinquent: document.getElementById('pf-tax')?.value                  || '',
+    femaChecked:   document.getElementById('pf-fema')?.value                 || '',
+    status:        document.getElementById('pf-status')?.value               || 'Researching',
+    followUpDate:  document.getElementById('pf-followup')?.value             || '',
+    sellerNotes:   document.getElementById('pf-seller-notes')?.value.trim()  || '',
   };
 }
 
-function saveNewProperty(id) {
+function saveNewProperty() {
   const fields = _readPropFields();
-  if (!fields.address) { toast('Property address is required', 'error'); return; }
-  const now = today();
+  if (!fields.sellerName && !fields.address) { toast('Seller name or address is required', 'error'); return; }
+  const now  = today();
+  const id   = 'prop' + Date.now().toString(36);
   const prop = Object.assign({ id, created: now, updated: now, activityLog: [] }, fields);
-  if (fields.notes) prop.activityLog.push({ text: fields.notes, ts: new Date().toISOString() });
+  if (fields.sellerNotes) {
+    prop.activityLog.push({ text: 'Imported from lead email:\n' + fields.sellerNotes, ts: new Date().toISOString() });
+  }
   if (!db.properties) db.properties = [];
   db.properties.unshift(prop);
   save();
   closeModal();
   renderProperties();
-  toast('Property saved', 'success');
+  const label = fields.sellerName || (fields.address ? fields.address.split(',')[0] : '');
+  const loc   = [fields.county, fields.state].filter(Boolean).join(', ');
+  toast('Property saved' + (label ? ' — ' + label : '') + (loc ? ' · ' + loc : ''), 'success');
 }
 
 function savePropertyDetail(id) {
   const p = (db.properties||[]).find(x => x.id === id);
   if (!p) return;
   const fields = _readPropFields();
-  if (!fields.address) { toast('Property address is required', 'error'); return; }
+  if (!fields.sellerName && !fields.address) { toast('Seller name or address is required', 'error'); return; }
   Object.assign(p, fields);
   p.updated = today();
   save();
@@ -2281,18 +2331,11 @@ function deleteProperty(id) {
 }
 
 function _propDetailHtml(p) {
-  const fmt$ = n => n ? '$' + Number(n).toLocaleString() : '—';
   const stColor = PROP_STATUS_COLORS[p.status] || 'var(--text3)';
-  const ddRow = (label, val, isYN) => {
-    if (!val) val = '—';
-    let color = 'var(--text2)';
-    if (isYN && val === 'Yes') color = 'var(--coral)';
-    if (isYN && val === 'No')  color = 'var(--teal)';
-    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);">
-      <span style="font-size:12px;color:var(--text3)">${label}</span>
-      <span style="font-size:12px;font-weight:500;color:${color}">${_gsEsc(val)}</span>
-    </div>`;
-  };
+  const phone = p.sellerPhone || '';
+  const phoneRaw = phone.replace(/\D/g,'');
+  const openPhoneCall = phoneRaw ? `https://app.openphone.com/calls/new?to=%2B1${phoneRaw}` : '';
+  const openPhoneText = phoneRaw ? `https://app.openphone.com/messages/new?to=%2B1${phoneRaw}` : '';
 
   const logHtml = (p.activityLog||[]).length
     ? [...(p.activityLog||[])].reverse().map(e => {
@@ -2304,11 +2347,36 @@ function _propDetailHtml(p) {
       }).join('')
     : '<div style="font-size:12px;color:var(--text3);padding:10px 0;">No activity yet</div>';
 
+  const reportSection = (label, field, val, notesVal) => {
+    const statuses = ['Pending','Complete','N/A'];
+    const colors = { 'Pending':'var(--amber)', 'Complete':'var(--teal)', 'N/A':'var(--text3)' };
+    const btns = statuses.map(s => {
+      const isActive = s === val;
+      const c = colors[s] || 'var(--text3)';
+      const style = isActive
+        ? `font-size:11px;padding:3px 10px;border-radius:5px;border:1px solid ${c};background:${c}20;color:${c};cursor:pointer;font-weight:600`
+        : 'font-size:11px;padding:3px 10px;border-radius:5px;border:1px solid var(--border);background:transparent;color:var(--text3);cursor:pointer';
+      return `<button style="${style}" data-report-id="${p.id}" data-report-field="${field}" data-report-val="${s}" onclick="setPropReport('${p.id}','${field}','${s}')">${s}</button>`;
+    }).join('');
+    return `
+      <div style="margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+          <span style="font-size:12px;font-weight:600;color:var(--text2)">${label}</span>
+          <div style="display:flex;gap:4px;">${btns}</div>
+        </div>
+        <textarea id="prop-report-notes-${field}-${p.id}" class="form-input" rows="2" style="resize:vertical;width:100%;font-size:12px;" placeholder="Paste report notes / findings here…">${_gsEsc(notesVal||'')}</textarea>
+        <button class="btn btn-ghost btn-sm" style="margin-top:4px;font-size:11px;" onclick="savePropReportNotes('${p.id}','${field}')">Save Notes</button>
+      </div>`;
+  };
+
+  const fuStyle = p.followUpDate && p.followUpDate <= today() ? 'color:var(--amber);font-weight:600' : 'color:var(--teal)';
+  const fuLabel = !p.followUpDate ? '' : p.followUpDate === today() ? ' — Today' : p.followUpDate < today() ? ' — Overdue' : '';
+
   return `
     <div class="modal-header">
       <div style="min-width:0;flex:1;">
-        <div class="modal-title" style="font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${_gsEsc(p.address||'Property Detail')}</div>
-        <div style="font-size:11px;color:var(--text3);margin-top:2px">${_gsEsc(p.county||'')}${p.county&&p.state?', ':''}${_gsEsc(p.state||'')} · APN: ${_gsEsc(p.apn||'—')}</div>
+        <div class="modal-title" style="font-size:15px">${_gsEsc(p.sellerName || p.address || 'Property Detail')}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px">${_gsEsc(p.address||'')}${p.city?' · '+_gsEsc(p.city):''}${p.county?' · '+_gsEsc(p.county)+' Co':''}${p.state?', '+_gsEsc(p.state):''}${p.acres?' · '+p.acres+' ac':''}</div>
       </div>
       <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;margin-left:12px;">
         <span style="font-size:11px;font-weight:700;padding:3px 9px;border-radius:6px;background:${stColor}18;color:${stColor};border:1px solid ${stColor}30">${_gsEsc(p.status||'Researching')}</span>
@@ -2317,63 +2385,106 @@ function _propDetailHtml(p) {
     </div>
     <div class="modal-body">
 
-      <!-- Key stats row -->
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;">
-        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;">
-          <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;text-transform:uppercase;margin-bottom:4px">Asking</div>
-          <div style="font-size:18px;font-weight:700;color:var(--text)">${fmt$(p.askingPrice)}</div>
-        </div>
-        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;">
-          <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;text-transform:uppercase;margin-bottom:4px">Acres</div>
-          <div style="font-size:18px;font-weight:700;color:var(--text)">${p.acres ? p.acres+' ac' : '—'}</div>
-        </div>
-        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;">
-          <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;text-transform:uppercase;margin-bottom:4px">Offer Status</div>
-          <div style="font-size:15px;font-weight:700;color:var(--text)">${_gsEsc(p.offerStatus||'None')}</div>
-        </div>
-        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;">
-          <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;text-transform:uppercase;margin-bottom:4px">Our Offer</div>
-          <div style="font-size:18px;font-weight:700;color:var(--accent)">${fmt$(p.offerAmount)}</div>
+      <!-- Seller Info -->
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:18px;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:10px">Seller</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div>
+            <div style="font-size:10px;color:var(--text3);margin-bottom:2px">Name</div>
+            <div style="font-size:14px;font-weight:600;color:var(--text)">${_gsEsc(p.sellerName||'—')}</div>
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--text3);margin-bottom:2px">Phone</div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:13px;color:var(--text)">${_gsEsc(phone||'—')}</span>
+              ${phoneRaw ? `<a href="${openPhoneCall}" target="_blank" style="font-size:11px;padding:2px 8px;border-radius:5px;background:var(--teal)20;color:var(--teal);border:1px solid var(--teal)40;text-decoration:none;">📞 Call</a>
+              <a href="${openPhoneText}" target="_blank" style="font-size:11px;padding:2px 8px;border-radius:5px;background:var(--accent)20;color:var(--accent);border:1px solid var(--accent)40;text-decoration:none;">💬 Text</a>` : ''}
+            </div>
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--text3);margin-bottom:2px">Email</div>
+            <div style="font-size:13px;color:var(--text)">${_gsEsc(p.sellerEmail||'—')}</div>
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--text3);margin-bottom:2px">Source</div>
+            <div style="font-size:13px;color:var(--text)">${_gsEsc(p.source||'—')}</div>
+          </div>
         </div>
       </div>
 
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:18px;">
 
-        <!-- Left column: Due Diligence checklist -->
+        <!-- Due Diligence toggles -->
         <div>
           <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:8px">Due Diligence</div>
-          ${ddRow('Utilities', p.utilities)}
-          ${ddRow('Road Access', p.roadAccess)}
-          ${ddRow('Landlocked', p.landlocked, true)}
-          ${ddRow('FEMA Checked', p.femaChecked)}
-          ${ddRow('Tax Delinquent', p.taxDelinquent, true)}
-          ${ddRow('Slope Report', p.slopeReportPulled)}
-          ${ddRow('Comp Report', p.compReportPulled)}
-
-          <div style="margin-top:16px;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:8px">Agent</div>
-          ${ddRow('Name', p.agentName)}
-          ${ddRow('Phone', p.agentPhone)}
-
-          ${p.followUpDate ? `<div style="margin-top:16px;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:8px">Follow Up</div>
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;">
-            <span style="font-size:12px;color:var(--text3)">Follow Up Date</span>
-            <span style="font-size:12px;font-weight:600;color:${p.followUpDate <= today() ? 'var(--amber)' : 'var(--teal)'};font-family:'DM Mono',monospace">${p.followUpDate}${p.followUpDate === today() ? ' — Today' : p.followUpDate < today() ? ' — Overdue' : ''}</span>
+          ${_ddToggleRow('Utilities',     'utilities',     p.utilities||'',     p.id)}
+          ${_ddToggleRow('Road Access',   'roadAccess',    p.roadAccess||'',    p.id)}
+          ${_ddToggleRow('Landlocked',    'landlocked',    p.landlocked||'',    p.id)}
+          ${_ddToggleRow('Tax Delinquent','taxDelinquent', p.taxDelinquent||'', p.id)}
+          ${_ddToggleRow('FEMA Checked',  'femaChecked',   p.femaChecked||'',   p.id)}
+          <div style="padding:7px 0;border-bottom:1px solid var(--border);">
+            <div style="font-size:12px;color:var(--text3);margin-bottom:2px">Structures</div>
+            <div style="font-size:12px;color:var(--text2)">${_gsEsc(p.structures||'—')}</div>
+          </div>
+          ${p.followUpDate ? `<div style="padding:7px 0;">
+            <span style="font-size:12px;color:var(--text3)">Follow Up</span>
+            <span style="float:right;font-size:12px;font-family:'DM Mono',monospace;${fuStyle}">${p.followUpDate}${fuLabel}</span>
           </div>` : ''}
         </div>
 
-        <!-- Right column: Notes -->
+        <!-- Land Portal Reports -->
         <div>
-          <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:8px">Notes</div>
-          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;font-size:13px;color:var(--text2);white-space:pre-wrap;min-height:80px;max-height:140px;overflow-y:auto">${_gsEsc(p.notes||'No notes yet')}</div>
+          <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:8px">Land Portal Reports</div>
+          ${reportSection('Slope Report', 'slopeReportStatus', p.slopeReportStatus||'', p.slopeReportNotes)}
+          ${reportSection('Comp Report',  'compReportStatus',  p.compReportStatus||'',  p.compReportNotes)}
         </div>
       </div>
 
+      <!-- Offer Math -->
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:18px;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:12px">Offer Math</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:10px;">
+          <div>
+            <label style="font-size:10px;color:var(--text3);display:block;margin-bottom:4px">ARV</label>
+            <input class="form-input" id="pm-arv-${p.id}" type="number" min="0" value="${p.arv||''}" placeholder="0" style="font-size:13px;" oninput="updatePropOfferMath('${p.id}')">
+          </div>
+          <div>
+            <label style="font-size:10px;color:var(--text3);display:block;margin-bottom:4px">Open Offer (30%)</label>
+            <input class="form-input" id="pm-oo-${p.id}" type="number" min="0" value="${p.openOffer||''}" placeholder="auto" style="font-size:13px;" oninput="this.dataset.manual='1'">
+          </div>
+          <div>
+            <label style="font-size:10px;color:var(--text3);display:block;margin-bottom:4px">MAO (45%)</label>
+            <input class="form-input" id="pm-mao-${p.id}" type="number" min="0" value="${p.maoAmount||''}" placeholder="auto" style="font-size:13px;" oninput="this.dataset.manual='1'">
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px;">
+          <div>
+            <label style="font-size:10px;color:var(--text3);display:block;margin-bottom:4px">Offer Status</label>
+            <select class="form-input" id="pm-status-${p.id}" style="font-size:13px;">
+              <option value="">None</option>
+              ${['Sent','Countered','Accepted','Dead'].map(s=>`<option${(p.offerStatus||'')===s?' selected':''}>${s}</option>`).join('')}
+            </select>
+          </div>
+          <div>
+            <label style="font-size:10px;color:var(--text3);display:block;margin-bottom:4px">Offer Amount</label>
+            <input class="form-input" id="pm-amount-${p.id}" type="number" min="0" value="${p.offerAmount||''}" placeholder="0" style="font-size:13px;">
+          </div>
+        </div>
+        <button class="btn btn-ghost btn-sm" style="border-color:var(--teal);color:var(--teal);" onclick="savePropOfferMath('${p.id}')">Save Offer Math</button>
+      </div>
+
+      <!-- Seller Notes -->
+      <div style="margin-bottom:18px;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:8px">Seller Notes</div>
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;font-size:13px;color:var(--text2);white-space:pre-wrap;min-height:60px;max-height:160px;overflow-y:auto">${_gsEsc(p.sellerNotes||p.notes||'No notes')}</div>
+      </div>
+
       <!-- Activity Log -->
-      <div style="margin-top:20px;">
+      <div>
         <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:8px">Activity Log</div>
         <div id="prop-log-entries" style="max-height:200px;overflow-y:auto;margin-bottom:12px">${logHtml}</div>
         <div style="display:flex;gap:8px;">
-          <textarea id="prop-log-input" class="form-input" rows="2" style="flex:1;resize:none;font-size:13px" placeholder="Add a note to the log…"></textarea>
+          <textarea id="prop-log-input" class="form-input" rows="2" style="flex:1;resize:none;font-size:13px" placeholder="Add a note…"></textarea>
           <button class="btn btn-ghost btn-sm" style="align-self:flex-end" onclick="addPropertyLog('${p.id}')">+ Log</button>
         </div>
       </div>
@@ -2387,11 +2498,115 @@ function _propDetailHtml(p) {
     </div>`;
 }
 
+function setPropDD(id, field, val) {
+  const p = (db.properties||[]).find(x => x.id === id);
+  if (!p) return;
+  p[field] = val;
+  p.updated = today();
+  save();
+  document.querySelectorAll(`[data-dd-id="${id}"][data-dd-field="${field}"]`).forEach(btn => {
+    const isActive = btn.dataset.ddVal === val;
+    const v = btn.dataset.ddVal;
+    let activeColor = 'var(--teal)';
+    if (v === 'Yes') activeColor = 'var(--coral)';
+    if (v === 'No')  activeColor = 'var(--teal)';
+    btn.style.cssText = isActive
+      ? `font-size:11px;padding:3px 10px;border-radius:5px;border:1px solid ${activeColor};background:${activeColor}20;color:${activeColor};cursor:pointer;font-weight:600`
+      : 'font-size:11px;padding:3px 10px;border-radius:5px;border:1px solid var(--border);background:transparent;color:var(--text3);cursor:pointer';
+  });
+}
+
+function _ddToggleRow(label, field, val, propId) {
+  const options = ['Yes','No','Unknown'];
+  const btns = options.map(o => {
+    const isActive = o === val;
+    let activeColor = 'var(--teal)';
+    if (o === 'Yes') activeColor = 'var(--coral)';
+    if (o === 'No')  activeColor = 'var(--teal)';
+    const style = isActive
+      ? `font-size:11px;padding:3px 10px;border-radius:5px;border:1px solid ${activeColor};background:${activeColor}20;color:${activeColor};cursor:pointer;font-weight:600`
+      : 'font-size:11px;padding:3px 10px;border-radius:5px;border:1px solid var(--border);background:transparent;color:var(--text3);cursor:pointer';
+    return `<button style="${style}" data-dd-id="${propId}" data-dd-field="${field}" data-dd-val="${o}" onclick="setPropDD('${propId}','${field}','${o}')">${o}</button>`;
+  }).join('');
+  return `<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);">
+    <span style="font-size:12px;color:var(--text3)">${label}</span>
+    <div style="display:flex;gap:4px;">${btns}</div>
+  </div>`;
+}
+
+function setPropReport(id, field, status) {
+  const p = (db.properties||[]).find(x => x.id === id);
+  if (!p) return;
+  p[field] = status;
+  p.updated = today();
+  save();
+  document.querySelectorAll(`[data-report-id="${id}"][data-report-field="${field}"]`).forEach(btn => {
+    const isActive = btn.dataset.reportVal === status;
+    const colors = { 'Pending':'var(--amber)', 'Complete':'var(--teal)', 'N/A':'var(--text3)' };
+    const c = colors[btn.dataset.reportVal] || 'var(--text3)';
+    btn.style.cssText = isActive
+      ? `font-size:11px;padding:3px 10px;border-radius:5px;border:1px solid ${c};background:${c}20;color:${c};cursor:pointer;font-weight:600`
+      : 'font-size:11px;padding:3px 10px;border-radius:5px;border:1px solid var(--border);background:transparent;color:var(--text3);cursor:pointer';
+  });
+}
+
+function savePropReportNotes(id, field) {
+  const p = (db.properties||[]).find(x => x.id === id);
+  if (!p) return;
+  const notesField = field + 'Notes';
+  const el = document.getElementById('prop-report-notes-' + field + '-' + id);
+  if (el) { p[notesField] = el.value.trim(); p.updated = today(); save(); toast('Report notes saved', 'success'); }
+}
+
+function updatePropOfferMath(id) {
+  const arvEl = document.getElementById('pm-arv-' + id);
+  const ooEl  = document.getElementById('pm-oo-' + id);
+  const maoEl = document.getElementById('pm-mao-' + id);
+  if (!arvEl) return;
+  const arv = parseFloat(arvEl.value) || 0;
+  if (ooEl  && ooEl.dataset.manual  !== '1') ooEl.value  = arv ? Math.round(arv * 0.30) : '';
+  if (maoEl && maoEl.dataset.manual !== '1') maoEl.value = arv ? Math.round(arv * 0.45) : '';
+}
+
+function savePropOfferMath(id) {
+  const p = (db.properties||[]).find(x => x.id === id);
+  if (!p) return;
+  const arvEl    = document.getElementById('pm-arv-'    + id);
+  const ooEl     = document.getElementById('pm-oo-'     + id);
+  const maoEl    = document.getElementById('pm-mao-'    + id);
+  const statusEl = document.getElementById('pm-status-' + id);
+  const amtEl    = document.getElementById('pm-amount-' + id);
+  if (arvEl)    p.arv         = arvEl.value.trim();
+  if (ooEl)     p.openOffer   = ooEl.value.trim();
+  if (maoEl)    p.maoAmount   = maoEl.value.trim();
+  if (statusEl) p.offerStatus = statusEl.value;
+  if (amtEl)    p.offerAmount = amtEl.value.trim();
+  p.updated = today();
+  save();
+  toast('Offer math saved', 'success');
+}
+
 function openPropEditModal(id) {
   const p = (db.properties||[]).find(x => x.id === id);
   if (!p) return;
   closeModal();
-  setTimeout(() => openCustomModal(_propModalHtml(p, p.id)), 80);
+  setTimeout(() => openCustomModal(_propEditModalHtml(p)), 80);
+}
+
+function _propEditModalHtml(p) {
+  return `
+    <div class="modal-header">
+      <div class="modal-title">Edit — ${_gsEsc(p.sellerName || p.address || 'Property')}</div>
+      <button class="modal-close" onclick="closeModal()">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      ${_propManualFieldsHtml(p)}
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost btn-sm" style="color:var(--coral)" onclick="deleteProperty('${p.id}')">Delete</button>
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="savePropertyDetail('${p.id}')">Save Changes</button>
+    </div>`;
 }
 
 function addPropertyLog(id) {
@@ -2403,17 +2618,15 @@ function addPropertyLog(id) {
   p.activityLog.push({ text, ts: new Date().toISOString() });
   p.updated = today();
   save();
-  // Re-render just the log section
   const entriesEl = document.getElementById('prop-log-entries');
   if (entriesEl) {
-    const logHtml = [...p.activityLog].reverse().map(e => {
+    entriesEl.innerHTML = [...p.activityLog].reverse().map(e => {
       const ts = e.ts ? new Date(e.ts).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'}) : '';
       return `<div style="padding:10px 0;border-bottom:1px solid var(--border);">
         <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:4px">${ts}</div>
         <div style="font-size:13px;color:var(--text2);white-space:pre-wrap">${_gsEsc(e.text)}</div>
       </div>`;
     }).join('');
-    entriesEl.innerHTML = logHtml;
   }
   document.getElementById('prop-log-input').value = '';
   toast('Note logged', 'success');
@@ -2422,47 +2635,46 @@ function addPropertyLog(id) {
 function promoteToAcquisitions(id) {
   const p = (db.properties||[]).find(x => x.id === id);
   if (!p) return;
-  if (!confirm('Promote "' + (p.address||'this property') + '" to Acquisitions? This creates a new contact in the Acq pipeline.')) return;
+  _propNormalize(p);
+  const label = p.sellerName || p.address || 'this property';
+  if (!confirm('Promote "' + label + '" to Acquisitions? This creates a new contact in the Acq pipeline.')) return;
 
-  // Build the log history as a notes string
   const logText = (p.activityLog||[]).map(e => {
     const d = e.ts ? new Date(e.ts).toLocaleDateString() : '';
     return (d ? '['+d+'] ' : '') + e.text;
   }).join('\n\n');
-  const combinedNotes = [p.notes, logText].filter(Boolean).join('\n\n---\n\n');
+  const combinedNotes = [p.sellerNotes||p.notes, logText].filter(Boolean).join('\n\n---\n\n');
 
   const now = today();
   const newContact = {
-    id:           uid(),
-    created:      now,
-    lastContact:  now,
-    touches:      [],
-    contactType:  'seller',
-    pipeline:     'acq',
-    stage:        'New',
-    temp:         'warm',
-    name:         p.agentName || p.address || 'Promoted Property',
-    phone:        p.agentPhone || '',
-    email:        '',
-    address:      p.address || '',
-    county:       p.county  || '',
-    state:        p.state   || '',
-    acreage:      p.acres   || '',
-    apn:          p.apn     || '',
-    askingPrice:  p.askingPrice || '',
-    ourOffer:     p.offerAmount || '',
-    source:       'MLS',
-    notes:        combinedNotes ? [{ date: now, text: combinedNotes }] : [],
-    tags:         ['promoted-from-properties'],
+    id:          uid(),
+    created:     now,
+    lastContact: now,
+    touches:     [],
+    contactType: 'seller',
+    pipeline:    'acq',
+    stage:       'New',
+    temp:        'warm',
+    name:        p.sellerName || p.address || 'Promoted Property',
+    phone:       p.sellerPhone || '',
+    email:       p.sellerEmail || '',
+    address:     p.address || '',
+    city:        p.city    || '',
+    county:      p.county  || '',
+    state:       p.state   || '',
+    acreage:     p.acres   || '',
+    apn:         p.apn     || '',
+    ourOffer:    p.offerAmount || p.openOffer || '',
+    source:      p.source  || 'Properties',
+    notes:       combinedNotes ? [{ date: now, text: combinedNotes }] : [],
+    tags:        ['promoted-from-properties'],
   };
   db.contacts.unshift(newContact);
 
-  // Mark property as promoted
   p.status  = 'Promoted';
   p.updated = now;
   if (!p.activityLog) p.activityLog = [];
   p.activityLog.push({ text: 'Promoted to Acquisitions pipeline — contact ID: ' + newContact.id, ts: new Date().toISOString() });
-
   save();
   closeModal();
   renderProperties();
@@ -8905,19 +9117,19 @@ function generateSystemTasks() {
     var key = 'prop-followup-'+p.id+'-'+p.followUpDate;
     if (existingKeys.includes(key)) return;
     var overdue = p.followUpDate < today();
-    var addrShort = p.address ? p.address.split(',')[0] : 'Property';
+    var nameLabel = p.sellerName || p.agentName || (p.address ? p.address.split(',')[0] : 'Property');
     newTasks.push({
       id: uid(),
-      title: 'Follow up — ' + addrShort,
+      title: 'Follow up — ' + nameLabel,
       source: 'system',
       systemKey: key,
       dueDate: p.followUpDate,
       priority: overdue ? 'urgent' : 'today',
       done: false,
       contactId: p.id,
-      contactName: addrShort,
+      contactName: nameLabel,
       contactType: 'property',
-      note: (p.county ? p.county + ' Co, ' + (p.state||'') + ' · ' : '') + (p.acres ? p.acres + ' ac · ' : '') + (p.askingPrice ? '$' + Number(p.askingPrice).toLocaleString() + ' asking' : ''),
+      note: (p.county ? p.county + ' Co, ' + (p.state||'') + ' · ' : '') + (p.acres ? p.acres + ' ac · ' : '') + (p.sellerNotes||p.notes ? (p.sellerNotes||p.notes).slice(0,60) : ''),
       created: today(),
       createdAt: new Date().toISOString(),
     });
