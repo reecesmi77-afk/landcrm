@@ -816,7 +816,7 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
         <table>
           <thead>
             <tr>
-              <th>Name</th>
+              <th>Property</th>
               <th>County / State</th>
               <th>Acres</th>
               <th>Source</th>
@@ -1967,11 +1967,13 @@ function renderProperties() {
 
   tbody.innerHTML = list.map(p => {
     const stColor  = PROP_STATUS_COLORS[p.status] || 'var(--text3)';
-    const name     = p.sellerName || p.address?.split(',')[0] || '—';
+    const addrShort = p.address ? (p.address.includes(',') ? p.address.split(',')[0] : p.address) : '';
+    const nameLine1 = addrShort || p.sellerName || '—';
+    const nameLine2 = (!addrShort && p.sellerName) ? '' : (p.sellerName && p.sellerName !== nameLine1 ? p.sellerName : '');
     const fu       = p.followUpDate;
     const fuStyle  = fu && fu <= today() ? 'color:var(--amber);font-weight:600' : 'color:var(--text3)';
     return `<tr onclick="openPropertyDetail('${p.id}')" style="cursor:pointer;">
-      <td style="font-weight:500">${_gsEsc(name)}</td>
+      <td style="font-weight:500">${_gsEsc(nameLine1)}${nameLine2 ? `<div style="font-size:11px;color:var(--text3);font-weight:400;margin-top:1px">${_gsEsc(nameLine2)}</div>` : ''}</td>
       <td style="color:var(--text2)">${_gsEsc(p.county||'—')}, ${_gsEsc(p.state||'—')}</td>
       <td style="font-family:'DM Mono',monospace;font-size:12px">${p.acres ? p.acres+' ac' : '—'}</td>
       <td>${srcBadge(p.source)}</td>
