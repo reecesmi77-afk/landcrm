@@ -2126,6 +2126,7 @@ function _propManualFieldsHtml(p) {
       <div class="form-group"><label class="form-label">Zip</label><input class="form-input" id="pf-zip" value="${_gsEsc(p?.zip||'')}" placeholder="38101"></div>
       <div class="form-group"><label class="form-label">APN / Parcel ID</label><input class="form-input" id="pf-apn" value="${_gsEsc(p?.apn||'')}" placeholder="123-456-789" oninput="_runDupCheck()"></div>
       <div class="form-group"><label class="form-label">Acres</label><input class="form-input" id="pf-acres" type="number" min="0" step="0.01" value="${p?.acres||''}" placeholder="12.5"></div>
+      <div class="form-group form-full"><label class="form-label">Legal Description</label><textarea class="form-input" id="pf-legal-desc" rows="3" style="resize:vertical;width:100%" placeholder="Pulled from Land Portal comp or slope report">${_gsEsc(p?.legalDescription||'')}</textarea></div>
     </div>
 
     <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin:18px 0 10px">Due Diligence</div>
@@ -2295,6 +2296,12 @@ function parsePastedProperty() {
 
   let city = extract(['City'], raw) || '';
   if (city) city = city.replace(/\w\S*/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+  // If city still empty, try to pull it from the raw address line (e.g. "123 Road, Talihina, OK 74571")
+  if (!city) {
+    const addrForCity = extract(['Property Address','Address'], raw);
+    const cityM = addrForCity.match(/,\s*([^,\d][^,]+?)\s*,\s*[A-Z]{2}/);
+    if (cityM) city = cityM[1].trim().replace(/\w\S*/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+  }
 
   // State
   let state = extract(['State'], raw);
@@ -2315,10 +2322,16 @@ function parsePastedProperty() {
 
   const apn = extract(['APN','Parcel ID','Parcel Number','Parcel'], raw);
 
-  // Acres — blank if N/A or empty
-  let acres = extract(['Acres','Acreage','Acre'], raw);
-  if (!acres || /^(n\/a|na|none)$/i.test(acres.trim())) acres = '';
-  else acres = acres.replace(/[^0-9.]/g, '');
+  // Acres — strict: only accept a leading number from labeled field, blank if N/A/empty
+  let acres = '';
+  const acresM = raw.match(/(?:^|\n)\s*Acres?\s*(?:\(Land\))?\s*[:\-]\s*([^\n]+)/im);
+  if (acresM) {
+    const acresRaw = acresM[1].trim();
+    if (!/^(n\/a|na|none|-)$/i.test(acresRaw)) {
+      const acresNum = acresRaw.match(/^[\d.]+/);
+      if (acresNum) acres = acresNum[0];
+    }
+  }
 
   // Source & status from event type
   const source = isSMS ? 'Cold SMS' : isCall ? 'Lead Gen Call' : '';
@@ -2398,7 +2411,8 @@ function _readPropFields() {
     state:         document.getElementById('pf-state')?.value                || '',
     zip:           document.getElementById('pf-zip')?.value.trim()           || '',
     apn:           document.getElementById('pf-apn')?.value.trim()           || '',
-    acres:         document.getElementById('pf-acres')?.value.trim()         || '',
+    acres:            document.getElementById('pf-acres')?.value.trim()           || '',
+    legalDescription: document.getElementById('pf-legal-desc')?.value.trim()     || '',
     utilities:     document.getElementById('pf-utilities')?.value            || '',
     roadAccess:    document.getElementById('pf-road')?.value                 || '',
     structures:    document.getElementById('pf-structures')?.value.trim()    || '',
@@ -2564,6 +2578,10 @@ function _propDetailHtml(p) {
             <div style="font-size:12px;color:var(--text3);margin-bottom:2px">Structures</div>
             <div style="font-size:12px;color:var(--text2)">${_gsEsc(p.structures||'—')}</div>
           </div>
+          ${p.legalDescription ? `<div style="padding:7px 0;border-bottom:1px solid var(--border);">
+            <div style="font-size:12px;color:var(--text3);margin-bottom:2px">Legal Description</div>
+            <div style="font-size:11px;color:var(--text2);white-space:pre-wrap;line-height:1.5">${_gsEsc(p.legalDescription)}</div>
+          </div>` : ''}
           ${p.followUpDate ? `<div style="padding:7px 0;">
             <span style="font-size:12px;color:var(--text3)">Follow Up</span>
             <span style="float:right;font-size:12px;font-family:'DM Mono',monospace;${fuStyle}">${p.followUpDate}${fuLabel}</span>
