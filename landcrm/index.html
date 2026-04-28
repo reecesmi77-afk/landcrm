@@ -1901,11 +1901,15 @@ function gsKeydown(e){
 // ══════════════════════════════════
 // PROPERTIES
 // ══════════════════════════════════
-const PROP_STATUSES = ['Researching','Call Needed','Offer Pending','Promoted','Not Now','Dead'];
+const PROP_STATUSES = ['Researching','Call Needed','Contacted','Awaiting Response','Negotiating','Offer Pending','Under Contract','Dead','Not Now'];
 const PROP_STATUS_COLORS = {
   'Researching':'var(--accent)',
   'Call Needed':'var(--amber)',
-  'Offer Pending':'var(--purple)',
+  'Contacted':'var(--blue)',
+  'Awaiting Response':'var(--amber)',
+  'Negotiating':'var(--purple)',
+  'Offer Pending':'var(--ai-color)',
+  'Under Contract':'var(--teal)',
   'Promoted':'var(--teal)',
   'Not Now':'var(--amber)',
   'Dead':'var(--text3)',
@@ -2621,6 +2625,12 @@ function _propDetailHtml(p) {
           <textarea id="prop-log-input" class="form-input" rows="2" style="flex:1;resize:none;font-size:13px" placeholder="Add a note…"></textarea>
           <button class="btn btn-ghost btn-sm" style="align-self:flex-end" onclick="addPropertyLog('${p.id}')">+ Log</button>
         </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:8px;">
+          <span style="font-size:12px;color:var(--text3);white-space:nowrap;">Also update status to:</span>
+          <select id="prop-log-status" class="form-input" style="font-size:12px;padding:4px 8px;flex:1;">
+            ${PROP_STATUSES.map(s=>`<option${s===(p.status||'Researching')?' selected':''}>${s}</option>`).join('')}
+          </select>
+        </div>
       </div>
 
     </div>
@@ -2806,6 +2816,14 @@ function addPropertyLog(id) {
   const text = document.getElementById('prop-log-input')?.value.trim();
   if (!text) return;
   if (!p.activityLog) p.activityLog = [];
+  // Status change
+  const newStatus = document.getElementById('prop-log-status')?.value || '';
+  const oldStatus = p.status || 'Researching';
+  const statusChanged = newStatus && newStatus !== oldStatus;
+  if (statusChanged) {
+    p.status = newStatus;
+    p.activityLog.push({ text: `Status changed: ${oldStatus} → ${newStatus}`, ts: new Date().toISOString() });
+  }
   p.activityLog.push({ text, ts: new Date().toISOString() });
   p.updated = today();
   save();
@@ -2820,7 +2838,7 @@ function addPropertyLog(id) {
     }).join('');
   }
   document.getElementById('prop-log-input').value = '';
-  toast('Note logged', 'success');
+  toast(statusChanged ? `Note logged — status updated to ${newStatus}` : 'Note logged', 'success');
 }
 
 function promoteToAcquisitions(id) {
