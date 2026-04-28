@@ -2431,6 +2431,9 @@ function savePropertyDetail(id) {
   if (!p) return;
   const fields = _readPropFields();
   if (!fields.sellerName && !fields.address) { toast('Seller name or address is required', 'error'); return; }
+  // Preserve existing toggle values if nothing was selected in the edit form
+  const toggleFields = ['utilities','roadAccess','landlocked','taxDelinquent','femaChecked'];
+  toggleFields.forEach(f => { if (!fields[f]) fields[f] = p[f] || ''; });
   Object.assign(p, fields);
   p.updated = today();
   save();
