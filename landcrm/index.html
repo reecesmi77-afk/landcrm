@@ -2289,9 +2289,9 @@ function parsePastedProperty() {
   let email = extract(['Email Address','Email'], raw);
   if (/^(none|n\/a|no email|na)$/i.test(email.trim())) email = '';
 
-  // Address — strip state+zip from end, strip leading dash/hyphen
-  let address = extract(['Property Address','Address'], raw);
-  address = address.replace(/,?\s*[A-Z]{2}\s*,?\s*\d{5,}.*$/, '').replace(/,\s*[A-Z]{2}\s*$/, '').trim();
+  // Address — take only the first comma-segment (street only), strip leading dash/hyphen
+  const rawAddrLine = extract(['Property Address','Address'], raw);
+  let address = rawAddrLine.includes(',') ? rawAddrLine.split(',')[0].trim() : rawAddrLine.trim();
   address = address.replace(/^[-\u2013\u2014\s]+/, '').trim();
 
   let city = extract(['City'], raw) || '';
@@ -2314,7 +2314,12 @@ function parsePastedProperty() {
     if (sm) state = sm[1];
   }
 
-  const zip = extract(['Zip','Zip Code','Postal Code'], raw) || '';
+  // Zip — parse from the Address line's last comma-segment; must be 5 digits
+  let zip = '';
+  if (rawAddrLine.includes(',')) {
+    const lastSeg = rawAddrLine.split(',').pop().trim();
+    if (/^\d{5}(\d{4})?$/.test(lastSeg)) zip = lastSeg.slice(0, 5);
+  }
 
   // County — strip trailing county/state bleed
   let county = extract(['County'], raw);
