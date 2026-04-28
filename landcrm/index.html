@@ -798,12 +798,14 @@ code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:'DM Mon
           <option>Call Needed</option>
           <option>Offer Pending</option>
           <option>Promoted</option>
+          <option>Not Now</option>
           <option>Dead</option>
         </select>
         <select class="filter-select" id="prop-state-filter" onchange="renderProperties()">
           <option value="">All states</option>
           <option>TN</option><option>MS</option><option>AR</option><option>MO</option><option>AL</option><option>KY</option><option>GA</option><option>FL</option><option>TX</option><option>OK</option>
         </select>
+        <button id="prop-archive-toggle" class="btn btn-ghost btn-sm" onclick="togglePropArchive()" style="font-size:12px;white-space:nowrap;">📦 Show Archive</button>
         <select class="filter-select" id="prop-sort" onchange="renderProperties()">
           <option value="updated-desc">Last Updated ↓</option>
           <option value="updated-asc">Last Updated ↑</option>
@@ -1829,8 +1831,8 @@ function globalSearch(){
     if(!haystack.includes(q)) return;
     if(propHits.length >= MAX_EACH) return;
     const name = p.sellerName || p.address?.split(',')[0] || '(no name)';
-    const sub = [p.county ? p.county+' Co, '+p.state : '', p.acres ? p.acres+' ac' : ''].filter(Boolean).join(' · ') || '';
-    propHits.push({label:name,sub,badge:'Property',bColor:'var(--teal)',action:`gsGo('properties','openPropertyDetail','${p.id}')`});
+    const sub = [p.county ? p.county+' Co, '+p.state : '', p.acres ? p.acres+' ac' : '', p.archived ? '📦 Archived' : ''].filter(Boolean).join(' · ') || '';
+    propHits.push({label:name,sub,badge:'Property',bColor:p.archived?'var(--text3)':'var(--teal)',action:`gsGo('properties','openPropertyDetail','${p.id}')`});
   });
   if(propHits.length) sections.push({title:'Properties', items:propHits});
 
@@ -1899,14 +1901,17 @@ function gsKeydown(e){
 // ══════════════════════════════════
 // PROPERTIES
 // ══════════════════════════════════
-const PROP_STATUSES = ['Researching','Call Needed','Offer Pending','Promoted','Dead'];
+const PROP_STATUSES = ['Researching','Call Needed','Offer Pending','Promoted','Not Now','Dead'];
 const PROP_STATUS_COLORS = {
   'Researching':'var(--accent)',
   'Call Needed':'var(--amber)',
   'Offer Pending':'var(--purple)',
   'Promoted':'var(--teal)',
+  'Not Now':'var(--amber)',
   'Dead':'var(--text3)',
 };
+// Archive mode state: false = show active, true = show archived
+var _propShowArchive = false;
 
 // Backward-compat: map old field names to new ones in-place
 function _propNormalize(p) {
@@ -1916,16 +1921,30 @@ function _propNormalize(p) {
   return p;
 }
 
+function togglePropArchive() {
+  _propShowArchive = !_propShowArchive;
+  const btn = document.getElementById('prop-archive-toggle');
+  if (btn) btn.textContent = _propShowArchive ? '✅ Show Active' : '📦 Show Archive';
+  const statusFilter = document.getElementById('prop-status-filter');
+  if (statusFilter) statusFilter.style.display = _propShowArchive ? 'none' : '';
+  renderProperties();
+}
+
 function renderProperties() {
   const search  = (document.getElementById('prop-search')?.value || '').toLowerCase();
-  const statusF = document.getElementById('prop-status-filter')?.value || '';
+  const statusF = _propShowArchive ? '' : (document.getElementById('prop-status-filter')?.value || '');
   const stateF  = document.getElementById('prop-state-filter')?.value  || '';
   const sortV   = document.getElementById('prop-sort')?.value          || 'updated-desc';
 
   let list = (db.properties || []).filter(p => {
     _propNormalize(p);
-    if (statusF && p.status !== statusF) return false;
-    if (stateF  && p.state  !== stateF)  return false;
+    if (_propShowArchive) {
+      if (!p.archived) return false;
+    } else {
+      if (p.archived) return false;
+      if (statusF && p.status !== statusF) return false;
+    }
+    if (stateF && p.state !== stateF) return false;
     if (search) {
       const h = [p.sellerName,p.address,p.apn,p.county,p.state,p.sellerNotes,p.notes].filter(Boolean).join(' ').toLowerCase();
       if (!h.includes(search)) return false;
@@ -1943,15 +1962,17 @@ function renderProperties() {
     return 0;
   });
 
-  // Nav badge
-  const activeCount = (db.properties||[]).filter(p => p.status !== 'Dead' && p.status !== 'Promoted').length;
+  // Nav badge — only non-archived properties
+  const activeCount = (db.properties||[]).filter(p => !p.archived && p.status !== 'Dead' && p.status !== 'Promoted').length;
   const nb = document.getElementById('nb-properties');
   if (nb) { nb.textContent = activeCount; nb.style.display = activeCount ? '' : 'none'; }
 
   const tbody = document.getElementById('properties-tbody');
   if (!tbody) return;
   if (!list.length) {
-    tbody.innerHTML = '<tr><td colspan="8"><div class="empty"><div class="empty-title">No properties found</div><div class="empty-sub">Add a property to start tracking due diligence</div></div></td></tr>';
+    const msg = _propShowArchive ? 'No archived properties' : 'No properties found';
+    const sub = _propShowArchive ? 'Archived properties will appear here' : 'Add a property to start tracking due diligence';
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty"><div class="empty-title">${msg}</div><div class="empty-sub">${sub}</div></div></td></tr>`;
     return;
   }
 
@@ -1970,8 +1991,24 @@ function renderProperties() {
     const addrShort = p.address ? (p.address.includes(',') ? p.address.split(',')[0] : p.address) : '';
     const nameLine1 = addrShort || p.sellerName || '—';
     const nameLine2 = (!addrShort && p.sellerName) ? '' : (p.sellerName && p.sellerName !== nameLine1 ? p.sellerName : '');
-    const fu       = p.followUpDate;
-    const fuStyle  = fu && fu <= today() ? 'color:var(--amber);font-weight:600' : 'color:var(--text3)';
+    const fu        = p.followUpDate;
+    const fuStyle   = fu && fu <= today() ? 'color:var(--amber);font-weight:600' : 'color:var(--text3)';
+
+    if (_propShowArchive) {
+      // Archive view row
+      const arColor = p.archiveReason === 'Dead — no deal' ? 'var(--coral)' : 'var(--amber)';
+      const arBg    = p.archiveReason === 'Dead — no deal' ? 'var(--cdim)'  : 'var(--ambdim)';
+      return `<tr onclick="openPropertyDetail('${p.id}')" style="cursor:pointer;opacity:0.85;">
+        <td style="font-weight:500">${_gsEsc(nameLine1)}${nameLine2 ? `<div style="font-size:11px;color:var(--text3);font-weight:400;margin-top:1px">${_gsEsc(nameLine2)}</div>` : ''}</td>
+        <td style="color:var(--text2)">${_gsEsc(p.county||'—')}, ${_gsEsc(p.state||'—')}</td>
+        <td style="font-family:'DM Mono',monospace;font-size:12px">${p.acres ? p.acres+' ac' : '—'}</td>
+        <td>${srcBadge(p.source)}</td>
+        <td colspan="2"><span style="font-size:11px;padding:2px 8px;border-radius:5px;background:${arBg};color:${arColor};border:1px solid ${arColor}30;font-weight:600">${_gsEsc(p.archiveReason||'Archived')}</span></td>
+        <td style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace">${p.archivedDate||'—'}</td>
+        <td onclick="event.stopPropagation()"><button class="btn btn-ghost btn-sm" style="font-size:11px;white-space:nowrap;" onclick="unarchiveProp('${p.id}')">↩ Unarchive</button></td>
+      </tr>`;
+    }
+
     return `<tr onclick="openPropertyDetail('${p.id}')" style="cursor:pointer;">
       <td style="font-weight:500">${_gsEsc(nameLine1)}${nameLine2 ? `<div style="font-size:11px;color:var(--text3);font-weight:400;margin-top:1px">${_gsEsc(nameLine2)}</div>` : ''}</td>
       <td style="color:var(--text2)">${_gsEsc(p.county||'—')}, ${_gsEsc(p.state||'—')}</td>
@@ -2036,6 +2073,7 @@ function _propAddModalHtml() {
         <hr style="border:none;border-top:1px solid var(--border);margin-bottom:16px;">
       </div>
 
+      <div id="pf-dup-banner" style="display:none;"></div>
       ${_propManualFieldsHtml(null)}
     </div>
     <div class="modal-footer">
@@ -2076,7 +2114,7 @@ function _propManualFieldsHtml(p) {
       <div class="form-group"><label class="form-label">County</label><input class="form-input" id="pf-county" value="${_gsEsc(p?.county||'')}" placeholder="Shelby"></div>
       <div class="form-group"><label class="form-label">State</label><select class="form-input" id="pf-state">${stateOptions(p?.state||'')}</select></div>
       <div class="form-group"><label class="form-label">Zip</label><input class="form-input" id="pf-zip" value="${_gsEsc(p?.zip||'')}" placeholder="38101"></div>
-      <div class="form-group"><label class="form-label">APN / Parcel ID</label><input class="form-input" id="pf-apn" value="${_gsEsc(p?.apn||'')}" placeholder="123-456-789"></div>
+      <div class="form-group"><label class="form-label">APN / Parcel ID</label><input class="form-input" id="pf-apn" value="${_gsEsc(p?.apn||'')}" placeholder="123-456-789" oninput="_runDupCheck()"></div>
       <div class="form-group"><label class="form-label">Acres</label><input class="form-input" id="pf-acres" type="number" min="0" step="0.01" value="${p?.acres||''}" placeholder="12.5"></div>
     </div>
 
@@ -2113,6 +2151,73 @@ function _propYNSelect(id, val) {
     <option value="No"${val==='No'?' selected':''}>No</option>
     <option value="Unknown"${val==='Unknown'?' selected':''}>Unknown</option>
   </select>`;
+}
+
+function _normApn(v) { return (v||'').toLowerCase().replace(/[\s\-]/g,''); }
+function _normAddr(v) { return (v||'').toLowerCase().replace(/\s/g,'').slice(0,10); }
+
+function _checkPropDuplicate(apn, address) {
+  const apnN   = _normApn(apn);
+  const addrN  = _normAddr(address);
+  let match = null;
+  if (apnN.length >= 4) {
+    match = (db.properties||[]).find(x => _normApn(x.apn) === apnN && _normApn(x.apn));
+  }
+  if (!match && addrN.length >= 10) {
+    match = (db.properties||[]).find(x => _normAddr(x.address) === addrN && _normAddr(x.address).length >= 10);
+  }
+  return match || null;
+}
+
+function _renderDupBanner(dup) {
+  const banner = document.getElementById('pf-dup-banner');
+  if (!banner) return;
+  if (!dup) { banner.style.display = 'none'; return; }
+
+  const isDead = dup.archived && dup.archiveReason === 'Dead — no deal';
+  const isArchived = dup.archived;
+  const bg  = isArchived ? 'var(--cdim)'   : 'var(--ambdim)';
+  const bdr = isArchived ? 'var(--coral)'  : 'var(--amber)';
+
+  const statusBadge = isArchived
+    ? `<span style="font-size:11px;padding:2px 7px;border-radius:4px;background:${bg};color:${bdr};border:1px solid ${bdr}30;">Archived — ${_gsEsc(dup.archiveReason||'')}</span>`
+    : `<span style="font-size:11px;padding:2px 7px;border-radius:4px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);">${_gsEsc(dup.status||'Researching')}</span>`;
+
+  const dateStr = isArchived ? (dup.archivedDate||'') : (dup.updated||'');
+  const lastEntry = (dup.activityLog||[]).length
+    ? dup.activityLog[dup.activityLog.length-1].text.slice(0,100)
+    : (dup.sellerNotes||'').slice(0,100);
+
+  const title = isArchived ? '⚠️ This property is in your Archive' : '⚠️ This property is already in your database';
+
+  const unarchiveBtn = isArchived ? `<button class="btn btn-ghost btn-sm" style="border-color:var(--teal);color:var(--teal);" onclick="_dupUnarchiveAndView('${dup.id}')">↩ Unarchive &amp; View</button>` : '';
+
+  banner.style.display = '';
+  banner.innerHTML = `
+    <div style="background:${bg};border:1px solid ${bdr};border-radius:8px;padding:14px;margin-bottom:16px;">
+      <div style="font-size:13px;font-weight:700;color:${bdr};margin-bottom:8px;">${title}</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">${statusBadge}${dateStr ? `<span style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;">${dateStr}</span>` : ''}</div>
+      ${lastEntry ? `<div style="font-size:12px;color:var(--text2);margin:6px 0;font-style:italic;">"${_gsEsc(lastEntry)}${lastEntry.length===100?'…':''}"</div>` : ''}
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+        <button class="btn btn-ghost btn-sm" style="border-color:${bdr};color:${bdr};" onclick="_dupViewExisting('${dup.id}')">View Existing Record</button>
+        ${unarchiveBtn}
+        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('pf-dup-banner').style.display='none'">Continue Anyway</button>
+      </div>
+    </div>`;
+}
+
+function _dupViewExisting(id) { closeModal(); setTimeout(() => openPropertyDetail(id), 80); }
+function _dupUnarchiveAndView(id) {
+  const p = (db.properties||[]).find(x => x.id === id);
+  if (p) { p.archived = false; p.archiveReason = ''; p.archivedDate = ''; p.updated = today(); save(); renderProperties(); }
+  _dupViewExisting(id);
+}
+
+function _runDupCheck() {
+  const apn  = document.getElementById('pf-apn')?.value.trim()     || '';
+  const addr = document.getElementById('pf-address')?.value.trim() || '';
+  const dup  = _checkPropDuplicate(apn, addr);
+  _renderDupBanner(dup);
 }
 
 function parsePastedProperty() {
@@ -2267,6 +2372,7 @@ function parsePastedProperty() {
   const filled = [fullName,phone,email,address,city,county,state,zip,apn,acres,source,status,utilities,roadAccess,structures,sellerNotes,followUpDate].filter(Boolean).length;
   const summaryEl = document.getElementById('pf-parse-summary');
   if (summaryEl) summaryEl.textContent = `Filled ${filled} field${filled!==1?'s':''} — review and save`;
+  _runDupCheck();
   toast(`Parsed — ${filled} fields filled`, 'success');
 }
 
@@ -2378,6 +2484,18 @@ function _propDetailHtml(p) {
   const fuStyle = p.followUpDate && p.followUpDate <= today() ? 'color:var(--amber);font-weight:600' : 'color:var(--teal)';
   const fuLabel = !p.followUpDate ? '' : p.followUpDate === today() ? ' — Today' : p.followUpDate < today() ? ' — Overdue' : '';
 
+  // Archive banner
+  const archiveBg    = p.archiveReason === 'Dead — no deal' ? 'var(--cdim)'  : 'var(--ambdim)';
+  const archiveBdr   = p.archiveReason === 'Dead — no deal' ? 'var(--coral)' : 'var(--amber)';
+  const archiveBanner = p.archived ? `
+    <div style="display:flex;justify-content:space-between;align-items:center;background:${archiveBg};border:1px solid ${archiveBdr};border-radius:8px;padding:12px 14px;margin-bottom:16px;">
+      <div>
+        <div style="font-size:13px;font-weight:600;color:${archiveBdr};margin-bottom:2px">⚠ Archived — ${_gsEsc(p.archiveReason||'')}</div>
+        <div style="font-size:11px;color:var(--text3)">${p.archivedDate||''}</div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="unarchiveProp('${p.id}')" style="white-space:nowrap;">↩ Unarchive</button>
+    </div>` : '';
+
   return `
     <div class="modal-header">
       <div style="min-width:0;flex:1;">
@@ -2390,6 +2508,7 @@ function _propDetailHtml(p) {
       </div>
     </div>
     <div class="modal-body">
+      ${archiveBanner}
 
       <!-- Seller Info -->
       <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:18px;">
@@ -2497,11 +2616,68 @@ function _propDetailHtml(p) {
 
     </div>
     <div class="modal-footer">
-      <button class="btn btn-ghost btn-sm" style="color:var(--coral)" onclick="deleteProperty('${p.id}')">Delete</button>
+      <div style="display:flex;gap:6px;align-items:center;margin-right:auto;">
+        <div style="position:relative;display:inline-block;">
+          <button class="btn btn-ghost btn-sm" onclick="toggleArchiveMenu('${p.id}')" style="color:var(--text3);">📦 Archive ▾</button>
+          <div id="archive-menu-${p.id}" style="display:none;position:absolute;bottom:calc(100% + 4px);left:0;background:var(--bg2);border:1px solid var(--border);border-radius:8px;min-width:180px;z-index:100;box-shadow:0 4px 16px rgba(0,0,0,0.2);">
+            <button onclick="archiveProp('${p.id}','Dead \u2014 no deal')" style="display:block;width:100%;text-align:left;padding:10px 14px;background:transparent;border:none;cursor:pointer;font-size:13px;color:var(--coral);border-bottom:1px solid var(--border);">💀 Dead — no deal</button>
+            <button onclick="archiveProp('${p.id}','Not Now \u2014 revisit later')" style="display:block;width:100%;text-align:left;padding:10px 14px;background:transparent;border:none;cursor:pointer;font-size:13px;color:var(--amber);">⏳ Not Now — revisit later</button>
+          </div>
+        </div>
+        <button class="btn btn-ghost btn-sm" style="color:var(--coral);font-size:11px;" onclick="deleteProperty('${p.id}')">🗑 Delete</button>
+      </div>
       <button class="btn btn-ghost btn-sm" onclick="openPropEditModal('${p.id}')">✎ Edit</button>
       <button class="btn btn-ghost" onclick="closeModal()">Close</button>
-      <button class="btn btn-primary" onclick="promoteToAcquisitions('${p.id}')">🚀 Promote to Acquisitions</button>
+      ${!p.archived ? `<button class="btn btn-primary" onclick="promoteToAcquisitions('${p.id}')">🚀 Promote to Acquisitions</button>` : ''}
     </div>`;
+}
+
+function toggleArchiveMenu(id) {
+  const menu = document.getElementById('archive-menu-' + id);
+  if (!menu) return;
+  const isOpen = menu.style.display !== 'none';
+  // Close all open menus first
+  document.querySelectorAll('[id^="archive-menu-"]').forEach(m => m.style.display = 'none');
+  if (!isOpen) {
+    menu.style.display = 'block';
+    // Close on outside click
+    setTimeout(() => {
+      const handler = e => {
+        if (!menu.contains(e.target)) { menu.style.display = 'none'; document.removeEventListener('click', handler); }
+      };
+      document.addEventListener('click', handler);
+    }, 0);
+  }
+}
+
+function archiveProp(id, reason) {
+  const p = (db.properties||[]).find(x => x.id === id);
+  if (!p) return;
+  p.archived      = true;
+  p.archiveReason = reason;
+  p.archivedDate  = today();
+  p.updated       = today();
+  if (!p.activityLog) p.activityLog = [];
+  p.activityLog.push({ text: 'Archived: ' + reason, ts: new Date().toISOString() });
+  save();
+  closeModal();
+  renderProperties();
+  toast('Property archived', 'success');
+}
+
+function unarchiveProp(id) {
+  const p = (db.properties||[]).find(x => x.id === id);
+  if (!p) return;
+  p.archived      = false;
+  p.archiveReason = '';
+  p.archivedDate  = '';
+  p.updated       = today();
+  if (!p.activityLog) p.activityLog = [];
+  p.activityLog.push({ text: 'Unarchived', ts: new Date().toISOString() });
+  save();
+  closeModal();
+  renderProperties();
+  toast('Property unarchived', 'success');
 }
 
 function setPropDD(id, field, val) {
