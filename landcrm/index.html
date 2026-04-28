@@ -2940,7 +2940,8 @@ function setPropReport(id, field, status) {
 function savePropReportNotes(id, field) {
   const p = (db.properties||[]).find(x => x.id === id);
   if (!p) return;
-  const notesField = field + 'Notes';
+  // field is e.g. 'slopeReportStatus' — notes field is 'slopeReportNotes'
+  const notesField = field.replace('Status', '') + 'Notes';
   const el = document.getElementById('prop-report-notes-' + field + '-' + id);
   if (el) { p[notesField] = el.value.trim(); p.updated = today(); save(); toast('Report notes saved', 'success'); }
 }
@@ -2963,14 +2964,19 @@ function savePropOfferMath(id) {
   const maoEl    = document.getElementById('pm-mao-'    + id);
   const statusEl = document.getElementById('pm-status-' + id);
   const amtEl    = document.getElementById('pm-amount-' + id);
-  if (arvEl)    p.arv         = arvEl.value.trim();
-  if (ooEl)     p.openOffer   = ooEl.value.trim();
-  if (maoEl)    p.maoAmount   = maoEl.value.trim();
-  if (statusEl) p.offerStatus = statusEl.value;
-  if (amtEl)    p.offerAmount = amtEl.value.trim();
+  const arv = parseFloat(arvEl?.value) || 0;
+  p.arv         = arvEl    ? arvEl.value.trim()    : (p.arv || '');
+  p.openOffer   = ooEl     ? (ooEl.value.trim()  || (arv ? String(Math.round(arv * 0.30)) : '')) : (p.openOffer || '');
+  p.maoAmount   = maoEl    ? (maoEl.value.trim() || (arv ? String(Math.round(arv * 0.45)) : '')) : (p.maoAmount || '');
+  p.offerStatus = statusEl ? statusEl.value        : (p.offerStatus || '');
+  p.offerAmount = amtEl    ? amtEl.value.trim()    : (p.offerAmount || '');
   p.updated = today();
   save();
+  renderProperties();
   toast('Offer math saved', 'success');
+  // Re-render the modal so the footer (Send Offer button) reflects the new offerAmount
+  closeModal();
+  setTimeout(() => openPropertyDetail(id), 80);
 }
 
 function openPropEditModal(id) {
