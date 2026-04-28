@@ -2647,8 +2647,167 @@ function _propDetailHtml(p) {
       </div>
       <button class="btn btn-ghost btn-sm" onclick="openPropEditModal('${p.id}')">✎ Edit</button>
       <button class="btn btn-ghost" onclick="closeModal()">Close</button>
+      ${!p.archived && parseFloat(p.offerAmount) > 0 ? `<button onclick="openPropSignWellModal('${p.id}')" style="padding:6px 14px;border-radius:7px;border:none;cursor:pointer;background:var(--teal);color:#0d1117;font-weight:600;font-size:13px;">📄 Send Offer</button>` : ''}
       ${!p.archived ? `<button class="btn btn-primary" onclick="promoteToAcquisitions('${p.id}')">🚀 Promote to Acquisitions</button>` : ''}
     </div>`;
+}
+
+function openPropSignWellModal(id) {
+  const p = (db.properties||[]).find(x => x.id === id);
+  if (!p) return;
+  _propNormalize(p);
+  const now = new Date();
+  const fmtDate = d => d.toLocaleDateString('en-US', { month:'2-digit', day:'2-digit', year:'numeric' });
+  const agreeDate = fmtDate(now);
+  const deadlineDate = new Date(now); deadlineDate.setDate(deadlineDate.getDate() + 7);
+  const deadline = fmtDate(deadlineDate);
+
+  openCustomModal(`
+    <div class="modal-header">
+      <div class="modal-title">Send Offer — ${_gsEsc(p.address || p.sellerName || 'Property')}</div>
+      <button class="modal-close" onclick="closeModal()">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+
+      <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:10px">Agreement Details</div>
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">Agreement Date</label><input class="form-input" id="psw-date" value="${_gsEsc(agreeDate)}"></div>
+        <div class="form-group"><label class="form-label">Acceptance Deadline</label><input class="form-input" id="psw-deadline" value="${_gsEsc(deadline)}"></div>
+      </div>
+
+      <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin:18px 0 10px">Seller Info</div>
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">Seller 1 Name *</label><input class="form-input" id="psw-s1-name" value="${_gsEsc(p.sellerName||'')}"></div>
+        <div class="form-group"><label class="form-label">Seller 1 Email * <span style="color:var(--text3);font-size:10px">— Required for SignWell</span></label><input class="form-input" id="psw-s1-email" value="${_gsEsc(p.sellerEmail||'')}" placeholder="Required for SignWell"></div>
+        <div class="form-group"><label class="form-label">Seller 1 Phone</label><input class="form-input" id="psw-s1-phone" value="${_gsEsc(p.sellerPhone||'')}"></div>
+        <div class="form-group"><label class="form-label">Seller 1 Mailing Address</label><input class="form-input" id="psw-s1-addr" value="${_gsEsc(p.address||'')}"></div>
+        <div class="form-group"><label class="form-label">Seller 2 Name <span style="color:var(--text3);font-size:10px">optional</span></label><input class="form-input" id="psw-s2-name" value="" placeholder="If applicable"></div>
+        <div class="form-group"><label class="form-label">Seller 2 Email <span style="color:var(--text3);font-size:10px">optional</span></label><input class="form-input" id="psw-s2-email" value="" placeholder="If applicable"></div>
+      </div>
+
+      <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin:18px 0 10px">Property</div>
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">APN</label><input class="form-input" id="psw-apn" value="${_gsEsc(p.apn||'')}"></div>
+        <div class="form-group"><label class="form-label">County</label><input class="form-input" id="psw-county" value="${_gsEsc(p.county||'')}"></div>
+        <div class="form-group"><label class="form-label">State</label><input class="form-input" id="psw-state" value="${_gsEsc(p.state||'')}"></div>
+        <div class="form-group"><label class="form-label">Acreage</label><input class="form-input" id="psw-acres" value="${_gsEsc(p.acres||'')}"></div>
+      </div>
+
+      <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin:18px 0 10px">Offer</div>
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">Purchase Price *</label><input class="form-input" id="psw-price" type="number" min="0" value="${p.offerAmount||''}"></div>
+        <div class="form-group"><label class="form-label">Earnest Money</label><input class="form-input" id="psw-emd" value="$200.00"></div>
+        <div class="form-group form-full"><label class="form-label">Additional Notes <span style="color:var(--text3);font-size:10px">— maps to Section 16</span></label><textarea class="form-input" id="psw-notes" rows="3" style="resize:vertical;width:100%"></textarea></div>
+      </div>
+
+      <div id="psw-status" style="display:none;padding:10px 12px;border-radius:7px;font-size:13px;margin-top:12px;"></div>
+    </div>
+    <div class="modal-footer" style="flex-direction:column;align-items:stretch;gap:8px;">
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+        <button id="psw-send-btn" onclick="sendPropSignWellOffer('${p.id}')" style="padding:7px 18px;border-radius:7px;border:none;cursor:pointer;background:var(--teal);color:#0d1117;font-weight:700;font-size:13px;">📄 Send Agreement</button>
+      </div>
+      <div style="text-align:center;font-size:11px;color:var(--text3);">Sent via SignWell · Legally binding e-signature · Seller signs from their phone</div>
+    </div>`);
+}
+
+function sendPropSignWellOffer(propId) {
+  const p = (db.properties||[]).find(x => x.id === propId);
+  if (!p) return;
+
+  const s1Name  = (document.getElementById('psw-s1-name')?.value  || '').trim();
+  const s1Email = (document.getElementById('psw-s1-email')?.value || '').trim();
+  const s1Phone = (document.getElementById('psw-s1-phone')?.value || '').trim();
+  const s1Addr  = (document.getElementById('psw-s1-addr')?.value  || '').trim();
+  const s2Name  = (document.getElementById('psw-s2-name')?.value  || '').trim();
+  const s2Email = (document.getElementById('psw-s2-email')?.value || '').trim();
+  const apn     = (document.getElementById('psw-apn')?.value      || '').trim();
+  const county  = (document.getElementById('psw-county')?.value   || '').trim();
+  const state   = (document.getElementById('psw-state')?.value    || '').trim();
+  const acres   = (document.getElementById('psw-acres')?.value    || '').trim();
+  const price   = (document.getElementById('psw-price')?.value    || '').trim();
+  const emd     = (document.getElementById('psw-emd')?.value      || '$200.00').trim();
+  const notes   = (document.getElementById('psw-notes')?.value    || '').trim();
+  const agDate  = (document.getElementById('psw-date')?.value     || '').trim();
+  const ddline  = (document.getElementById('psw-deadline')?.value || '').trim();
+
+  if (!s1Name)  { toast('Seller 1 name is required', 'error'); return; }
+  if (!s1Email) { toast('Seller 1 email is required', 'error'); return; }
+
+  const btn      = document.getElementById('psw-send-btn');
+  const statusEl = document.getElementById('psw-status');
+  if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
+  if (statusEl) {
+    statusEl.style.display = 'block';
+    statusEl.style.background = 'var(--bg3)';
+    statusEl.style.border = '1px solid var(--border)';
+    statusEl.style.color = 'var(--text2)';
+    statusEl.textContent = 'Creating agreement in SignWell…';
+  }
+
+  const formattedPrice = price ? '$' + parseFloat(price).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '';
+  const firstName = s1Name.split(' ')[0];
+
+  const payload = {
+    template_id: SIGNWELL_TEMPLATE_ID,
+    sellerName:          s1Name,
+    sellerEmail:         s1Email,
+    sellerPhone:         s1Phone,
+    sellerAddress:       s1Addr,
+    seller2Name:         s2Name,
+    seller2Email:        s2Email,
+    apn:                 apn,
+    county:              county,
+    state:               state,
+    acreage:             acres,
+    purchasePrice:       formattedPrice,
+    agreementDate:       agDate,
+    acceptanceDeadline:  ddline,
+    emdAmount:           emd,
+    additionalNotes:     notes,
+    subject:             'Purchase Agreement — Coldwater Property Group',
+    message:             'Hi ' + firstName + ', please review and sign the attached Purchase Agreement for your property in ' + county + ' County, ' + state + '. You can sign directly from your phone — no account needed. It takes less than 2 minutes. Call or text me with any questions. — William Smith, Coldwater Property Group, 901-899-6698',
+  };
+
+  fetch('/.netlify/functions/send-offer', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.id) {
+      if (!p.activityLog) p.activityLog = [];
+      p.activityLog.push({ text: 'Offer sent via SignWell — ' + formattedPrice + ' — ' + s1Email, ts: new Date().toISOString() });
+      p.status      = 'Offer Pending';
+      p.offerStatus = 'Sent';
+      p.updated     = today();
+      save();
+      if (statusEl) {
+        statusEl.style.background = 'rgba(52,211,153,0.1)';
+        statusEl.style.border = '1px solid rgba(52,211,153,0.3)';
+        statusEl.style.color = 'var(--teal)';
+        statusEl.textContent = '✓ Agreement sent to ' + s1Email + ' — status updated to Offer Pending';
+      }
+      if (btn) { btn.textContent = '✓ Sent'; btn.style.background = 'var(--teal)'; }
+      toast('Offer sent to ' + s1Name + ' via SignWell', 'success');
+      renderProperties();
+      setTimeout(() => { closeModal(); openPropertyDetail(propId); }, 1200);
+    } else {
+      throw new Error(data.error || data.message || JSON.stringify(data));
+    }
+  })
+  .catch(err => {
+    console.error('SignWell property offer error:', err);
+    if (statusEl) {
+      statusEl.style.display = 'block';
+      statusEl.style.background = 'rgba(248,113,113,0.1)';
+      statusEl.style.border = '1px solid rgba(248,113,113,0.3)';
+      statusEl.style.color = 'var(--coral)';
+      statusEl.textContent = 'Error: ' + (err.message || 'Something went wrong. Check console.');
+    }
+    if (btn) { btn.disabled = false; btn.textContent = '📄 Send Agreement'; }
+  });
 }
 
 function toggleArchiveMenu(id) {
