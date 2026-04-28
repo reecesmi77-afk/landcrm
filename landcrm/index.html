@@ -1981,9 +1981,15 @@ function renderProperties() {
     return `<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${c};margin-right:5px;vertical-align:middle;"></span>`;
   };
   const srcBadge = src => {
-    if (!src) return '<span style="color:var(--text3)">—</span>';
-    const c = src.includes('SMS') ? 'var(--accent)' : src.includes('Call') ? 'var(--amber)' : 'var(--text3)';
-    return `<span style="font-size:10px;font-family:'DM Mono',monospace;background:${c}18;color:${c};padding:2px 6px;border-radius:4px;border:1px solid ${c}30">${_gsEsc(src)}</span>`;
+    if (!src || src === '—') return '<span style="color:var(--text3)">—</span>';
+    const s = src.toLowerCase();
+    if (s.includes('mls')) {
+      return '<span style="font-size:10px;font-family:\'DM Mono\',monospace;background:rgba(14,165,233,0.15);color:var(--accent);border:1px solid rgba(14,165,233,0.3);padding:2px 6px;border-radius:4px;">MLS</span>';
+    }
+    if (s.includes('cold sms') || s.includes('off market') || s.includes('lead gen')) {
+      return '<span style="font-size:10px;font-family:\'DM Mono\',monospace;background:rgba(52,211,153,0.15);color:var(--teal);border:1px solid rgba(52,211,153,0.3);padding:2px 6px;border-radius:4px;">Off Market</span>';
+    }
+    return '<span style="color:var(--text3)">—</span>';
   };
 
   tbody.innerHTML = list.map(p => {
