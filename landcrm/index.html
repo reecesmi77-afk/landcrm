@@ -2679,6 +2679,7 @@ function openPropSignWellModal(id) {
   const agreeDate = fmtDate(now);
   const deadlineDate = new Date(now); deadlineDate.setDate(deadlineDate.getDate() + 7);
   const deadline = fmtDate(deadlineDate);
+  const cityStateZip = [p.city, p.state, p.zip].filter(Boolean).join(p.city && p.state ? ', ' : ' ').replace(/,\s+,/g, ',').trim();
 
   openCustomModal(`
     <div class="modal-header">
@@ -2699,6 +2700,7 @@ function openPropSignWellModal(id) {
         <div class="form-group"><label class="form-label">Seller 1 Email * <span style="color:var(--text3);font-size:10px">— Required for SignWell</span></label><input class="form-input" id="psw-s1-email" value="${_gsEsc(p.sellerEmail||'')}" placeholder="Required for SignWell"></div>
         <div class="form-group"><label class="form-label">Seller 1 Phone</label><input class="form-input" id="psw-s1-phone" value="${_gsEsc(p.sellerPhone||'')}"></div>
         <div class="form-group"><label class="form-label">Seller 1 Mailing Address</label><input class="form-input" id="psw-s1-addr" value="${_gsEsc(p.address||'')}"></div>
+        <div class="form-group"><label class="form-label">Seller City / ST / Zip</label><input class="form-input" id="psw-s1-csz" value="${_gsEsc(cityStateZip)}" placeholder="Talihina, OK 74571"></div>
         <div class="form-group"><label class="form-label">Seller 2 Name <span style="color:var(--text3);font-size:10px">optional</span></label><input class="form-input" id="psw-s2-name" value="" placeholder="If applicable"></div>
         <div class="form-group"><label class="form-label">Seller 2 Email <span style="color:var(--text3);font-size:10px">optional</span></label><input class="form-input" id="psw-s2-email" value="" placeholder="If applicable"></div>
       </div>
@@ -2708,7 +2710,7 @@ function openPropSignWellModal(id) {
         <div class="form-group"><label class="form-label">APN</label><input class="form-input" id="psw-apn" value="${_gsEsc(p.apn||'')}"></div>
         <div class="form-group"><label class="form-label">County</label><input class="form-input" id="psw-county" value="${_gsEsc(p.county||'')}"></div>
         <div class="form-group"><label class="form-label">State</label><input class="form-input" id="psw-state" value="${_gsEsc(p.state||'')}"></div>
-        <div class="form-group"><label class="form-label">Acreage</label><input class="form-input" id="psw-acres" value="${_gsEsc(p.acres||'')}"></div>
+        <div class="form-group"><label class="form-label">Acreage</label><input class="form-input" id="psw-acres" value="${_gsEsc((p.acres && String(p.acres).trim()) || '')}"></div>
       </div>
 
       <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin:18px 0 10px">Offer</div>
@@ -2737,6 +2739,7 @@ function sendPropSignWellOffer(propId) {
   const s1Email = (document.getElementById('psw-s1-email')?.value || '').trim();
   const s1Phone = (document.getElementById('psw-s1-phone')?.value || '').trim();
   const s1Addr  = (document.getElementById('psw-s1-addr')?.value  || '').trim();
+  const s1CSZ   = (document.getElementById('psw-s1-csz')?.value   || '').trim();
   const s2Name  = (document.getElementById('psw-s2-name')?.value  || '').trim();
   const s2Email = (document.getElementById('psw-s2-email')?.value || '').trim();
   const apn     = (document.getElementById('psw-apn')?.value      || '').trim();
@@ -2772,8 +2775,9 @@ function sendPropSignWellOffer(propId) {
     sellerEmail:         s1Email,
     sellerPhone:         s1Phone,
     sellerAddress:       s1Addr,
+    sellerCityStateZip:  s1CSZ,
     seller2Name:         s2Name,
-    seller2Email:        s2Email,
+    seller2Email:        s2Name ? s2Email : '',
     apn:                 apn,
     county:              county,
     state:               state,
@@ -2782,7 +2786,7 @@ function sendPropSignWellOffer(propId) {
     agreementDate:       agDate,
     acceptanceDeadline:  ddline,
     emdAmount:           emd,
-    additionalNotes:     notes,
+    additionalNotes:     notes || '',
     subject:             'Purchase Agreement — Coldwater Property Group',
     message:             'Hi ' + firstName + ', please review and sign the attached Purchase Agreement for your property in ' + county + ' County, ' + state + '. You can sign directly from your phone — no account needed. It takes less than 2 minutes. Call or text me with any questions. — William Smith, Coldwater Property Group, 901-899-6698',
   };
