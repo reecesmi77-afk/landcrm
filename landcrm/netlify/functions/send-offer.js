@@ -22,22 +22,21 @@ exports.handler = async (event) => {
     const recipients = [
       {
         id: '1',
-        placeholder_name: 'Seller 1',
         name: sellerName,
         email: sellerEmail,
+        placeholder_name: 'seller 1',
       },
       {
         id: '2',
-        placeholder_name: 'Seller 2',
-        name: seller2Name || 'N/A',
+        name: seller2Email ? (seller2Name || seller2Email) : 'N/A',
         email: seller2Email || 'coldwaterpropertygroup@gmail.com',
-        send_email: seller2Email ? true : false,
+        placeholder_name: 'seller 2',
       },
       {
         id: '3',
-        placeholder_name: 'Document Sender',
         name: 'Coldwater Property Group',
         email: 'coldwaterpropertygroup@gmail.com',
+        placeholder_name: 'document sender',
       },
     ];
 
