@@ -24,7 +24,7 @@ exports.handler = async (event) => {
     const recipients = [];
 
     recipients.push({
-      id: 'seller 1',
+      id: 'Seller 1',
       name: sellerName,
       email: sellerEmail,
       role: 'signer',
@@ -32,7 +32,7 @@ exports.handler = async (event) => {
 
     if (seller2Email && seller2Email.trim() !== '') {
       recipients.push({
-        id: 'seller 2',
+        id: 'Seller 2',
         name: seller2Name || seller2Email,
         email: seller2Email,
         role: 'signer',
@@ -40,7 +40,7 @@ exports.handler = async (event) => {
     }
 
     recipients.push({
-      id: 'document sender',
+      id: 'Document Sender',
       name: 'Coldwater Property Group',
       email: 'coldwaterpropertygroup@gmail.com',
       role: 'signer',
