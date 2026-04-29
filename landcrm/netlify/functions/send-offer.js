@@ -6,6 +6,7 @@ exports.handler = async (event) => {
 
   try {
     const body = JSON.parse(event.body);
+    console.log('send-offer body:', JSON.stringify(body));
     const {
       sellerName, sellerEmail, sellerPhone, sellerAddress, sellerCityStateZip,
       seller2Name, seller2Email, seller2Phone, seller2Address, seller2CityStateZip,
@@ -44,7 +45,7 @@ exports.handler = async (event) => {
       { api_id: 'purchase_price',        value: purchasePrice || '' },
       { api_id: 'emd_amount',            value: emdAmount || '$200.00' },
       { api_id: 'alt_closing_date',      value: ' ' },
-      { api_id: 'additional_notes',      value: body.legalDescription || ' ' },
+      { api_id: 'additional_notes',      value: body.legalDescription || body.additionalNotes || ' ' },
       { api_id: 'seller_name',           value: sellerName || '' },
       { api_id: 'seller_email',          value: sellerEmail || '' },
       { api_id: 'seller_phone',          value: sellerPhone || '' },
