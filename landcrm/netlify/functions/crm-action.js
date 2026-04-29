@@ -3,7 +3,7 @@
 // so Claude's browser-based fetch can reach it directly
 
 const CORS_HEADERS = {
-  'Access-Control-Allow-Origin':  'https://claude.ai',
+  'Access-Control-Allow-Origin':  '*',
   'Access-Control-Allow-Methods': 'GET, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type',
   'Content-Type':                 'application/json',
