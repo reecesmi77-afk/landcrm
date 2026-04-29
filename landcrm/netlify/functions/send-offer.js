@@ -24,26 +24,23 @@ exports.handler = async (event) => {
     const recipients = [];
 
     recipients.push({
-      id: 'Seller 1',
+      placeholder_name: 'Seller 1',
       name: sellerName,
       email: sellerEmail,
-      role: 'signer',
     });
 
     if (seller2Email && seller2Email.trim() !== '') {
       recipients.push({
-        id: 'Seller 2',
+        placeholder_name: 'Seller 2',
         name: seller2Name || seller2Email,
         email: seller2Email,
-        role: 'signer',
       });
     }
 
     recipients.push({
-      id: 'Document Sender',
+      placeholder_name: 'Document Sender',
       name: 'Coldwater Property Group',
       email: 'coldwaterpropertygroup@gmail.com',
-      role: 'signer',
     });
 
     const templateFields = [
