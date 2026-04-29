@@ -1700,32 +1700,44 @@ let db = load();
 
   // ── Supabase sync ──────────────────────────────────────────────────────────
   var _sbUrl = '', _sbKey = '';
+  var _sbReady = false;          // true once config is fetched
+  var _sbSyncPending = false;    // flag: a sync was requested before config was ready
 
   async function _initSupabase() {
+    console.log('[Supabase] _initSupabase: fetching config…');
     try {
       const r = await fetch('/.netlify/functions/supabase-config');
+      if (!r.ok) { console.error('[Supabase] supabase-config returned', r.status); return; }
       const cfg = await r.json();
-      _sbUrl = cfg.url || '';
-      _sbKey = cfg.anonKey || '';
-      if (_sbUrl && _sbKey) await _loadPropertiesFromSupabase();
-    } catch(e) { console.warn('Supabase init failed:', e.message); }
+      _sbUrl  = (cfg.url     || '').replace(/\/$/, ''); // strip trailing slash
+      _sbKey  = cfg.anonKey  || '';
+      console.log('[Supabase] config loaded — url:', _sbUrl ? _sbUrl : '(empty)', '| key:', _sbKey ? '***' + _sbKey.slice(-6) : '(empty)');
+      if (!_sbUrl || !_sbKey) { console.error('[Supabase] URL or anon key missing — check SUPABASE_URL and SUPABASE_ANON_KEY env vars'); return; }
+      _sbReady = true;
+      // Flush any sync that fired before config was ready
+      if (_sbSyncPending) { _sbSyncPending = false; _syncPropertiesToSupabase(); }
+      await _loadPropertiesFromSupabase();
+    } catch(e) { console.error('[Supabase] _initSupabase failed:', e.message); }
   }
 
   function _sbHeaders(extra) {
     return Object.assign({
-      'apikey': _sbKey,
-      'Authorization': 'Bearer ' + _sbKey,
-      'Content-Type': 'application/json',
+      'apikey':          _sbKey,
+      'Authorization':   'Bearer ' + _sbKey,
+      'Content-Type':    'application/json',
     }, extra || {});
   }
 
   async function _loadPropertiesFromSupabase() {
+    console.log('[Supabase] loading properties from', _sbUrl + '/rest/v1/properties');
     try {
       const r = await fetch(_sbUrl + '/rest/v1/properties?select=*&order=created.desc', {
         headers: _sbHeaders(),
       });
-      if (!r.ok) { console.warn('Supabase load failed:', r.status, await r.text()); return; }
-      const rows = await r.json();
+      const text = await r.text();
+      if (!r.ok) { console.error('[Supabase] load failed:', r.status, text); return; }
+      const rows = JSON.parse(text);
+      console.log('[Supabase] loaded', Array.isArray(rows) ? rows.length : 0, 'rows from Supabase');
       if (!Array.isArray(rows) || !rows.length) return;
       // Merge: Supabase wins; add missing rows, update existing
       const byId = {};
@@ -1734,32 +1746,40 @@ let db = load();
       db.properties = Object.values(byId);
       localStorage.setItem(KEY, JSON.stringify(db));
       if (typeof renderProperties === 'function') renderProperties();
-    } catch(e) { console.warn('Supabase load failed:', e.message); }
+    } catch(e) { console.error('[Supabase] _loadPropertiesFromSupabase failed:', e.message); }
   }
 
   async function _syncPropertiesToSupabase() {
-    if (!_sbUrl || !_sbKey) return;
+    if (!_sbReady) {
+      console.log('[Supabase] sync called before config ready — queuing');
+      _sbSyncPending = true;
+      return;
+    }
     const props = db.properties || [];
-    if (!props.length) return;
+    if (!props.length) { console.log('[Supabase] sync skipped — no properties'); return; }
+    console.log('[Supabase] upserting', props.length, 'properties to', _sbUrl + '/rest/v1/properties');
     try {
       const r = await fetch(_sbUrl + '/rest/v1/properties?on_conflict=id', {
-        method: 'POST',
-        headers: _sbHeaders({ 'Prefer': 'resolution=merge-duplicates,return=minimal' }),
-        body: JSON.stringify(props),
+        method:  'POST',
+        headers: _sbHeaders({ 'Prefer': 'resolution=merge-duplicates' }),
+        body:    JSON.stringify(props),
       });
-      if (!r.ok) console.warn('Supabase property sync failed:', r.status, await r.text());
-    } catch(e) { console.warn('Supabase property sync failed:', e.message); }
+      const text = await r.text();
+      if (!r.ok) { console.error('[Supabase] upsert failed:', r.status, text); }
+      else        { console.log('[Supabase] upsert OK —', r.status); }
+    } catch(e) { console.error('[Supabase] _syncPropertiesToSupabase failed:', e.message); }
   }
 
   async function _propLogActivity(propId, text) {
-    if (!_sbUrl || !_sbKey || !propId || !text) return;
+    if (!_sbReady || !propId || !text) return;
     try {
-      await fetch(_sbUrl + '/rest/v1/activity_log', {
-        method: 'POST',
+      const r = await fetch(_sbUrl + '/rest/v1/activity_log', {
+        method:  'POST',
         headers: _sbHeaders({ 'Prefer': 'return=minimal' }),
-        body: JSON.stringify({ property_id: propId, entry: text }),
+        body:    JSON.stringify({ property_id: propId, entry: text }),
       });
-    } catch(e) { console.warn('Activity log sync failed:', e.message); }
+      if (!r.ok) console.error('[Supabase] activity_log insert failed:', r.status, await r.text());
+    } catch(e) { console.error('[Supabase] _propLogActivity failed:', e.message); }
   }
   // ── end Supabase sync ───────────────────────────────────────────────────────
 
