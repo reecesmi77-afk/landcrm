@@ -1693,8 +1693,75 @@ function _doAutoSync() {
     }
   })
   .catch(function(e) { console.warn('Auto-sync failed:', e.message); });
+  // Sync properties to Supabase
+  _syncPropertiesToSupabase();
 }
 let db = load();
+
+  // ── Supabase sync ──────────────────────────────────────────────────────────
+  var _sbUrl = '', _sbKey = '';
+
+  async function _initSupabase() {
+    try {
+      const r = await fetch('/.netlify/functions/supabase-config');
+      const cfg = await r.json();
+      _sbUrl = cfg.url || '';
+      _sbKey = cfg.anonKey || '';
+      if (_sbUrl && _sbKey) await _loadPropertiesFromSupabase();
+    } catch(e) { console.warn('Supabase init failed:', e.message); }
+  }
+
+  function _sbHeaders(extra) {
+    return Object.assign({
+      'apikey': _sbKey,
+      'Authorization': 'Bearer ' + _sbKey,
+      'Content-Type': 'application/json',
+    }, extra || {});
+  }
+
+  async function _loadPropertiesFromSupabase() {
+    try {
+      const r = await fetch(_sbUrl + '/rest/v1/properties?select=*&order=created.desc', {
+        headers: _sbHeaders(),
+      });
+      if (!r.ok) { console.warn('Supabase load failed:', r.status, await r.text()); return; }
+      const rows = await r.json();
+      if (!Array.isArray(rows) || !rows.length) return;
+      // Merge: Supabase wins; add missing rows, update existing
+      const byId = {};
+      (db.properties || []).forEach(p => { byId[p.id] = p; });
+      rows.forEach(row => { byId[row.id] = Object.assign({}, byId[row.id] || {}, row); });
+      db.properties = Object.values(byId);
+      localStorage.setItem(KEY, JSON.stringify(db));
+      if (typeof renderProperties === 'function') renderProperties();
+    } catch(e) { console.warn('Supabase load failed:', e.message); }
+  }
+
+  async function _syncPropertiesToSupabase() {
+    if (!_sbUrl || !_sbKey) return;
+    const props = db.properties || [];
+    if (!props.length) return;
+    try {
+      const r = await fetch(_sbUrl + '/rest/v1/properties?on_conflict=id', {
+        method: 'POST',
+        headers: _sbHeaders({ 'Prefer': 'resolution=merge-duplicates,return=minimal' }),
+        body: JSON.stringify(props),
+      });
+      if (!r.ok) console.warn('Supabase property sync failed:', r.status, await r.text());
+    } catch(e) { console.warn('Supabase property sync failed:', e.message); }
+  }
+
+  async function _propLogActivity(propId, text) {
+    if (!_sbUrl || !_sbKey || !propId || !text) return;
+    try {
+      await fetch(_sbUrl + '/rest/v1/activity_log', {
+        method: 'POST',
+        headers: _sbHeaders({ 'Prefer': 'return=minimal' }),
+        body: JSON.stringify({ property_id: propId, entry: text }),
+      });
+    } catch(e) { console.warn('Activity log sync failed:', e.message); }
+  }
+  // ── end Supabase sync ───────────────────────────────────────────────────────
 
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
 function today(){return new Date().toISOString().slice(0,10);}
@@ -2442,6 +2509,7 @@ function saveNewProperty() {
   const prop = Object.assign({ id, created: now, updated: now, activityLog: [] }, fields);
   if (fields.sellerNotes) {
     prop.activityLog.push({ text: 'Imported from lead email:\n' + fields.sellerNotes, ts: new Date().toISOString() });
+    _propLogActivity(prop.id, 'Imported from lead email:\n' + fields.sellerNotes);
   }
   if (!db.properties) db.properties = [];
   db.properties.unshift(prop);
@@ -2811,6 +2879,7 @@ function sendPropSignWellOffer(propId) {
     if (data.id) {
       if (!p.activityLog) p.activityLog = [];
       p.activityLog.push({ text: 'Offer sent via SignWell — ' + formattedPrice + ' — ' + s1Email, ts: new Date().toISOString() });
+      _propLogActivity(p.id, 'Offer sent via SignWell — ' + formattedPrice + ' — ' + s1Email);
       p.status      = 'Offer Pending';
       p.offerStatus = 'Sent';
       p.updated     = today();
@@ -2869,6 +2938,7 @@ function archiveProp(id, reason) {
   p.updated       = today();
   if (!p.activityLog) p.activityLog = [];
   p.activityLog.push({ text: 'Archived: ' + reason, ts: new Date().toISOString() });
+  _propLogActivity(p.id, 'Archived: ' + reason);
   save();
   closeModal();
   renderProperties();
@@ -2884,6 +2954,7 @@ function unarchiveProp(id) {
   p.updated       = today();
   if (!p.activityLog) p.activityLog = [];
   p.activityLog.push({ text: 'Unarchived', ts: new Date().toISOString() });
+  _propLogActivity(p.id, 'Unarchived');
   save();
   closeModal();
   renderProperties();
@@ -3020,8 +3091,10 @@ function addPropertyLog(id) {
   if (statusChanged) {
     p.status = newStatus;
     p.activityLog.push({ text: `Status changed: ${oldStatus} → ${newStatus}`, ts: new Date().toISOString() });
+    _propLogActivity(p.id, `Status changed: ${oldStatus} → ${newStatus}`);
   }
   p.activityLog.push({ text, ts: new Date().toISOString() });
+  _propLogActivity(p.id, text);
   p.updated = today();
   save();
   const entriesEl = document.getElementById('prop-log-entries');
@@ -3081,6 +3154,7 @@ function promoteToAcquisitions(id) {
   p.updated = now;
   if (!p.activityLog) p.activityLog = [];
   p.activityLog.push({ text: 'Promoted to Acquisitions pipeline — contact ID: ' + newContact.id, ts: new Date().toISOString() });
+  _propLogActivity(p.id, 'Promoted to Acquisitions pipeline — contact ID: ' + newContact.id);
   save();
   closeModal();
   renderProperties();
@@ -10543,6 +10617,7 @@ function sendSignWellOffer(contactId) {
 }
 
 // INIT
+_initSupabase();
 const savedTheme=localStorage.getItem('crm_theme');
 if(savedTheme==='light'){document.body.classList.add('light');}
 injectModeToggle();
