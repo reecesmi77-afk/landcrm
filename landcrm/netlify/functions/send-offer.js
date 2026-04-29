@@ -45,17 +45,15 @@ exports.handler = async (event) => {
       { api_id: 'seller_city_state_zip', value: sellerCityStateZip || '' },
     ];
 
-    // Only include seller2 fields if we have a co-seller
-    if (hasSeller2) {
-      templateFields.push(
-        { api_id: 'seller2_name_top', value: seller2Name || '' },
-        { api_id: 'seller2_name',     value: seller2Name || '' },
-        { api_id: 'seller2_email',    value: seller2Email || '' },
-        { api_id: 'seller2_phone',    value: seller2Phone || '' },
-        { api_id: 'seller2_address',  value: seller2Address || '' },
-        { api_id: 'seller2_city_state_zip', value: seller2CityStateZip || '' }
-      );
-    }
+    // Always include seller2 fields; send single space when empty so placeholders render blank
+    templateFields.push(
+      { api_id: 'seller2_name_top',       value: seller2Name        || ' ' },
+      { api_id: 'seller2_name',           value: seller2Name        || ' ' },
+      { api_id: 'seller2_phone',          value: seller2Phone       || ' ' },
+      { api_id: 'seller2_email',          value: seller2Email       || ' ' },
+      { api_id: 'seller2_address',        value: seller2Address     || ' ' },
+      { api_id: 'seller2_city_state_zip', value: seller2CityStateZip || ' ' }
+    );
 
     const payload = {
       test_mode: false,
