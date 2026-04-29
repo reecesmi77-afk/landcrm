@@ -134,12 +134,32 @@ exports.handler = async (event) => {
       }
 
       // ── INSERT NEW PROPERTY ───────────────────────────────────────────────
+      // Accepts either a JSON `data` param OR individual field params
       case 'insert_property': {
-        const dataParam = params.data || '';
-        if (!dataParam) return fail('data param is required (JSON string)', 400);
         let propertyData;
-        try { propertyData = JSON.parse(dataParam); }
-        catch (e) { return fail('data param is not valid JSON: ' + e.message, 400); }
+        const dataParam = params.data || '';
+        if (dataParam) {
+          // Legacy: data={"first_name":"..."} JSON string
+          try { propertyData = JSON.parse(dataParam); }
+          catch (e) { return fail('data param is not valid JSON: ' + e.message, 400); }
+        } else {
+          // New: individual URL params — first_name=James&last_name=Whitfield&...
+          const PROPERTY_FIELDS = [
+            'first_name','last_name','phone','email','address','city','county','state','zip',
+            'apn','acres','source','status','seller_notes','legal_description',
+            'slope_report_notes','slope_report_status','comp_report_notes','comp_report_status',
+            'arv','open_offer','mao','offer_amount','offer_status',
+            'seller2_name','seller2_email','seller2_phone','seller2_address','seller2_city_state_zip',
+            'utilities','road_access','structures','landlocked','tax_delinquent','fema_checked','archived',
+          ];
+          propertyData = {};
+          PROPERTY_FIELDS.forEach(f => { if (params[f] !== undefined) propertyData[f] = params[f]; });
+          if (!Object.keys(propertyData).length) return fail('No property fields provided', 400);
+        }
+        // Generate a unique ID if not provided
+        if (!propertyData.id) {
+          propertyData.id = 'prop' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+        }
         const row = await sbInsert('properties', propertyData);
         return ok(row);
       }
