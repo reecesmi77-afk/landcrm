@@ -1757,12 +1757,60 @@ let db = load();
     }
     const props = db.properties || [];
     if (!props.length) { console.log('[Supabase] sync skipped — no properties'); return; }
-    console.log('[Supabase] upserting', props.length, 'properties to', _sbUrl + '/rest/v1/properties');
+
+    // Normalize every property to the exact Supabase schema so all objects have identical keys
+    function _toSupabaseRow(p) {
+      const nameParts = (p.sellerName || '').trim().split(/\s+/);
+      const firstName = nameParts[0] || null;
+      const lastName  = nameParts.length > 1 ? nameParts.slice(1).join(' ') : null;
+      return {
+        id:                    p.id                  || null,
+        first_name:            firstName,
+        last_name:             lastName,
+        phone:                 p.sellerPhone         || null,
+        email:                 p.sellerEmail         || null,
+        address:               p.address             || null,
+        city:                  p.city                || null,
+        county:                p.county              || null,
+        state:                 p.state               || null,
+        zip:                   p.zip                 || null,
+        apn:                   p.apn                 || null,
+        acres:                 p.acres               || null,
+        source:                p.source              || null,
+        status:                p.status              || null,
+        seller_notes:          p.sellerNotes         || null,
+        legal_description:     p.legalDescription    || null,
+        slope_report_notes:    p.slopeReportNotes    || null,
+        slope_report_status:   p.slopeReportStatus   || null,
+        comp_report_notes:     p.compReportNotes     || null,
+        comp_report_status:    p.compReportStatus    || null,
+        arv:                   p.arv                 || null,
+        open_offer:            p.openOffer           || null,
+        mao:                   p.maoAmount           || null,
+        offer_amount:          p.offerAmount         || null,
+        offer_status:          p.offerStatus         || null,
+        seller2_name:          p.seller2Name         || null,
+        seller2_email:         p.seller2Email        || null,
+        seller2_phone:         p.seller2Phone        || null,
+        seller2_address:       p.seller2Address      || null,
+        seller2_city_state_zip:p.seller2CityStateZip || null,
+        utilities:             p.utilities           || null,
+        road_access:           p.roadAccess          || null,
+        structures:            p.structures          || null,
+        landlocked:            p.landlocked          || null,
+        tax_delinquent:        p.taxDelinquent       || null,
+        fema_checked:          p.femaChecked         || null,
+        archived:              p.archived            || null,
+      };
+    }
+
+    const rows = props.map(_toSupabaseRow);
+    console.log('[Supabase] upserting', rows.length, 'properties to', _sbUrl + '/rest/v1/properties');
     try {
       const r = await fetch(_sbUrl + '/rest/v1/properties?on_conflict=id', {
         method:  'POST',
         headers: _sbHeaders({ 'Prefer': 'resolution=merge-duplicates' }),
-        body:    JSON.stringify(props),
+        body:    JSON.stringify(rows),
       });
       const text = await r.text();
       if (!r.ok) { console.error('[Supabase] upsert failed:', r.status, text); }
