@@ -2099,6 +2099,8 @@ function _propManualFieldsHtml(p) {
       <div class="form-group"><label class="form-label">Seller Name *</label><input class="form-input" id="pf-seller-name" value="${_gsEsc(p?.sellerName||'')}" placeholder="Jane Smith"></div>
       <div class="form-group"><label class="form-label">Seller Phone</label><input class="form-input" id="pf-seller-phone" value="${_gsEsc(p?.sellerPhone||'')}" placeholder="901-555-0100"></div>
       <div class="form-group form-full"><label class="form-label">Seller Email</label><input class="form-input" id="pf-seller-email" value="${_gsEsc(p?.sellerEmail||'')}" placeholder="jane@email.com"></div>
+      <div class="form-group"><label class="form-label">Seller 2 Name <span style="color:var(--text3);font-size:10px">optional</span></label><input class="form-input" id="pf-seller2-name" value="${_gsEsc(p?.seller2Name||'')}" placeholder="If applicable"></div>
+      <div class="form-group"><label class="form-label">Seller 2 Email <span style="color:var(--text3);font-size:10px">optional</span></label><input class="form-input" id="pf-seller2-email" value="${_gsEsc(p?.seller2Email||'')}" placeholder="If applicable"></div>
     </div>
 
     <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin:18px 0 10px">Source</div>
@@ -2406,9 +2408,11 @@ function parsePastedProperty() {
 
 function _readPropFields() {
   return {
-    sellerName:    document.getElementById('pf-seller-name')?.value.trim()   || '',
-    sellerPhone:   document.getElementById('pf-seller-phone')?.value.trim()  || '',
-    sellerEmail:   document.getElementById('pf-seller-email')?.value.trim()  || '',
+    sellerName:    document.getElementById('pf-seller-name')?.value.trim()    || '',
+    sellerPhone:   document.getElementById('pf-seller-phone')?.value.trim()   || '',
+    sellerEmail:   document.getElementById('pf-seller-email')?.value.trim()   || '',
+    seller2Name:   document.getElementById('pf-seller2-name')?.value.trim()   || '',
+    seller2Email:  document.getElementById('pf-seller2-email')?.value.trim()  || '',
     source:        document.getElementById('pf-source')?.value               || '',
     address:       document.getElementById('pf-address')?.value.trim()       || '',
     city:          document.getElementById('pf-city')?.value.trim()          || '',
@@ -2706,8 +2710,8 @@ function openPropSignWellModal(id) {
         <div class="form-group"><label class="form-label">Seller 1 Phone</label><input class="form-input" id="psw-s1-phone" value="${_gsEsc(p.sellerPhone||'')}"></div>
         <div class="form-group"><label class="form-label">Seller 1 Mailing Address</label><input class="form-input" id="psw-s1-addr" value="${_gsEsc(p.address||'')}"></div>
         <div class="form-group"><label class="form-label">Seller City / ST / Zip</label><input class="form-input" id="psw-s1-csz" value="${_gsEsc(cityStateZip)}" placeholder="Talihina, OK 74571"></div>
-        <div class="form-group"><label class="form-label">Seller 2 Name <span style="color:var(--text3);font-size:10px">optional</span></label><input class="form-input" id="psw-s2-name" value="" placeholder="If applicable"></div>
-        <div class="form-group"><label class="form-label">Seller 2 Email <span style="color:var(--text3);font-size:10px">optional</span></label><input class="form-input" id="psw-s2-email" value="" placeholder="If applicable"></div>
+        <div class="form-group"><label class="form-label">Seller 2 Name <span style="color:var(--text3);font-size:10px">optional</span></label><input class="form-input" id="psw-s2-name" value="${_gsEsc(p.seller2Name||'')}" placeholder="If applicable"></div>
+        <div class="form-group"><label class="form-label">Seller 2 Email <span style="color:var(--text3);font-size:10px">optional</span></label><input class="form-input" id="psw-s2-email" value="${_gsEsc(p.seller2Email||'')}" placeholder="If applicable"></div>
       </div>
 
       <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin:18px 0 10px">Property</div>
