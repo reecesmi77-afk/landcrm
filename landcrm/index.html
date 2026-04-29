@@ -1731,7 +1731,7 @@ let db = load();
   async function _loadPropertiesFromSupabase() {
     console.log('[Supabase] loading properties from', _sbUrl + '/rest/v1/properties');
     try {
-      const r = await fetch(_sbUrl + '/rest/v1/properties?select=*&order=created.desc', {
+      const r = await fetch(_sbUrl + '/rest/v1/properties?select=*&order=created_at.desc', {
         headers: _sbHeaders(),
       });
       const text = await r.text();
