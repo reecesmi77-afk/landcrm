@@ -1759,6 +1759,11 @@ let db = load();
     if (!props.length) { console.log('[Supabase] sync skipped — no properties'); return; }
 
     // Normalize every property to the exact Supabase schema so all objects have identical keys
+    function _toBool(v) {
+      if (v === true  || v === 'true')  return true;
+      if (v === false || v === 'false') return false;
+      return null;
+    }
     function _toSupabaseRow(p) {
       const nameParts = (p.sellerName || '').trim().split(/\s+/);
       const firstName = nameParts[0] || null;
@@ -1794,13 +1799,13 @@ let db = load();
         seller2_phone:         p.seller2Phone        || null,
         seller2_address:       p.seller2Address      || null,
         seller2_city_state_zip:p.seller2CityStateZip || null,
-        utilities:             p.utilities           || null,
-        road_access:           p.roadAccess          || null,
-        structures:            p.structures          || null,
-        landlocked:            p.landlocked          || null,
-        tax_delinquent:        p.taxDelinquent       || null,
-        fema_checked:          p.femaChecked         || null,
-        archived:              p.archived            || null,
+        utilities:             _toBool(p.utilities),
+        road_access:           _toBool(p.roadAccess),
+        structures:            _toBool(p.structures),
+        landlocked:            _toBool(p.landlocked),
+        tax_delinquent:        _toBool(p.taxDelinquent),
+        fema_checked:          _toBool(p.femaChecked),
+        archived:              _toBool(p.archived),
       };
     }
 
