@@ -144,8 +144,18 @@ exports.handler = async (event) => {
         return ok(row);
       }
 
+      // ── INSERT KNOWLEDGE ENTRY ────────────────────────────────────────────
+      case 'insert_knowledge': {
+        const title    = params.title    || '';
+        const category = params.category || '';
+        if (!title) return fail('title param is required', 400);
+        if (!value) return fail('value param is required (content)', 400);
+        const row = await sbInsert('knowledge', { category: category || null, title, content: value });
+        return ok(row);
+      }
+
       default:
-        return fail('Unknown action: ' + (action || '(none)') + '. Valid: update_field, update_status, add_note, insert_activity, insert_property', 400);
+        return fail('Unknown action: ' + (action || '(none)') + '. Valid: update_field, update_status, add_note, insert_activity, insert_property, insert_knowledge', 400);
     }
 
   } catch (e) {

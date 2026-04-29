@@ -123,6 +123,27 @@ exports.handler = async (event) => {
         data = JSON.parse(text);
         return respond(Array.isArray(data) ? data[0] || null : data);
 
+      // ── GET ALL KNOWLEDGE ENTRIES ───────────────────────────────────────────
+      case 'get_knowledge':
+        r = await fetch(SUPABASE_URL + '/rest/v1/knowledge?select=*&order=created_at.desc', { headers });
+        text = await r.text();
+        if (!r.ok) return respondError('Supabase error: ' + text, r.status);
+        return respond(JSON.parse(text));
+
+      // ── INSERT KNOWLEDGE ENTRY ──────────────────────────────────────────────
+      case 'insert_knowledge':
+        if (!payload.title)   return respondError('payload.title is required', 400);
+        if (!payload.content) return respondError('payload.content is required', 400);
+        r = await fetch(SUPABASE_URL + '/rest/v1/knowledge', {
+          method:  'POST',
+          headers: Object.assign({}, headers, { 'Prefer': 'return=representation' }),
+          body:    JSON.stringify({ category: payload.category || null, title: payload.title, content: payload.content }),
+        });
+        text = await r.text();
+        if (!r.ok) return respondError('Supabase error: ' + text, r.status);
+        data = JSON.parse(text);
+        return respond(Array.isArray(data) ? data[0] || null : data);
+
       default:
         return respondError('Unknown action: ' + action, 400);
     }
