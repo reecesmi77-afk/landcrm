@@ -21,18 +21,10 @@ exports.handler = async (event) => {
 
     const hasSeller2 = seller2Email && seller2Email.trim().length > 0;
 
-    const recipients = [
-      { id: 'seller1', name: sellerName, email: sellerEmail, placeholder_name: 'Seller 1' },
-    ];
-
+    const recipients = [{ name: sellerName, email: sellerEmail }];
     if (hasSeller2) {
-      recipients.push({ id: 'seller2', name: seller2Name || 'Co-Seller', email: seller2Email.trim(), placeholder_name: 'Seller 2' });
+      recipients.push({ name: seller2Name || 'Co-Seller', email: seller2Email.trim() });
     }
-
-    recipients.push({ id: 'sender', name: 'William Smith', email: effectiveSenderEmail, placeholder_name: 'Document Sender' });
-
-    // Exclude Seller 2 placeholder if no co-seller
-    const excludePlaceholders = hasSeller2 ? [] : ['Seller 2'];
 
     const templateFields = [
       { api_id: 'agreement_date',        value: agreementDate || '' },
@@ -72,7 +64,6 @@ exports.handler = async (event) => {
       message: body.message,
       apply_signing_order: true,
       recipients,
-      exclude_placeholders: excludePlaceholders,
       template_fields: templateFields,
     };
 
