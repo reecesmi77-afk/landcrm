@@ -21,10 +21,30 @@ exports.handler = async (event) => {
 
     const hasSeller2 = seller2Email && seller2Email.trim().length > 0;
 
-    const recipients = [{ name: sellerName, email: sellerEmail }];
-    if (hasSeller2) {
-      recipients.push({ name: seller2Name || 'Co-Seller', email: seller2Email.trim() });
+    const recipients = [];
+
+    recipients.push({
+      id: 'seller 1',
+      name: sellerName,
+      email: sellerEmail,
+      role: 'signer',
+    });
+
+    if (seller2Email && seller2Email.trim() !== '') {
+      recipients.push({
+        id: 'seller 2',
+        name: seller2Name || seller2Email,
+        email: seller2Email,
+        role: 'signer',
+      });
     }
+
+    recipients.push({
+      id: 'document sender',
+      name: 'Coldwater Property Group',
+      email: 'coldwaterpropertygroup@gmail.com',
+      role: 'signer',
+    });
 
     const templateFields = [
       { api_id: 'agreement_date',        value: agreementDate || '' },
@@ -65,7 +85,7 @@ exports.handler = async (event) => {
       template_fields: templateFields,
     };
 
-    console.log('Sending to SignWell:', JSON.stringify(payload).slice(0, 800));
+    console.log('Sending to SignWell:', JSON.stringify(payload));
 
     const response = await fetch('https://www.signwell.com/api/v1/document_templates/documents/', {
       method: 'POST',
