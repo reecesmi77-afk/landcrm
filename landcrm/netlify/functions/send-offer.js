@@ -19,29 +19,27 @@ exports.handler = async (event) => {
       ? 'wsmith+cw@coldwaterpropertygroup.com'
       : senderEmail;
 
-    const hasSeller2 = seller2Email && seller2Email.trim().length > 0;
-
-    const recipients = [];
-
-    recipients.push({
-      placeholder_name: 'Seller 1',
-      name: sellerName,
-      email: sellerEmail,
-    });
-
-    if (seller2Email && seller2Email.trim() !== '') {
-      recipients.push({
+    const recipients = [
+      {
+        id: '1',
+        placeholder_name: 'Seller 1',
+        name: sellerName,
+        email: sellerEmail,
+      },
+      {
+        id: '2',
         placeholder_name: 'Seller 2',
-        name: seller2Name || seller2Email,
-        email: seller2Email,
-      });
-    }
-
-    recipients.push({
-      placeholder_name: 'Document Sender',
-      name: 'Coldwater Property Group',
-      email: 'coldwaterpropertygroup@gmail.com',
-    });
+        name: seller2Name || 'N/A',
+        email: seller2Email || 'coldwaterpropertygroup@gmail.com',
+        send_email: seller2Email ? true : false,
+      },
+      {
+        id: '3',
+        placeholder_name: 'Document Sender',
+        name: 'Coldwater Property Group',
+        email: 'coldwaterpropertygroup@gmail.com',
+      },
+    ];
 
     const templateFields = [
       { api_id: 'agreement_date',        value: agreementDate || '' },
