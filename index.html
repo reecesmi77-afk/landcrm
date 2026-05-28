@@ -101,7 +101,7 @@ html, body { background: var(--bg); color: var(--text); font-family: -apple-syst
 .pl { font-size: 11px; color: var(--text-faint); margin-top: 4px; letter-spacing: 0.02em; }
 
 /* ── SMART WORKLIST (Phase 3c-3) ──────────────────────────────── */
-.wl-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; margin-bottom: 22px; align-items: start; }
+.wl-grid { display: grid; grid-template-columns: 1fr 1.4fr; gap: 16px; margin-bottom: 22px; align-items: start; }
 @media (max-width: 900px) { .wl-grid { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 720px) { .wl-grid { grid-template-columns: 1fr; } }
 .wl-col { }
@@ -123,32 +123,26 @@ html, body { background: var(--bg); color: var(--text); font-family: -apple-syst
 .wl-cohort-parked { background: transparent; color: var(--text-faint); border: 0.5px solid var(--border); }
 .wl-score { font-size: 12px; color: var(--text-faint); font-variant-numeric: tabular-nums;
   white-space: nowrap; flex-shrink: 0; min-width: 38px; text-align: right; }
-.wl-primary { background: var(--bg-card); border: 0.5px solid var(--border);
-  border-left: 3px solid var(--accent); border-radius: var(--radius);
-  padding: 14px 18px; margin-bottom: 10px; }
-.wl-primary-label { font-size: 11px; color: var(--text-faint); letter-spacing: 0.04em;
-  text-transform: uppercase; margin-bottom: 6px; }
-.wl-primary-action { font-size: 15px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
-.wl-primary-step { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
-.wl-primary-step b { color: var(--accent); }
+/* (primary "Next move" card removed 2026-05-28 — the ranked worklist #1 is the next move) */
 .wl-empty { background: var(--bg-card); border: 0.5px dashed var(--border-strong);
   border-radius: var(--radius); padding: 18px 20px; color: var(--text-muted);
   font-size: 13px; line-height: 1.6; }
 
-/* ── DIGEST (Phase 3c-3) ──────────────────────────────────────── */
-.digest-section { margin-bottom: 22px; }
-.digest-row { display: grid; grid-template-columns: auto 1fr auto; gap: 10px;
-  align-items: center; padding: 8px 0; border-top: 0.5px solid var(--border);
-  font-size: 13px; }
-.digest-row:first-child { border-top: none; }
-.digest-chan { font-size: 11px; padding: 2px 7px; border-radius: 4px;
-  background: var(--bg-soft); color: var(--text-faint); border: 0.5px solid var(--border);
-  white-space: nowrap; flex-shrink: 0; }
-.digest-body { min-width: 0; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.digest-time { font-size: 11px; color: var(--text-faint); white-space: nowrap; }
-.digest-card { background: var(--bg-card); border: 0.5px solid var(--border);
+/* ── FRONT DESK NOTES (2026-05-28) ─────────────────────────────── */
+.fdn-card { background: var(--bg-card); border: 0.5px solid var(--border);
   border-radius: var(--radius); padding: 14px 18px; }
-.digest-empty { font-size: 13px; color: var(--text-faint); font-style: italic; }
+.fdn-sub { font-size: 11px; color: var(--text-faint); letter-spacing: 0.04em;
+  text-transform: uppercase; margin: 0 0 8px; }
+.fdn-sub.up { margin-top: 16px; }
+.fdn-row { display: grid; grid-template-columns: auto 1fr; gap: 9px; align-items: baseline;
+  padding: 7px 0; border-top: 0.5px solid var(--border); font-size: 13px; line-height: 1.45; }
+.fdn-row:first-child { border-top: none; }
+.fdn-dot { font-size: 15px; line-height: 1; color: var(--text-faint); }
+.fdn-dot.overdue { color: var(--urgent-text); }
+.fdn-dot.soon { color: var(--warn-text); }
+.fdn-text { min-width: 0; color: var(--text);
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.fdn-empty { font-size: 13px; color: var(--text-faint); font-style: italic; padding: 4px 0; }
 
 /* Hot deals queue */
 .hd-zone { display: flex; flex-direction: column; gap: 8px; margin-bottom: 22px; }
@@ -343,18 +337,15 @@ select.act { appearance: auto; }
 
     <div class="status-banner"><strong>Live from Supabase.</strong> <span id="status-text">Loading cockpit…</span></div>
 
-    <!-- ── PRIMARY RECOMMENDATION (Phase 3c-3) — full width ─────── -->
-    <div id="wl-primary-zone"></div>
-
-    <!-- ── 2-COLUMN GRID: Worklist (left) | Digest (right) ───────── -->
+    <!-- ── 2-COLUMN GRID: Front Desk Notes (left) | Smart worklist (right) ─ -->
     <div class="wl-grid">
+      <div class="wl-col">
+        <div class="section-label">Front Desk Notes</div>
+        <div class="fdn-card" id="fdn-card"><div class="fdn-empty">Loading…</div></div>
+      </div>
       <div class="wl-col">
         <div class="section-label">Smart worklist · what to work</div>
         <div id="wl-list-zone"><div class="wl-empty">Loading worklist…</div></div>
-      </div>
-      <div class="wl-col">
-        <div class="section-label">Since your last view</div>
-        <div class="digest-card" id="digest-card"><div class="digest-empty">Loading…</div></div>
       </div>
     </div>
 
@@ -391,7 +382,7 @@ select.act { appearance: auto; }
       <div class="pcell clickable" data-section="deals"><div class="pn" id="pipe-closed">—</div><div class="pl">Closed YTD</div></div>
     </div>
 
-    <div class="footer-note">CPG Ops · live cockpit · secured · cockpit_summary() + cockpit_smart_worklist() · Phase 3c-3<br>Add to Home Screen for app-like experience</div>
+    <div class="footer-note">CPG Ops · live cockpit · secured · cockpit_summary() + cockpit_smart_worklist() + cockpit_front_desk()<br>Add to Home Screen for app-like experience</div>
   </div><!-- /view-home -->
 
   <!-- LEAD DETAIL VIEW (Phase 3b-2b) — populated by loadLead() -->
@@ -845,7 +836,7 @@ function renderStatus(d) {
   $('status-text').textContent = msg;
 }
 
-/* ── SMART WORKLIST + DIGEST (Phase 3c-3) ─────────────────────── */
+/* ── SMART WORKLIST + FRONT DESK NOTES ─────────────────────────── */
 
 const COHORT_LABELS = {
   hard_deadline:     'Deadline',
@@ -874,99 +865,77 @@ function fmtAgo(isoStr) {
 }
 
 async function loadWorklist() {
-  const primaryEl = $('wl-primary-zone');
-  const listEl    = $('wl-list-zone');
-  const digestEl  = $('digest-card');
+  const listEl = $('wl-list-zone');
+  const fdnEl  = $('fdn-card');
 
-  const { data, error } = await sb.rpc('cockpit_smart_worklist');
+  const [wl, fd] = await Promise.all([
+    sb.rpc('cockpit_smart_worklist'),
+    sb.rpc('cockpit_front_desk'),
+  ]);
 
-  if (error) {
-    if (primaryEl) primaryEl.innerHTML = '';
-    if (listEl)    listEl.innerHTML    = '<div class="wl-empty">Worklist unavailable: ' + esc(error.message) + '</div>';
-    digestEl.innerHTML = '<div class="digest-empty">Digest unavailable.</div>';
-    return;
-  }
-
-  const primary = data.primary_recommendation || {};
-  const list    = data.sorted_list            || [];
-  const digest  = data.digest_since_last_view || [];
-  const meta    = data._meta                  || {};
-
-  // ── Block A-1: Primary recommendation card (full width) ───────
-  let primaryHtml = '';
-
-  if (primary.action && primary.action !== 'none' && primary.lead_id) {
-    const actionLabel = {
-      advance_with_owner:  'Contact owner',
-      advance_with_funder: 'Advance with funder',
-      send_offer:          'Send offer',
-      force_decision:      'Force decision',
-      drip_continue:       'Drip continues',
-      dd_action:           'DD action needed',
-    }[primary.action] || primary.action;
-
-    primaryHtml = '<div class="wl-primary">' +
-      '<div class="wl-primary-label">Next move · ' + esc(primary.lead_name || '') + '</div>' +
-      '<div class="wl-primary-action">' + esc(actionLabel) +
-        (primary.channel && primary.channel !== 'none' ? ' · <b>' + esc(primary.channel.toUpperCase()) + '</b>' : '') +
-      '</div>' +
-      '<div class="wl-primary-step">' + esc(primary.rationale_one_line || '') + '</div>' +
-      (primary.next_step_specific ? '<div class="wl-primary-step" style="margin-top:4px;color:var(--text)"><b>→</b> ' + esc(primary.next_step_specific) + '</div>' : '') +
-    '</div>';
-  } else if (primary.rationale_one_line) {
-    primaryHtml = '<div class="wl-primary" style="border-left-color:var(--text-faint)">' +
-      '<div class="wl-primary-label">Worklist</div>' +
-      '<div class="wl-primary-action" style="color:var(--text-muted)">' + esc(primary.rationale_one_line) + '</div>' +
-    '</div>';
-  }
-
-  if (primaryEl) primaryEl.innerHTML = primaryHtml;
-
-  // ── Block A-2: Top 10 sorted list (left column) ───────────────
-  let listHtml = '';
-  const top10 = list.slice(0, 10);
-  if (top10.length === 0) {
-    listHtml = '<div class="wl-empty">Worklist empty — no leads in active cohorts.</div>';
+  // ── Smart worklist (right column) ─────────────────────────────
+  if (wl.error) {
+    if (listEl) listEl.innerHTML = '<div class="wl-empty">Worklist unavailable: ' + esc(wl.error.message) + '</div>';
   } else {
-    top10.forEach((row, i) => {
-      const cohortCss   = COHORT_CSS[row.cohort]   || 'wl-cohort-parked';
-      const cohortLabel = COHORT_LABELS[row.cohort] || row.cohort;
-      const ps = row.priority_score != null ? Math.round(row.priority_score * 100) + '%' : '—';
-      const leadAttr = row.lead_id ? ' data-lead-id="' + esc(row.lead_id) + '"' : '';
-      listHtml += '<div class="wl-row"' + leadAttr + '>' +
-        '<div class="wl-row-left">' +
-          '<div class="wl-name"><span style="color:var(--text-faint);margin-right:6px">' + (i + 1) + '</span>' + esc(row.lead_name || 'Unknown lead') + '</div>' +
-          '<div class="wl-reason">' + esc(row.reason_chip || '') + '</div>' +
-        '</div>' +
-        '<span class="wl-cohort ' + cohortCss + '">' + esc(cohortLabel) + '</span>' +
-        '<span class="wl-score">' + ps + '</span>' +
-      '</div>';
-    });
+    const list  = (wl.data && wl.data.sorted_list) || [];
+    const top10 = list.slice(0, 10);
+    let listHtml = '';
+    if (top10.length === 0) {
+      listHtml = '<div class="wl-empty">Worklist empty — no leads in active cohorts.</div>';
+    } else {
+      top10.forEach((row, i) => {
+        const cohortCss   = COHORT_CSS[row.cohort]   || 'wl-cohort-parked';
+        const cohortLabel = COHORT_LABELS[row.cohort] || row.cohort;
+        const ps = row.priority_score != null ? Math.round(row.priority_score * 100) + '%' : '—';
+        const leadAttr = row.lead_id ? ' data-lead-id="' + esc(row.lead_id) + '"' : '';
+        listHtml += '<div class="wl-row"' + leadAttr + '>' +
+          '<div class="wl-row-left">' +
+            '<div class="wl-name"><span style="color:var(--text-faint);margin-right:6px">' + (i + 1) + '</span>' + esc(row.lead_name || 'Unknown lead') + '</div>' +
+            '<div class="wl-reason">' + esc(row.reason_chip || '') + '</div>' +
+          '</div>' +
+          '<span class="wl-cohort ' + cohortCss + '">' + esc(cohortLabel) + '</span>' +
+          '<span class="wl-score">' + ps + '</span>' +
+        '</div>';
+      });
+    }
+    if (listEl) listEl.innerHTML = listHtml;
   }
 
-  if (listEl) listEl.innerHTML = listHtml;
-
-  // ── Block B: Digest ───────────────────────────────────────────
-  const lastViewAt = meta.last_view_at;
-  const lastViewLabel = lastViewAt
-    ? 'Nothing new since your last view at ' + new Date(lastViewAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-    : 'Nothing new since your last view.';
-
-  if (digest.length === 0) {
-    digestEl.innerHTML = '<div class="digest-empty">' + esc(lastViewLabel) + '</div>';
+  // ── Front Desk Notes (left column) ────────────────────────────
+  if (fd.error) {
+    if (fdnEl) fdnEl.innerHTML = '<div class="fdn-empty">Front desk notes unavailable: ' + esc(fd.error.message) + '</div>';
   } else {
-    digestEl.innerHTML = digest.map(ev =>
-      '<div class="digest-row">' +
-        '<span class="digest-chan">' + esc(ev.channel || '?') + '</span>' +
-        '<span class="digest-body"><b>' + esc(ev.event || '') + '</b>' +
-          (ev.lead_name ? ' · ' + esc(ev.lead_name) : '') +
-        '</span>' +
-        '<span class="digest-time">' + fmtAgo(ev.timestamp) + '</span>' +
-      '</div>'
-    ).join('');
+    const recent   = (fd.data && fd.data.recent)   || [];
+    const upcoming = (fd.data && fd.data.upcoming) || [];
+    let html = '<div class="fdn-sub">Recently</div>';
+    if (recent.length === 0) {
+      html += '<div class="fdn-empty">Nothing logged recently.</div>';
+    } else {
+      html += recent.map(ev =>
+        '<div class="fdn-row">' +
+          '<span class="fdn-dot">•</span>' +
+          '<span class="fdn-text">' + esc(ev.text || '') +
+            (ev.ts ? ' <span style="color:var(--text-faint)">· ' + fmtAgo(ev.ts) + '</span>' : '') +
+          '</span>' +
+        '</div>'
+      ).join('');
+    }
+    html += '<div class="fdn-sub up">Upcoming</div>';
+    if (upcoming.length === 0) {
+      html += '<div class="fdn-empty">Nothing scheduled.</div>';
+    } else {
+      html += upcoming.map(ev => {
+        const u = ev.urgency === 'overdue' ? 'overdue' : (ev.urgency === 'soon' ? 'soon' : '');
+        return '<div class="fdn-row">' +
+          '<span class="fdn-dot ' + u + '">•</span>' +
+          '<span class="fdn-text">' + esc(ev.text || '') + '</span>' +
+        '</div>';
+      }).join('');
+    }
+    if (fdnEl) fdnEl.innerHTML = html;
   }
 
-  // Update watermark AFTER both blocks render (so digest window is correct)
+  // Keep the last-view watermark current (smart_worklist digest window relies on it)
   await sb.rpc('update_last_view_watermark');
 }
 
